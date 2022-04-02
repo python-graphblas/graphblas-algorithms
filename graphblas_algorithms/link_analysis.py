@@ -3,8 +3,7 @@ from warnings import warn
 import grblas as gb
 import networkx as nx
 import numpy as np
-from grblas.binary import plus
-from grblas.semiring import plus_first
+from grblas.semiring import any_times, plus_first
 
 
 def pagerank(
@@ -34,10 +33,13 @@ def pagerank(
         take_ownership=True,
         name="A",
     )
+    # If we know A is purely structural (comprised of only 1 values),
+    # we can structure the calculation to use the plus_first semiring).
     S = A.reduce_rowwise().new(name="S")
-    A << gb.semiring.any_truediv.commutes_to(S.diag() @ A)  # TODO: use any_rtruediv
+    # Fold alpha constant into A
+    A << any_times((alpha / S).diag() @ A)
 
-    # initial vector
+    # Initial vector
     if nstart is None:
         x = gb.Vector.new(float, N)
         x[:] = 1.0 / N
@@ -48,8 +50,7 @@ def pagerank(
 
     # Personalization vector
     if personalization is None:
-        p = gb.Vector.new(float, N, name="p")
-        p[:] = 1.0 / N
+        p = 1.0 / N
     else:
         p = np.array([personalization.get(n, 0) for n in nodelist], dtype=float)
         if p.sum() == 0:
@@ -58,35 +59,43 @@ def pagerank(
         p = gb.Vector.ss.import_full(p, take_ownership=True, name="p")
 
     # Dangling nodes
-    if dangling is None:
-        dangling_weights = gb.Vector.new(float, N, name="dangling_weights")
-        dangling_weights(mask=~S.S) << alpha * p
-    else:
-        # Convert the dangling dictionary into an array in nodelist order
-        weights = np.array([dangling.get(n, 0) for n in nodelist], dtype=float)
-        weights /= weights.sum()
-        weights *= alpha
-        dangling_weights = gb.Vector.ss.import_full(weights, take_ownership=True, name="weights")
-        dangling_mask = gb.Vector.new(float, N, name="dangling_mask")
-        dangling_mask(mask=~S.S) << 1.0
+    dangling_mask = gb.Vector.new(float, N, name="dangling_mask")
+    dangling_mask(mask=~S.S) << 1.0
+    is_dangling = dangling_mask.nvals > 0
+    if is_dangling:
+        # Fold alpha constant into dangling_weights (or dangling_mask)
+        if dangling is not None:
+            # Convert the dangling dictionary into an array in nodelist order
+            weights = np.array([dangling.get(n, 0) for n in nodelist], dtype=float)
+            weights *= alpha / weights.sum()
+            dangling_weights = gb.Vector.ss.import_full(
+                weights, take_ownership=True, name="dangling_weights"
+            )
+        elif personalization is None:
+            # Fast case (and common case)
+            dangling_mask(mask=dangling_mask.S) << alpha * p
+        else:
+            dangling_weights = (alpha * p).new(name="dangling_weights")
 
-    # Fold constants into objects
-    A *= alpha
+    # Fold decay constant into p
     p *= 1 - alpha
-    is_dangling = dangling_weights.nvals > 0
     xnew = gb.Vector.new(float, N, name="xnew")
-    for i in range(max_iter):
+    # Power iteration: make up to max_iter iterations
+    for _ in range(max_iter):
         # xnew << alpha * (x @ A + "dangling_weights") + (1 - alpha) * p
-        xnew << x @ A
-        xnew(plus) << p
+        xnew << p
         if is_dangling:
-            if dangling is None:
-                # Add a constant (dangling_weights is already masked)
-                xnew += x @ dangling_weights
+            if dangling is None and personalization is None:
+                # Fast case: add a scalar; xnew is still iso-valued (b/c p is also scalar)
+                xnew += x @ dangling_mask
             else:
                 # Add a vector
-                xnew(plus) << plus_first(x @ dangling_mask) * dangling_weights
+                xnew += plus_first(x @ dangling_mask) * dangling_weights
+        # We use plus_times semiring here b/c A may be weighted or from a multigraph.
+        # If we're clever, we could figure out when we can use plus_first semiring.
+        xnew += x @ A
 
+        # Check convergence, l1 norm
         err = gb.binary.minus(x & xnew).apply(gb.unary.abs).reduce().value
         if err < N * tol:
             return dict(zip(nodelist, xnew.to_values()[1]))
