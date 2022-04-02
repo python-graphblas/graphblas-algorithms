@@ -59,10 +59,10 @@ def pagerank(
         p = gb.Vector.ss.import_full(p, take_ownership=True, name="p")
 
     # Dangling nodes
-    dangling_mask = gb.Vector.new(float, N, name="dangling_mask")
-    dangling_mask(mask=~S.S) << 1.0
-    is_dangling = dangling_mask.nvals > 0
+    is_dangling = S.nvals < N
     if is_dangling:
+        dangling_mask = gb.Vector.new(float, N, name="dangling_mask")
+        dangling_mask(mask=~S.S) << 1.0
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
             # Convert the dangling dictionary into an array in nodelist order
