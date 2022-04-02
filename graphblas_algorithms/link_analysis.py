@@ -29,7 +29,6 @@ def pagerank_core(
         denom = nstart.reduce(allow_empty=False).value
         if denom == 0:
             raise ZeroDivisionError()
-        # Is it worth sparsifying (dropping 0s) with a value mask here?
         x(mask=nstart.V) << nstart / denom
 
     # Personalization vector or scalar
@@ -39,7 +38,6 @@ def pagerank_core(
         denom = personalization.reduce(allow_empty=False).value
         if denom == 0:
             raise ZeroDivisionError()
-        # Is it worth sparsifying (dropping 0s) with a value mask here?
         p = (personalization / denom).new(mask=personalization.V, name="p")
 
     # Inverse of row_degrees
@@ -49,8 +47,6 @@ def pagerank_core(
         S(mask=S.V) << alpha / S
     else:
         S = (alpha / row_degrees).new(mask=row_degrees.V, name="S")
-    if S.nvals == 0:
-        raise ZeroDivisionError()
 
     if A.ss.is_iso:
         # Fold iso-value of A into S
@@ -67,11 +63,7 @@ def pagerank_core(
         dangling_mask(mask=~S.S) << 1.0
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
-            denom = dangling.reduce(allow_empty=False).value
-            if denom == 0:
-                raise ZeroDivisionError()
-            # Is it worth sparsifying (dropping 0s) with a value mask here?
-            dangling_weights = (alpha / denom * dangling).new(
+            dangling_weights = (alpha / dangling.reduce(allow_empty=False).value * dangling).new(
                 mask=dangling.V, name="dangling_weights"
             )
         elif personalization is None:
@@ -88,6 +80,7 @@ def pagerank_core(
     w = Vector.new(float, N, name="w")
     for _ in range(max_iter):
         xprev, x = x, xprev
+
         # x << alpha * ((xprev * S) @ A + "dangling_weights") + (1 - alpha) * p
         x << p
         if is_dangling:
