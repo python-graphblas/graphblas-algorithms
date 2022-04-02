@@ -1,7 +1,7 @@
+from collections import OrderedDict
 from warnings import warn
 
 import networkx as nx
-import numpy as np
 from grblas import Matrix, Vector, binary, monoid, unary
 from grblas.semiring import plus_first, plus_times
 
@@ -17,8 +17,6 @@ def pagerank_core(
     row_degrees=None,
     name="pagerank",
 ):
-    # TODO: consider what happens and what we should do if personalization,
-    # nstart, dangling, and row_degrees input vectors are not dense.
     N = A.nrows
     if A.nvals == 0:
         return Vector.new(float, N, name=name)
@@ -28,24 +26,31 @@ def pagerank_core(
     if nstart is None:
         x[:] = 1.0 / N
     else:
-        x << nstart / nstart.reduce()
+        denom = nstart.reduce(allow_empty=False).value
+        if denom == 0:
+            raise ZeroDivisionError()
+        # Is it worth sparsifying (dropping 0s) with a value mask here?
+        x(mask=nstart.V) << nstart / denom
 
     # Personalization vector or scalar
     if personalization is None:
         p = 1.0 / N
     else:
-        denom = personalization.reduce().value
+        denom = personalization.reduce(allow_empty=False).value
         if denom == 0:
             raise ZeroDivisionError()
-        p = (personalization / denom).new(name="p")
+        # Is it worth sparsifying (dropping 0s) with a value mask here?
+        p = (personalization / denom).new(mask=personalization.V, name="p")
 
     # Inverse of row_degrees
     # Fold alpha constant into S
     if row_degrees is None:
         S = A.reduce_rowwise().new(float, name="S")
-        S << alpha / S
+        S(mask=S.V) << alpha / S
     else:
-        S = (alpha / row_degrees).new(name="S")
+        S = (alpha / row_degrees).new(mask=row_degrees.V, name="S")
+    if S.nvals == 0:
+        raise ZeroDivisionError()
 
     if A.ss.is_iso:
         # Fold iso-value of A into S
@@ -62,8 +67,12 @@ def pagerank_core(
         dangling_mask(mask=~S.S) << 1.0
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
-            dangling_weights = (alpha / dangling.reduce().value * dangling).new(
-                name="dangling_weights"
+            denom = dangling.reduce(allow_empty=False).value
+            if denom == 0:
+                raise ZeroDivisionError()
+            # Is it worth sparsifying (dropping 0s) with a value mask here?
+            dangling_weights = (alpha / denom * dangling).new(
+                mask=dangling.V, name="dangling_weights"
             )
         elif personalization is None:
             # Fast case (and common case); is iso-valued
@@ -75,29 +84,29 @@ def pagerank_core(
     p *= 1 - alpha
 
     # Power iteration: make up to max_iter iterations
-    xnew = Vector.new(float, N, name="xnew")
+    xprev = Vector.new(float, N, name="x_prev")
     w = Vector.new(float, N, name="w")
     for _ in range(max_iter):
-        # xnew << alpha * ((x * S) @ A + "dangling_weights") + (1 - alpha) * p
-        xnew << p
+        xprev, x = x, xprev
+        # x << alpha * ((xprev * S) @ A + "dangling_weights") + (1 - alpha) * p
+        x << p
         if is_dangling:
             if dangling is None and personalization is None:
-                # Fast case: add a scalar; xnew is still iso-valued (b/c p is also scalar)
-                xnew += x @ dangling_mask
+                # Fast case: add a scalar; x is still iso-valued (b/c p is also scalar)
+                x += xprev @ dangling_mask
             else:
                 # Add a vector
-                xnew += plus_first(x @ dangling_mask) * dangling_weights
-        w << x * S
-        xnew += semiring(w @ A)  # plus_first if A.ss.is_iso else plus_times
+                x += plus_first(xprev @ dangling_mask) * dangling_weights
+        w << xprev * S
+        x += semiring(w @ A)  # plus_first if A.ss.is_iso else plus_times
 
-        # Check convergence, l1 norm: err = sum(abs(x - xnew))
-        x << binary.minus(x & xnew)
-        x << unary.abs(x)
-        err = x.reduce().value
+        # Check convergence, l1 norm: err = sum(abs(xprev - x))
+        xprev << binary.minus(xprev | x, require_monoid=False)
+        xprev << unary.abs(xprev)
+        err = xprev.reduce().value
         if err < N * tol:
-            xnew.name = name
-            return xnew
-        x, xnew = xnew, x
+            x.name = name
+            return x
     raise nx.PowerIterationFailedConvergence(max_iter)
 
 
@@ -115,10 +124,10 @@ def pagerank(
     N = len(G)
     if N == 0:
         return {}
-    nodelist = list(G)
+    node_ids = OrderedDict((k, i) for i, k in enumerate(G))
     # grblas io functions should be able to do this more conveniently, and it would
     # be best if it could determine whether the output matrix is iso-valued or not.
-    A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, dtype=float)
+    A = nx.to_scipy_sparse_array(G, nodelist=node_ids, weight=weight, dtype=float)
     A = Matrix.ss.import_csr(
         nrows=A.shape[0],
         ncols=A.shape[1],
@@ -132,26 +141,19 @@ def pagerank(
     x = p = dangling_weights = None
     # Initial vector (we'll normalize later)
     if nstart is not None:
-        x = Vector.ss.import_full(
-            np.array([nstart.get(n, 0) for n in nodelist], dtype=float),
-            take_ownership=True,
-            name="nstart",
-        )
+        indices, values = zip(*((node_ids[key], val) for key, val in nstart.items()))
+        x = Vector.from_values(indices, values, size=N, dtype=float, name="nstart")
     # Personalization vector (we'll normalize later)
     if personalization is not None:
-        p = Vector.ss.import_full(
-            np.array([personalization.get(n, 0) for n in nodelist], dtype=float),
-            take_ownership=True,
-            name="personalization",
-        )
+        indices, values = zip(*((node_ids[key], val) for key, val in personalization.items()))
+        p = Vector.from_values(indices, values, size=N, dtype=float, name="personalization")
     # Dangling nodes (we'll normalize later)
     row_degrees = A.reduce_rowwise().new(name="row_degrees")
     if dangling is not None:
         if row_degrees.nvals < N:  # is_dangling
-            dangling_weights = Vector.ss.import_full(
-                np.array([dangling.get(n, 0) for n in nodelist], dtype=float),
-                take_ownership=True,
-                name="dangling",
+            indices, values = zip(*((node_ids[key], val) for key, val in dangling.items()))
+            dangling_weights = Vector.from_values(
+                indices, values, size=N, dtype=float, name="dangling"
             )
     result = pagerank_core(
         A,
@@ -163,4 +165,7 @@ def pagerank(
         dangling=dangling_weights,
         row_degrees=row_degrees,
     )
-    return dict(zip(nodelist, result.to_values()[1]))
+    if result.nvals != N:
+        # Not likely, but fill with 0 just in case
+        result(mask=~result.S) << 0
+    return dict(zip(node_ids, result.to_values()[1]))
