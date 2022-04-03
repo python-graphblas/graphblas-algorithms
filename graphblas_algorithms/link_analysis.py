@@ -29,7 +29,7 @@ def pagerank_core(
         denom = nstart.reduce(allow_empty=False).value
         if denom == 0:
             raise ZeroDivisionError()
-        x(mask=nstart.V) << nstart / denom
+        x << nstart / denom
 
     # Personalization vector or scalar
     if personalization is None:
@@ -38,15 +38,15 @@ def pagerank_core(
         denom = personalization.reduce(allow_empty=False).value
         if denom == 0:
             raise ZeroDivisionError()
-        p = (personalization / denom).new(mask=personalization.V, name="p")
+        p = (personalization / denom).new(name="p")
 
     # Inverse of row_degrees
     # Fold alpha constant into S
     if row_degrees is None:
         S = A.reduce_rowwise().new(float, name="S")
-        S(mask=S.V) << alpha / S
+        S << alpha / S
     else:
-        S = (alpha / row_degrees).new(mask=row_degrees.V, name="S")
+        S = (alpha / row_degrees).new(name="S")
 
     if A.ss.is_iso:
         # Fold iso-value of A into S
@@ -64,7 +64,7 @@ def pagerank_core(
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
             dangling_weights = (alpha / dangling.reduce(allow_empty=False).value * dangling).new(
-                mask=dangling.V, name="dangling_weights"
+                name="dangling_weights"
             )
         elif personalization is None:
             # Fast case (and common case); is iso-valued
