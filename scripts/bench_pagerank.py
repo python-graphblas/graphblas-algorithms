@@ -121,14 +121,16 @@ def pagerank_scipy(
 def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
     import statistics
     import timeit
+    import warnings
 
     import numpy as np
 
+    warnings.simplefilter("ignore")
     if verify:
-        rtol = tol
-        atol = 1e-15
         gb_result = main.callback(filename, "gb", None, None, False, alpha, tol, _get_result=True)
         sp_result = main.callback(filename, "sp", None, None, False, alpha, tol, _get_result=True)
+        rtol = tol / gb_result.size
+        atol = 1e-16
         np.testing.assert_allclose(gb_result, sp_result, rtol=rtol, atol=atol)
         print(" |- graphblas and scipy.sparse match")
         nx_result = main.callback(filename, "nx", None, None, False, alpha, tol, _get_result=True)
@@ -143,6 +145,22 @@ def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
         np.testing.assert_allclose(gbnx_result, sp_result, rtol=rtol, atol=atol)
         np.testing.assert_allclose(gbnx_result, nx_result, rtol=rtol, atol=atol)
         print("All good!")
+        # Show a grid of total absolute differences between results
+        results = {
+            "gb": gb_result,
+            "sp": sp_result,
+            "nx": nx_result,
+            "gbnx": gbnx_result,
+        }
+        print("     ", end="")
+        for k1 in results:
+            print("%9s" % k1, end="")
+        print()
+        for k1, v1 in results.items():
+            print("%5s" % k1, end="")
+            for k2, v2 in results.items():
+                print("%9.2g" % np.abs(v1 - v2).sum(), end="")
+            print()
         return
 
     backend = {
