@@ -17,8 +17,8 @@ setup(
     url="https://github.com/metagraph-dev/graphblas-algorithms",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["grblas", "networkx"],
-    tests_require=["pytest"],
+    install_requires=["grblas >=2022.4.0", "networkx"],
+    tests_require=["pytest", "scipy"],
     include_package_data=True,
     license="Apache License 2.0",
     keywords=[

@@ -1,8 +1,9 @@
 from collections import OrderedDict
 from warnings import warn
 
+import grblas as gb
 import networkx as nx
-from grblas import Matrix, Vector, binary, monoid, unary
+from grblas import Vector, binary, unary
 from grblas.semiring import plus_first, plus_times
 
 
@@ -51,11 +52,12 @@ def pagerank_core(
     if A.ss.is_iso:
         # Fold iso-value of A into S
         # This lets us use the plus_first semiring, which is faster
-        S *= A.reduce_scalar(monoid.any)
-        # S *= A.ss.iso_value  # This would be nice to have
-        semiring = plus_first
+        iso_value = A.ss.iso_value
+        if iso_value != 1:
+            S *= iso_value
+        semiring = plus_first[float]
     else:
-        semiring = plus_times
+        semiring = plus_times[float]
 
     is_dangling = S.nvals < N
     if is_dangling:
@@ -118,19 +120,8 @@ def pagerank(
     if N == 0:
         return {}
     node_ids = OrderedDict((k, i) for i, k in enumerate(G))
-    # grblas io functions should be able to do this more conveniently, and it would
-    # be best if it could determine whether the output matrix is iso-valued or not.
-    A = nx.to_scipy_sparse_array(G, nodelist=node_ids, weight=weight, dtype=float)
-    A = Matrix.ss.import_csr(
-        nrows=A.shape[0],
-        ncols=A.shape[1],
-        indptr=A.indptr,
-        col_indices=A.indices,
-        values=A.data,
-        sorted_cols=A._has_sorted_indices,
-        take_ownership=True,
-        name="A",
-    )
+    A = gb.io.from_networkx(G, nodelist=node_ids, weight=weight, dtype=float)
+
     x = p = dangling_weights = None
     # Initial vector (we'll normalize later)
     if nstart is not None:

@@ -91,24 +91,59 @@ def pagerank_scipy(
     "-b",
     "--backend",
     default="graphblas",
-    type=click.Choice(["graphblas", "networkx", "scipy", "gb", "nx", "sp"]),
+    type=click.Choice(["graphblas", "networkx", "scipy", "gb", "nx", "sp", "gbnx"]),
 )
 @click.option(
     "-t",
     "--time",
     default=3,
-    type=click.FloatRange(min=0),
+    type=click.FloatRange(min=0, min_open=True),
 )
 @click.option(
     "-n",
     default=None,
-    type=click.IntRange(min=0),
+    type=click.IntRange(min=1),
 )
-def main(filename, backend, time, n):
+@click.option(
+    "--verify",
+    is_flag=True,
+)
+@click.option(
+    "--alpha",
+    default=0.85,
+    type=click.FloatRange(min=0, max=1),
+)
+@click.option(
+    "--tol",
+    default=1e-06,
+    type=click.FloatRange(min=0, min_open=True),
+)
+def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
     import statistics
     import timeit
 
     import numpy as np
+
+    if verify:
+        rtol = tol
+        atol = 1e-15
+        gb_result = main.callback(filename, "gb", None, None, False, alpha, tol, _get_result=True)
+        sp_result = main.callback(filename, "sp", None, None, False, alpha, tol, _get_result=True)
+        np.testing.assert_allclose(gb_result, sp_result, rtol=rtol, atol=atol)
+        print(" |- graphblas and scipy.sparse match")
+        nx_result = main.callback(filename, "nx", None, None, False, alpha, tol, _get_result=True)
+        np.testing.assert_allclose(gb_result, nx_result, rtol=rtol, atol=atol)
+        print(" |- graphblas and networkx match")
+        np.testing.assert_allclose(sp_result, nx_result, rtol=rtol, atol=atol)
+        print(" |- scipy.sparse and networkx match")
+        gbnx_result = main.callback(
+            filename, "gbnx", None, None, False, alpha, tol, _get_result=True
+        )
+        np.testing.assert_allclose(gbnx_result, gb_result, rtol=rtol, atol=atol)
+        np.testing.assert_allclose(gbnx_result, sp_result, rtol=rtol, atol=atol)
+        np.testing.assert_allclose(gbnx_result, nx_result, rtol=rtol, atol=atol)
+        print("All good!")
+        return
 
     backend = {
         "gb": "graphblas",
@@ -129,18 +164,12 @@ def main(filename, backend, time, n):
         stop = timeit.default_timer()
         num_nodes = G.nrows
         num_edges = G.nvals
-    elif backend == "networkx":
-        from networkx import pagerank
+        if _get_result:
+            result = pagerank(G, alpha=alpha, tol=tol)
+            result(~result.S) << 0  # Densify just in case
+            return result.to_values()[1]
 
-        start = timeit.default_timer()
-        G = nx.read_edgelist(filename, delimiter="\t", nodetype=int, create_using=nx.DiGraph)
-        for i in range(max(G)):
-            if i not in G:
-                G.add_node(i)
-        stop = timeit.default_timer()
-        num_nodes = len(G.nodes)
-        num_edges = len(G.edges)
-    else:
+    elif backend == "scipy":
         import pandas as pd
         import scipy.sparse
 
@@ -151,11 +180,35 @@ def main(filename, backend, time, n):
         stop = timeit.default_timer()
         num_nodes = G.shape[0]
         num_edges = G.nnz
+        if _get_result:
+            return pagerank(G, alpha=alpha, tol=tol)
+    else:
+        if backend == "networkx":
+            from networkx import pagerank
+        else:
+            from graphblas_algorithms.link_analysis import pagerank
+
+        start = timeit.default_timer()
+        G = nx.read_edgelist(filename, delimiter="\t", nodetype=int, create_using=nx.DiGraph)
+        N = max(G)
+        for i in range(N):
+            if i not in G:
+                G.add_node(i)
+        stop = timeit.default_timer()
+        num_nodes = len(G.nodes)
+        num_edges = len(G.edges)
+
+        if _get_result:
+            result = pagerank(G, alpha=alpha, tol=tol)
+            return np.array([result.get(key, 0) for key in range(N + 1)])
 
     print("Num nodes:", num_nodes)
     print("Num edges:", num_edges)
     print("Load time:", stime(stop - start))
-    timer = timeit.Timer("pagerank(G)", globals=dict(pagerank=pagerank, G=G))
+    timer = timeit.Timer(
+        "pagerank(G, alpha=alpha, tol=tol)",
+        globals=dict(pagerank=pagerank, G=G, alpha=alpha, tol=tol),
+    )
     first_time = timer.timeit(1)
     if time == 0:
         n = 1
