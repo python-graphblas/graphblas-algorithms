@@ -46,6 +46,7 @@ jobs:
           COVERALLS_PARALLEL: true
         run: |
           coverage report --show-missing
+          coveralls debug  # Why no work?!
           coveralls --service=github
 
   finish:
@@ -68,4 +69,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          coveralls debug  # Why no work?!
           coveralls --finish
