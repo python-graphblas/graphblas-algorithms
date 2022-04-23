@@ -5,7 +5,7 @@
 [![Tests](https://github.com/python-graphblas/graphblas-algorithms/workflows/Tests/badge.svg?branch=main)](https://github.com/python-graphblas/graphblas-algorithms/actions)
 [![Coverage](https://coveralls.io/repos/python-graphblas/graphblas-algorithms/badge.svg?branch=main)](https://coveralls.io/r/python-graphblas/graphblas-algorithms)
 [![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-<!--- [![conda-forge](https://img.shields.io/conda/vn/conda-forge/graphblas-algorithms.svg)](https://anaconda.org/conda-forge/graphblas-algorithms) --->
+<!--- [![conda-forge](https://img.shields.io/conda/vn/conda-forge/graphblas-algorithms.svg)](https://anaconda.org/conda-forge/graphblas-algorithms)  --->
 <!--- [![Docs](https://readthedocs.org/projects/graphblas-algorithms/badge/?version=latest)](https://graphblas-algorithms.readthedocs.io/en/latest/) --->
 
 GraphBLAS algorithms written in Python with [Python-graphblas](https://github.com/python-graphblas/python-graphblas).  We are trying to target the NetworkX API algorithms where possible.
