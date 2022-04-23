@@ -46,28 +46,26 @@ jobs:
           COVERALLS_PARALLEL: true
         run: |
           coverage report --show-missing
-          coveralls debug  # Why no work?!
-          coveralls --service=github
+          # coveralls --service=github  # Broken :(
 
-  finish:
-    needs: test
-    if: always()
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - name: Create env
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: "3.10"
-          activate-environment: finishing
-      - name: Update env
-        run: conda install -c conda-forge coveralls
-      - name: Coveralls finished
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          coveralls debug  # Why no work?!
-          coveralls --finish
+#  finish:
+#    needs: test
+#    if: always()
+#    runs-on: ubuntu-latest
+#    defaults:
+#      run:
+#        shell: bash -l {0}
+#    steps:
+#      - name: Create env
+#        uses: conda-incubator/setup-miniconda@v2
+#        with:
+#          auto-update-conda: true
+#          python-version: "3.10"
+#          activate-environment: finishing
+#      - name: Update env
+#        run: conda install -c conda-forge coveralls
+#      - name: Coveralls finished
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          coveralls --finish
