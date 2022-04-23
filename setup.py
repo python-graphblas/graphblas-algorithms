@@ -2,6 +2,11 @@ from setuptools import find_packages, setup
 
 import versioneer
 
+extras_require = {
+    "test": ["pytest", "scipy"],
+}
+extras_require["complete"] = sorted({v for req in extras_require.values() for v in req})
+
 with open("README.md") as f:
     long_description = f.read()
 
@@ -14,11 +19,11 @@ setup(
     long_description_content_type="text/markdown",
     author="Jim Kitchen and Erik Welch",
     author_email="erik.n.welch@gmail.com,jim22k@gmail.com",
-    url="https://github.com/metagraph-dev/graphblas-algorithms",
+    url="https://github.com/python-graphblas/graphblas-algorithms",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["grblas >=2022.4.0", "networkx"],
-    tests_require=["pytest", "scipy"],
+    install_requires=["python-graphblas >=2022.4.1", "networkx"],
+    extras_require=extras_require,
     include_package_data=True,
     license="Apache License 2.0",
     keywords=[

@@ -1,10 +1,10 @@
 from collections import OrderedDict
 from warnings import warn
 
-import grblas as gb
+import graphblas as gb
 import networkx as nx
-from grblas import Vector, binary, unary
-from grblas.semiring import plus_first, plus_times
+from graphblas import Vector, binary, unary
+from graphblas.semiring import plus_first, plus_times
 
 
 def pagerank_core(

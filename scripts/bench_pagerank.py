@@ -158,7 +158,7 @@ def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
         print()
         for k1, v1 in results.items():
             print("%5s" % k1, end="")
-            for k2, v2 in results.items():
+            for v2 in results.values():
                 print("%9.2g" % np.abs(v1 - v2).sum(), end="")
             print()
         return
@@ -172,7 +172,7 @@ def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
 
     if backend == "graphblas":
         import pandas as pd
-        from grblas import Matrix
+        from graphblas import Matrix
 
         from graphblas_algorithms.link_analysis import pagerank_core as pagerank
 
@@ -225,7 +225,7 @@ def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
     print("Load time:", stime(stop - start))
     timer = timeit.Timer(
         "pagerank(G, alpha=alpha, tol=tol)",
-        globals=dict(pagerank=pagerank, G=G, alpha=alpha, tol=tol),
+        globals={"pagerank": pagerank, "G": G, "alpha": alpha, "tol": tol},
     )
     first_time = timer.timeit(1)
     if time == 0:
