@@ -18,4 +18,4 @@ def test_signatures():
     assert nx_sig == sig
 
 
-from networkx.algorithms.link_analysis.tests.test_pagerank import *  # isort:skip
+from networkx.algorithms.link_analysis.tests.test_pagerank import *  # noqa isort:skip
