@@ -6,18 +6,20 @@ from graphblas.semiring import any_pair, plus_pair
 from networkx.utils import not_implemented_for
 
 
-def single_triangle_core(G, index, *, L=None):
-    if L is None:
-        # Pretty much all the time is spent here.
-        # We take the TRIL as a way to ignore the self-edges.
-        # If we knew there were no self-edges, we could use G below instead of L.
-        L = select.tril(G, -1).new(name="L")
+def single_triangle_core(G, index, *, L=None, has_self_edges=True):
     M = Matrix(bool, G.nrows, G.ncols)
     M[index, index] = False
     C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
     del C[index, index]  # Ignore self-edges
     R = C.T.new(name="R")
-    return plus_pair(L @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value
+    if has_self_edges:
+        if L is None:
+            # Pretty much all the time is spent here.
+            # We take the TRIL as a way to ignore the self-edges.
+            L = select.tril(G, -1).new(name="L")
+        return plus_pair(L @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value
+    else:
+        return plus_pair(G @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value // 2
 
 
 def triangles_core(G, mask=None, *, L=None, U=None):
@@ -37,7 +39,7 @@ def triangles_core(G, mask=None, *, L=None, U=None):
 def total_triangles_core(G, *, L=None, U=None):
     # Ignores self-edges
     # We use SandiaDot method, because it's usually the fastest on large graphs.
-    # For smaller graphs, Sandia method is usually faster: plus_pair(L @ L).new(mask(L.S))
+    # For smaller graphs, Sandia method is usually faster: plus_pair(L @ L).new(mask=L.S)
     if L is None:
         L = select.tril(G, -1).new(name="L")
     if U is None:

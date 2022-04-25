@@ -22,11 +22,14 @@ def test_triangles_full():
     # Including self-edges!
     G = gb.Matrix(bool, 5, 5)
     G[:, :] = True
+    G2 = gb.select.offdiag(G).new()
     L = gb.select.tril(G, -1).new(name="L")
     U = gb.select.triu(G, 1).new(name="U")
     result = ga.cluster.triangles_core(G, L=L, U=U)
     expected = gb.Vector(int, 5)
     expected[:] = 6
+    assert result.isequal(expected)
+    result = ga.cluster.triangles_core(G2, L=L, U=U)
     assert result.isequal(expected)
     mask = gb.Vector(bool, 5)
     mask[0] = True
@@ -36,7 +39,12 @@ def test_triangles_full():
     expected[0] = 6
     expected[3] = 6
     assert result.isequal(expected)
+    result = ga.cluster.triangles_core(G2, mask=mask.S)
+    assert result.isequal(expected)
+    assert ga.cluster.single_triangle_core(G, 1) == 6
     assert ga.cluster.single_triangle_core(G, 0, L=L) == 6
+    assert ga.cluster.single_triangle_core(G2, 0, has_self_edges=False) == 6
+    assert ga.cluster.total_triangles_core(G2) == 10
     assert ga.cluster.total_triangles_core(G) == 10
     assert ga.cluster.total_triangles_core(G, L=L, U=U) == 10
 
