@@ -10,7 +10,8 @@ def single_triangle_core(G, index, *, L=None, has_self_edges=True):
     M = Matrix(bool, G.nrows, G.ncols)
     M[index, index] = False
     C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
-    del C[index, index]  # Ignore self-edges
+    if has_self_edges:
+        del C[index, index]  # Ignore self-edges
     R = C.T.new(name="R")
     if has_self_edges:
         if L is None:
