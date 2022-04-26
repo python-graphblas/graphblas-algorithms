@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import graphblas as gb
-from graphblas import Matrix, Vector, binary, select
+from graphblas import Matrix, Vector, agg, binary, select
 from graphblas.semiring import any_pair, plus_pair
 from networkx.utils import not_implemented_for
 
@@ -72,3 +72,27 @@ def triangles(G, nodes=None):
         # Fill with zero
         result(mask=~result.S) << 0
     return dict(zip(node_ids, result.to_values()[1]))
+
+
+def transitivity_core(G, *, L=None, U=None, has_self_edges=True):
+    if L is None:
+        L = select.tril(G, -1).new(name="L")
+    if U is None:
+        U = select.triu(G, 1).new(name="U")
+    numerator = total_triangles_core(G, L=L, U=U)
+    if numerator == 0:
+        return 0
+    if has_self_edges:
+        degrees = L.reduce_rowwise(agg.count) + U.reduce_rowwise(agg.count)
+    else:
+        degrees = G.reduce_rowwise(agg.count)
+    denom = (degrees * (degrees - 1)).reduce().value
+    return 6 * numerator / denom
+
+
+@not_implemented_for("directed")
+def transitivity(G):
+    if len(G) == 0:
+        return 0
+    A = gb.io.from_networkx(G, weight=None, dtype=bool)
+    return transitivity_core(A)
