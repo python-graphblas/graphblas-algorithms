@@ -56,7 +56,7 @@ def test_triangles_full():
     assert ga.cluster.total_triangles_core(G) == 10
     assert ga.cluster.total_triangles_core(G, L=L, U=U) == 10
     assert ga.cluster.transitivity_core(G) == 1.0
-    assert ga.cluster.transitivity_core(G2, has_self_edges=False) == 1.0
+    assert ga.cluster.transitivity_core(G2) == 1.0
 
 
 from networkx.algorithms.tests.test_cluster import *  # noqa isort:skip
