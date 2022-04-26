@@ -1,8 +1,10 @@
 from collections import OrderedDict
 
 import graphblas as gb
+import networkx as nx
 from graphblas import Matrix, Vector, agg, binary, select
 from graphblas.semiring import any_pair, plus_pair
+from networkx import clustering as _nx_clustering
 from networkx.utils import not_implemented_for
 
 
@@ -23,18 +25,7 @@ def get_properties(G, names, *, L=None, U=None, degrees=None, has_self_edges=Tru
             rv.append(U)
         elif name == "degrees":
             if degrees is None:
-                if L is not None:
-                    has_self_edges = G.nvals > 2 * L.nvals
-                elif U is not None:
-                    has_self_edges = G.nvals > 2 * U.nvals
-                if has_self_edges:
-                    if L is None or U is None:
-                        L, U = get_properties(G, "L U", L=L, U=U)
-                    degrees = (L.reduce_rowwise(agg.count) + U.reduce_rowwise(agg.count)).new(
-                        name="degrees"
-                    )
-                else:
-                    degrees = G.reduce_rowwise(agg.count).new(name="degrees")
+                degrees = get_degrees(G, L=L, U=U, has_self_edges=has_self_edges)
             rv.append(degrees)
         elif name == "has_self_edges":
             # Compute if cheap
@@ -50,14 +41,30 @@ def get_properties(G, names, *, L=None, U=None, degrees=None, has_self_edges=Tru
     return rv
 
 
+def get_degrees(G, mask=None, *, L=None, U=None, has_self_edges=True):
+    if L is not None:
+        has_self_edges = G.nvals > 2 * L.nvals
+    elif U is not None:
+        has_self_edges = G.nvals > 2 * U.nvals
+    if has_self_edges:
+        if L is None or U is None:
+            L, U = get_properties(G, "L U", L=L, U=U)
+        degrees = (
+            L.reduce_rowwise(agg.count).new(mask=mask) + U.reduce_rowwise(agg.count).new(mask=mask)
+        ).new(name="degrees")
+    else:
+        degrees = G.reduce_rowwise(agg.count).new(mask=mask, name="degrees")
+    return degrees
+
+
 def single_triangle_core(G, index, *, L=None, has_self_edges=True):
     M = Matrix(bool, G.nrows, G.ncols)
     M[index, index] = False
     C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
+    has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
     if has_self_edges:
         del C[index, index]  # Ignore self-edges
     R = C.T.new(name="R")
-    has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
     if has_self_edges:
         # Pretty much all the time is spent here taking TRIL, which is used to ignore self-edges
         L = get_properties(G, "L", L=L)
@@ -129,13 +136,53 @@ def transitivity(G):
     return transitivity_core(A)
 
 
-def clustering_core(G, *, L=None, U=None, degrees=None):
-    L, U, degrees = get_properties(G, "L U degrees", L=L, U=U, degrees=degrees)
-    tri = triangles_core(G, L=L, U=U)
+def clustering_core(G, mask=None, *, L=None, U=None, degrees=None):
+    L, U = get_properties(G, "L U", L=L, U=U)
+    tri = triangles_core(G, mask=mask, L=L, U=U)
+    degrees = get_degrees(G, mask=mask, L=L, U=U)
     denom = degrees * (degrees - 1)
     return (2 * tri / denom).new(name="clustering")
 
 
-@not_implemented_for("directed")  # TODO: implement for directed
+def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=True):
+    has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
+    tri = single_triangle_core(G, index, L=L, has_self_edges=has_self_edges)
+    if tri == 0:
+        return 0
+    if degrees is not None:
+        degrees = degrees[index].value
+    else:
+        row = G[index, :].new()
+        degrees = row.reduce(agg.count).value
+        if has_self_edges and row[index].value is not None:
+            degrees -= 1
+    denom = degrees * (degrees - 1)
+    return 2 * tri / denom
+
+
 def clustering(G, nodes=None, weight=None):
-    pass
+    N = len(G)
+    if N == 0:
+        return {}
+    if isinstance(G, nx.DiGraph) or weight is not None:
+        # TODO: Not yet implemented.  Clustering implemented only for undirected and unweighted.
+        return _nx_clustering(G, nodes=nodes, weight=weight)
+    node_ids = OrderedDict((k, i) for i, k in enumerate(G))
+    A = gb.io.from_networkx(G, nodelist=node_ids, weight=weight)
+    if nodes in G:
+        return single_clustering_core(A, node_ids[nodes])
+    if nodes is not None:
+        id_to_key = {node_ids[key]: key for key in nodes}
+        mask = Vector.from_values(list(id_to_key), True, size=N, dtype=bool, name="mask").S
+    else:
+        mask = None
+    result = clustering_core(A, mask=mask)
+    if nodes is not None:
+        if result.nvals != len(id_to_key):
+            result(mask, binary.first) << 0.0
+        indices, values = result.to_values()
+        return {id_to_key[index]: value for index, value in zip(indices, values)}
+    elif result.nvals != N:
+        # Fill with zero
+        result(mask=~result.S) << 0.0
+    return dict(zip(node_ids, result.to_values()[1]))
