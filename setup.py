@@ -7,6 +7,8 @@ extras_require = {
 }
 extras_require["complete"] = sorted({v for req in extras_require.values() for v in req})
 
+with open("requirements.txt") as f:
+    install_requires = f.read().strip().split("\n")
 with open("README.md") as f:
     long_description = f.read()
 
@@ -22,7 +24,7 @@ setup(
     url="https://github.com/python-graphblas/graphblas-algorithms",
     packages=find_packages(),
     python_requires=">=3.8",
-    install_requires=["python-graphblas >=2022.4.1", "networkx"],
+    install_requires=install_requires,
     extras_require=extras_require,
     include_package_data=True,
     license="Apache License 2.0",

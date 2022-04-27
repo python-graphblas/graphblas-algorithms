@@ -1,10 +1,10 @@
-from collections import OrderedDict
 from warnings import warn
 
-import graphblas as gb
 import networkx as nx
 from graphblas import Vector, binary, unary
 from graphblas.semiring import plus_first, plus_times
+
+from ._utils import dict_to_vector, graph_to_adjacency, vector_to_dict
 
 
 def pagerank_core(
@@ -44,7 +44,7 @@ def pagerank_core(
     # Inverse of row_degrees
     # Fold alpha constant into S
     if row_degrees is None:
-        S = A.reduce_rowwise().new(float, name="S")
+        S = A.reduce_rowwise().new(float, name="S")  # XXX: What about self-edges
         S << alpha / S
     else:
         S = (alpha / row_degrees).new(name="S")
@@ -119,26 +119,15 @@ def pagerank(
     N = len(G)
     if N == 0:
         return {}
-    node_ids = OrderedDict((k, i) for i, k in enumerate(G))
-    A = gb.io.from_networkx(G, nodelist=node_ids, weight=weight, dtype=float)
-
-    x = p = dangling_weights = None
-    # Initial vector (we'll normalize later)
-    if nstart is not None:
-        indices, values = zip(*((node_ids[key], val) for key, val in nstart.items()))
-        x = Vector.from_values(indices, values, size=N, dtype=float, name="nstart")
-    # Personalization vector (we'll normalize later)
-    if personalization is not None:
-        indices, values = zip(*((node_ids[key], val) for key, val in personalization.items()))
-        p = Vector.from_values(indices, values, size=N, dtype=float, name="personalization")
-    # Dangling nodes (we'll normalize later)
-    row_degrees = A.reduce_rowwise().new(name="row_degrees")
-    if dangling is not None:
-        if row_degrees.nvals < N:  # is_dangling
-            indices, values = zip(*((node_ids[key], val) for key, val in dangling.items()))
-            dangling_weights = Vector.from_values(
-                indices, values, size=N, dtype=float, name="dangling"
-            )
+    A, key_to_id = graph_to_adjacency(G, weight=weight, dtype=float)
+    # We'll normalize initial, personalization, and dangling vectors later
+    x = dict_to_vector(nstart, key_to_id, dtype=float, name="nstart")
+    p = dict_to_vector(personalization, key_to_id, dtype=float, name="personalization")
+    row_degrees = A.reduce_rowwise().new(name="row_degrees")  # XXX: What about self-edges?
+    if dangling is not None and row_degrees.nvals < N:
+        dangling_weights = dict_to_vector(dangling, key_to_id, dtype=float, name="dangling")
+    else:
+        dangling_weights = None
     result = pagerank_core(
         A,
         alpha=alpha,
@@ -149,7 +138,4 @@ def pagerank(
         dangling=dangling_weights,
         row_degrees=row_degrees,
     )
-    if result.nvals != N:
-        # Not likely, but fill with 0 just in case
-        result(mask=~result.S) << 0
-    return dict(zip(node_ids, result.to_values()[1]))
+    return vector_to_dict(result, key_to_id, fillvalue=0.0)
