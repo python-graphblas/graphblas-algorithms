@@ -4,7 +4,7 @@ import graphblas as gb
 import networkx as nx
 
 import graphblas_algorithms as ga
-from graphblas_algorithms import clustering, transitivity, triangles
+from graphblas_algorithms import average_clustering, clustering, transitivity, triangles
 
 nx_triangles = nx.triangles
 nx.triangles = triangles
@@ -20,6 +20,11 @@ nx_clustering = nx.clustering
 nx.clustering = clustering
 nx.algorithms.clustering = clustering
 nx.algorithms.cluster.clustering = clustering
+
+nx_average_clustering = nx.average_clustering
+nx.average_clustering = average_clustering
+nx.algorithms.average_clustering = average_clustering
+nx.algorithms.cluster.average_clustering = average_clustering
 
 
 def test_signatures():
@@ -78,6 +83,10 @@ def test_triangles_full():
     assert result.isequal(expected)
     result = ga.cluster.clustering_core(G2, mask=mask.S)
     assert result.isequal(expected)
+    assert ga.cluster.average_clustering_core(G) == 1
+    assert ga.cluster.average_clustering_core(G2) == 1
+    assert ga.cluster.average_clustering_core(G, mask=mask.S) == 1
+    assert ga.cluster.average_clustering_core(G2, mask=mask.S) == 1
 
 
 from networkx.algorithms.tests.test_cluster import *  # noqa isort:skip

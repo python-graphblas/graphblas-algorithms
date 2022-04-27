@@ -1,11 +1,12 @@
-from collections import OrderedDict
-
 import graphblas as gb
 import networkx as nx
-from graphblas import Matrix, Vector, agg, binary, select
+from graphblas import Matrix, agg, select
 from graphblas.semiring import any_pair, plus_pair
+from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
 from networkx.utils import not_implemented_for
+
+from ._utils import graph_to_adjacency, list_to_mask, vector_to_dict
 
 
 def get_properties(G, names, *, L=None, U=None, degrees=None, has_self_edges=True):
@@ -59,7 +60,7 @@ def get_degrees(G, mask=None, *, L=None, U=None, has_self_edges=True):
 
 def single_triangle_core(G, index, *, L=None, has_self_edges=True):
     M = Matrix(bool, G.nrows, G.ncols)
-    M[index, index] = False
+    M[index, index] = True
     C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
     has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
     if has_self_edges:
@@ -86,32 +87,17 @@ def triangles_core(G, mask=None, *, L=None, U=None):
 
 @not_implemented_for("directed")
 def triangles(G, nodes=None):
-    N = len(G)
-    if N == 0:
+    if len(G) == 0:
         return {}
-    node_ids = OrderedDict((k, i) for i, k in enumerate(G))
-    A = gb.io.from_networkx(G, nodelist=node_ids, weight=None, dtype=bool)
+    A, key_to_id = graph_to_adjacency(G, dtype=bool)
     if nodes in G:
-        return single_triangle_core(A, node_ids[nodes])
-    if nodes is not None:
-        id_to_key = {node_ids[key]: key for key in nodes}
-        mask = Vector.from_values(list(id_to_key), True, size=N, dtype=bool, name="mask").S
-    else:
-        mask = None
+        return single_triangle_core(A, key_to_id[nodes])
+    mask, id_to_key = list_to_mask(nodes, key_to_id)
     result = triangles_core(A, mask=mask)
-    if nodes is not None:
-        if result.nvals != len(id_to_key):
-            result(mask, binary.first) << 0
-        indices, values = result.to_values()
-        return {id_to_key[index]: value for index, value in zip(indices, values)}
-    elif result.nvals != N:
-        # Fill with zero
-        result(mask=~result.S) << 0
-    return dict(zip(node_ids, result.to_values()[1]))
+    return vector_to_dict(result, key_to_id, id_to_key, mask=mask, fillvalue=0)
 
 
 def total_triangles_core(G, *, L=None, U=None):
-    # Ignores self-edges
     # We use SandiaDot method, because it's usually the fastest on large graphs.
     # For smaller graphs, Sandia method is usually faster: plus_pair(L @ L).new(mask=L.S)
     L, U = get_properties(G, "L U", L=L, U=U)
@@ -161,28 +147,34 @@ def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=Tru
 
 
 def clustering(G, nodes=None, weight=None):
-    N = len(G)
-    if N == 0:
+    if len(G) == 0:
         return {}
     if isinstance(G, nx.DiGraph) or weight is not None:
         # TODO: Not yet implemented.  Clustering implemented only for undirected and unweighted.
         return _nx_clustering(G, nodes=nodes, weight=weight)
-    node_ids = OrderedDict((k, i) for i, k in enumerate(G))
-    A = gb.io.from_networkx(G, nodelist=node_ids, weight=weight)
+    A, key_to_id = graph_to_adjacency(G, weight=weight)
     if nodes in G:
-        return single_clustering_core(A, node_ids[nodes])
-    if nodes is not None:
-        id_to_key = {node_ids[key]: key for key in nodes}
-        mask = Vector.from_values(list(id_to_key), True, size=N, dtype=bool, name="mask").S
-    else:
-        mask = None
+        return single_clustering_core(A, key_to_id[nodes])
+    mask, id_to_key = list_to_mask(nodes, key_to_id)
     result = clustering_core(A, mask=mask)
-    if nodes is not None:
-        if result.nvals != len(id_to_key):
-            result(mask, binary.first) << 0.0
-        indices, values = result.to_values()
-        return {id_to_key[index]: value for index, value in zip(indices, values)}
-    elif result.nvals != N:
-        # Fill with zero
-        result(mask=~result.S) << 0.0
-    return dict(zip(node_ids, result.to_values()[1]))
+    return vector_to_dict(result, key_to_id, id_to_key, mask=mask, fillvalue=0.0)
+
+
+def average_clustering_core(G, mask=None, count_zeros=True, *, L=None, U=None, degrees=None):
+    c = clustering_core(G, mask=mask, L=L, U=U, degrees=degrees)
+    val = c.reduce(allow_empty=False).value
+    if not count_zeros:
+        return val / c.nvals
+    elif mask is not None:
+        return val / mask.parent.nvals
+    else:
+        return val / c.size
+
+
+def average_clustering(G, nodes=None, weight=None, count_zeros=True):
+    if len(G) == 0 or isinstance(G, nx.DiGraph) or weight is not None:
+        # TODO: Not yet implemented.  Clustering implemented only for undirected and unweighted.
+        return _nx_average_clustering(G, nodes=nodes, weight=weight, count_zeros=count_zeros)
+    A, key_to_id = graph_to_adjacency(G, weight=weight)
+    mask, _ = list_to_mask(nodes, key_to_id)
+    return average_clustering_core(A, mask=mask, count_zeros=count_zeros)
