@@ -89,4 +89,13 @@ def test_triangles_full():
     assert ga.cluster.average_clustering_core(G2, mask=mask.S) == 1
 
 
+def test_transitivity_directed():
+    # XXX" is transitivity supposed to work on directed graphs like this?
+    G = nx.complete_graph(5, create_using=nx.DiGraph())
+    G.remove_edge(1, 2)
+    expected = nx_transitivity(G)
+    result = transitivity(G)
+    assert expected == result
+
+
 from networkx.algorithms.tests.test_cluster import *  # noqa isort:skip
