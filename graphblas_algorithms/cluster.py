@@ -1,6 +1,6 @@
 import graphblas as gb
 import networkx as nx
-from graphblas import Matrix, agg, binary, select
+from graphblas import Matrix, agg, binary, monoid, select
 from graphblas.semiring import any_pair, plus_pair
 from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
@@ -185,6 +185,29 @@ def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=Tru
     return 2 * tri / denom
 
 
+def single_clustering_directed_core(G, index, *, has_self_edges=True):
+    # Is there a faster way?
+    if has_self_edges:
+        A = select.offdiag(G)
+    else:
+        A = G
+    M = Matrix(bool, A.nrows, A.ncols)
+    M[index, index] = True
+    C = any_pair(A @ M.T).new(name="C")  # select.coleq(A, index); why so slow?
+    R = any_pair(M @ A).new(name="R")  # select.roweq(A, index)
+    CR = monoid.any(C | R).new(name="CR")
+    tri = (
+        plus_pair(A @ A.T).new(mask=CR.S).reduce_scalar(allow_empty=False).value
+        + plus_pair(A.T @ A.T).new(mask=R.S).reduce_scalar(allow_empty=False).value
+        + plus_pair(A @ A).new(mask=C.S).reduce_scalar(allow_empty=False).value
+    )
+    if tri == 0:
+        return 0
+    total_degrees = CR.reduce_scalar(allow_empty=False).value
+    recip_degrees = binary.pair(C.T & R).reduce_scalar(allow_empty=False).value
+    return tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)
+
+
 def clustering(G, nodes=None, weight=None):
     if len(G) == 0:
         return {}
@@ -193,8 +216,10 @@ def clustering(G, nodes=None, weight=None):
         return _nx_clustering(G, nodes=nodes, weight=weight)
     A, key_to_id = graph_to_adjacency(G, weight=weight)
     if nodes in G:
-        # TODO: single_clustering_directed_core (also needs tested!)
-        return single_clustering_core(A, key_to_id[nodes])
+        if isinstance(G, nx.DiGraph):
+            return single_clustering_directed_core(A, key_to_id[nodes])
+        else:
+            return single_clustering_core(A, key_to_id[nodes])
     mask, id_to_key = list_to_mask(nodes, key_to_id)
     if isinstance(G, nx.DiGraph):
         result = clustering_directed_core(A, mask=mask)
@@ -218,9 +243,9 @@ def average_clustering_directed_core(G, mask=None, count_zeros=True, *, has_self
     c = clustering_directed_core(G, mask=mask, has_self_edges=has_self_edges)
     val = c.reduce(allow_empty=False).value
     if not count_zeros:
-        return val / c.nvals  # Not covered
+        return val / c.nvals
     elif mask is not None:
-        return val / mask.parent.nvals  # Not covered
+        return val / mask.parent.nvals
     else:
         return val / c.size
 
