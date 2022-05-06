@@ -1,7 +1,7 @@
 import graphblas as gb
 import networkx as nx
-from graphblas import Matrix, agg, binary, monoid, select
-from graphblas.semiring import any_pair, plus_pair
+from graphblas import agg, binary, select
+from graphblas.semiring import plus_pair
 from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
 from networkx.utils import not_implemented_for
@@ -59,19 +59,15 @@ def get_degrees(G, mask=None, *, L=None, U=None, has_self_edges=True):
 
 
 def single_triangle_core(G, index, *, L=None, has_self_edges=True):
-    M = Matrix(bool, G.nrows, G.ncols)
-    M[index, index] = True
-    C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
+    r = G[index, :].new()
     has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
-    if has_self_edges:
-        del C[index, index]  # Ignore self-edges
-    R = C.T.new(name="R")
     if has_self_edges:
         # Pretty much all the time is spent here taking TRIL, which is used to ignore self-edges
         L = get_properties(G, "L", L=L)
-        return plus_pair(L @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value
+        del r[index]  # Ignore self-edges
+        return plus_pair(L @ r).new(mask=r.S).reduce(allow_empty=False).value
     else:
-        return plus_pair(G @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value // 2
+        return plus_pair(G @ r).new(mask=r.S).reduce(allow_empty=False).value // 2
 
 
 def triangles_core(G, mask=None, *, L=None, U=None):
@@ -178,7 +174,7 @@ def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=Tru
         degrees = degrees[index].value
     else:
         row = G[index, :].new()
-        degrees = row.reduce(agg.count).value
+        degrees = row.nvals
         if has_self_edges and row[index].value is not None:
             degrees -= 1
     denom = degrees * (degrees - 1)
@@ -186,25 +182,22 @@ def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=Tru
 
 
 def single_clustering_directed_core(G, index, *, has_self_edges=True):
-    # Is there a faster way?
     if has_self_edges:
         A = select.offdiag(G)
     else:
         A = G
-    M = Matrix(bool, A.nrows, A.ncols)
-    M[index, index] = True
-    C = any_pair(A @ M.T).new(name="C")  # select.coleq(A, index); why so slow?
-    R = any_pair(M @ A).new(name="R")  # select.roweq(A, index)
-    CR = monoid.any(C | R).new(name="CR")
+    r = A[index, :].new()
+    c = A[:, index].new()
     tri = (
-        plus_pair(A @ A.T).new(mask=CR.S).reduce_scalar(allow_empty=False).value
-        + plus_pair(A.T @ A.T).new(mask=R.S).reduce_scalar(allow_empty=False).value
-        + plus_pair(A @ A).new(mask=C.S).reduce_scalar(allow_empty=False).value
+        plus_pair(A @ c).new(mask=c.S).reduce(allow_empty=False).value
+        + plus_pair(A @ c).new(mask=r.S).reduce(allow_empty=False).value
+        + plus_pair(A @ r).new(mask=c.S).reduce(allow_empty=False).value
+        + plus_pair(A @ r).new(mask=r.S).reduce(allow_empty=False).value
     )
     if tri == 0:
         return 0
-    total_degrees = CR.reduce_scalar(allow_empty=False).value
-    recip_degrees = binary.pair(C.T & R).reduce_scalar(allow_empty=False).value
+    total_degrees = c.nvals + r.nvals
+    recip_degrees = binary.pair(c & r).nvals
     return tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)
 
 
