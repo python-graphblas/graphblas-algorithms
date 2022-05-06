@@ -1,6 +1,6 @@
 import graphblas as gb
 import networkx as nx
-from graphblas import agg, binary, select
+from graphblas import binary, select
 from graphblas.semiring import plus_pair
 from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
@@ -51,10 +51,11 @@ def get_degrees(G, mask=None, *, L=None, U=None, has_self_edges=True):
         if L is None or U is None:
             L, U = get_properties(G, "L U", L=L, U=U)
         degrees = (
-            L.reduce_rowwise(agg.count).new(mask=mask) + U.reduce_rowwise(agg.count).new(mask=mask)
+            L.reduce_rowwise(gb.agg.count).new(mask=mask)
+            + U.reduce_rowwise(gb.agg.count).new(mask=mask)
         ).new(name="degrees")
     else:
-        degrees = G.reduce_rowwise(agg.count).new(mask=mask, name="degrees")
+        degrees = G.reduce_rowwise(gb.agg.count).new(mask=mask, name="degrees")
     return degrees
 
 
@@ -119,7 +120,7 @@ def transitivity_directed_core(G, *, has_self_edges=True):
     numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar(allow_empty=False).value
     if numerator == 0:
         return 0
-    deg = A.reduce_rowwise(agg.count)
+    deg = A.reduce_rowwise(gb.agg.count)
     denom = (deg * (deg - 1)).reduce().value
     return numerator / denom
 
@@ -160,7 +161,7 @@ def clustering_directed_core(G, mask=None, *, has_self_edges=True):
     )
     recip_degrees = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
     total_degrees = (
-        A.reduce_rowwise(agg.count).new(mask=mask) + A.reduce_columnwise(agg.count)
+        A.reduce_rowwise(gb.agg.count).new(mask=mask) + A.reduce_columnwise(gb.agg.count)
     ).new(mask=mask)
     return (tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)).new(name="clustering")
 
