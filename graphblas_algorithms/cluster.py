@@ -1,7 +1,7 @@
 import graphblas as gb
 import networkx as nx
-from graphblas import Matrix, agg, select
-from graphblas.semiring import any_pair, plus_pair
+from graphblas import binary, select
+from graphblas.semiring import plus_pair
 from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
 from networkx.utils import not_implemented_for
@@ -51,27 +51,24 @@ def get_degrees(G, mask=None, *, L=None, U=None, has_self_edges=True):
         if L is None or U is None:
             L, U = get_properties(G, "L U", L=L, U=U)
         degrees = (
-            L.reduce_rowwise(agg.count).new(mask=mask) + U.reduce_rowwise(agg.count).new(mask=mask)
+            L.reduce_rowwise(gb.agg.count).new(mask=mask)
+            + U.reduce_rowwise(gb.agg.count).new(mask=mask)
         ).new(name="degrees")
     else:
-        degrees = G.reduce_rowwise(agg.count).new(mask=mask, name="degrees")
+        degrees = G.reduce_rowwise(gb.agg.count).new(mask=mask, name="degrees")
     return degrees
 
 
 def single_triangle_core(G, index, *, L=None, has_self_edges=True):
-    M = Matrix(bool, G.nrows, G.ncols)
-    M[index, index] = True
-    C = any_pair(G.T @ M.T).new(name="C")  # select.coleq(G.T, index)
+    r = G[index, :].new()
     has_self_edges = get_properties(G, "has_self_edges", L=L, has_self_edges=has_self_edges)
-    if has_self_edges:
-        del C[index, index]  # Ignore self-edges
-    R = C.T.new(name="R")
     if has_self_edges:
         # Pretty much all the time is spent here taking TRIL, which is used to ignore self-edges
         L = get_properties(G, "L", L=L)
-        return plus_pair(L @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value
+        del r[index]  # Ignore self-edges
+        return plus_pair(L @ r).new(mask=r.S).reduce(allow_empty=False).value
     else:
-        return plus_pair(G @ R.T).new(mask=C.S).reduce_scalar(allow_empty=False).value // 2
+        return plus_pair(G @ r).new(mask=r.S).reduce(allow_empty=False).value // 2
 
 
 def triangles_core(G, mask=None, *, L=None, U=None):
@@ -114,12 +111,28 @@ def transitivity_core(G, *, L=None, U=None, degrees=None):
     return 6 * numerator / denom
 
 
-@not_implemented_for("directed")  # Should we implement it for directed?
+def transitivity_directed_core(G, *, has_self_edges=True):
+    # XXX" is transitivity supposed to work on directed graphs like this?
+    if has_self_edges:
+        A = select.offdiag(G)
+    else:
+        A = G
+    numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar(allow_empty=False).value
+    if numerator == 0:
+        return 0
+    deg = A.reduce_rowwise(gb.agg.count)
+    denom = (deg * (deg - 1)).reduce().value
+    return numerator / denom
+
+
 def transitivity(G):
     if len(G) == 0:
         return 0
     A = gb.io.from_networkx(G, weight=None, dtype=bool)
-    return transitivity_core(A)
+    if isinstance(G, nx.DiGraph):
+        return transitivity_directed_core(A)
+    else:
+        return transitivity_core(A)
 
 
 def clustering_core(G, mask=None, *, L=None, U=None, degrees=None):
@@ -128,6 +141,29 @@ def clustering_core(G, mask=None, *, L=None, U=None, degrees=None):
     degrees = get_degrees(G, mask=mask, L=L, U=U)
     denom = degrees * (degrees - 1)
     return (2 * tri / denom).new(name="clustering")
+
+
+def clustering_directed_core(G, mask=None, *, has_self_edges=True):
+    # TODO: Alright, this introduces us to properties of directed graphs:
+    # has_self_edges, offdiag, row_degrees, column_degrees, total_degrees, recip_degrees
+    # (in_degrees, out_degrees?)
+    if has_self_edges:
+        A = select.offdiag(G)
+    else:
+        A = G
+    AT = A.T.new()
+    temp = plus_pair(A @ A.T).new(mask=A.S)
+    tri = (
+        temp.reduce_rowwise().new(mask=mask)
+        + temp.reduce_columnwise().new(mask=mask)
+        + plus_pair(AT @ A.T).new(mask=A.S).reduce_rowwise().new(mask=mask)
+        + plus_pair(AT @ AT.T).new(mask=A.S).reduce_columnwise().new(mask=mask)
+    )
+    recip_degrees = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
+    total_degrees = (
+        A.reduce_rowwise(gb.agg.count).new(mask=mask) + A.reduce_columnwise(gb.agg.count)
+    ).new(mask=mask)
+    return (tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)).new(name="clustering")
 
 
 def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=True):
@@ -139,24 +175,50 @@ def single_clustering_core(G, index, *, L=None, degrees=None, has_self_edges=Tru
         degrees = degrees[index].value
     else:
         row = G[index, :].new()
-        degrees = row.reduce(agg.count).value
+        degrees = row.nvals
         if has_self_edges and row[index].value is not None:
             degrees -= 1
     denom = degrees * (degrees - 1)
     return 2 * tri / denom
 
 
+def single_clustering_directed_core(G, index, *, has_self_edges=True):
+    if has_self_edges:
+        A = select.offdiag(G)
+    else:
+        A = G
+    r = A[index, :].new()
+    c = A[:, index].new()
+    tri = (
+        plus_pair(A @ c).new(mask=c.S).reduce(allow_empty=False).value
+        + plus_pair(A @ c).new(mask=r.S).reduce(allow_empty=False).value
+        + plus_pair(A @ r).new(mask=c.S).reduce(allow_empty=False).value
+        + plus_pair(A @ r).new(mask=r.S).reduce(allow_empty=False).value
+    )
+    if tri == 0:
+        return 0
+    total_degrees = c.nvals + r.nvals
+    recip_degrees = binary.pair(c & r).nvals
+    return tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)
+
+
 def clustering(G, nodes=None, weight=None):
     if len(G) == 0:
         return {}
-    if isinstance(G, nx.DiGraph) or weight is not None:
-        # TODO: Not yet implemented.  Clustering implemented only for undirected and unweighted.
+    if weight is not None:
+        # TODO: Not yet implemented.  Clustering implemented only for unweighted.
         return _nx_clustering(G, nodes=nodes, weight=weight)
     A, key_to_id = graph_to_adjacency(G, weight=weight)
     if nodes in G:
-        return single_clustering_core(A, key_to_id[nodes])
+        if isinstance(G, nx.DiGraph):
+            return single_clustering_directed_core(A, key_to_id[nodes])
+        else:
+            return single_clustering_core(A, key_to_id[nodes])
     mask, id_to_key = list_to_mask(nodes, key_to_id)
-    result = clustering_core(A, mask=mask)
+    if isinstance(G, nx.DiGraph):
+        result = clustering_directed_core(A, mask=mask)
+    else:
+        result = clustering_core(A, mask=mask)
     return vector_to_dict(result, key_to_id, id_to_key, mask=mask, fillvalue=0.0)
 
 
@@ -171,10 +233,26 @@ def average_clustering_core(G, mask=None, count_zeros=True, *, L=None, U=None, d
         return val / c.size
 
 
+def average_clustering_directed_core(G, mask=None, count_zeros=True, *, has_self_edges=True):
+    c = clustering_directed_core(G, mask=mask, has_self_edges=has_self_edges)
+    val = c.reduce(allow_empty=False).value
+    if not count_zeros:
+        return val / c.nvals
+    elif mask is not None:
+        return val / mask.parent.nvals
+    else:
+        return val / c.size
+
+
 def average_clustering(G, nodes=None, weight=None, count_zeros=True):
-    if len(G) == 0 or isinstance(G, nx.DiGraph) or weight is not None:
-        # TODO: Not yet implemented.  Clustering implemented only for undirected and unweighted.
+    if len(G) == 0:
+        raise ZeroDivisionError()  # Not covered
+    if weight is not None:
+        # TODO: Not yet implemented.  Clustering implemented only for unweighted.
         return _nx_average_clustering(G, nodes=nodes, weight=weight, count_zeros=count_zeros)
     A, key_to_id = graph_to_adjacency(G, weight=weight)
     mask, _ = list_to_mask(nodes, key_to_id)
-    return average_clustering_core(A, mask=mask, count_zeros=count_zeros)
+    if isinstance(G, nx.DiGraph):
+        return average_clustering_directed_core(A, mask=mask, count_zeros=count_zeros)
+    else:
+        return average_clustering_core(A, mask=mask, count_zeros=count_zeros)
