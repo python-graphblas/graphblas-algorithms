@@ -30,8 +30,8 @@ jobs:
           activate-environment: testing
       - name: Install dependencies
         run: |
-          conda install -c conda-forge python-graphblas networkx scipy pytest \
-            coverage codecov black flake8 flake8-comprehensions flake8-bugbear
+          conda install -c conda-forge python-graphblas networkx scipy \
+            pytest coverage black flake8 flake8-comprehensions flake8-bugbear
           pip install -e .
       - name: Style checks
         run: |
@@ -41,6 +41,5 @@ jobs:
         run: |
           coverage run --branch -m pytest
           coverage xml
-          codecov
-      # - name: Coverage
-      #   uses: codecov/codecov-action@v2
+      - name: Coverage
+        uses: codecov/codecov-action@v2
