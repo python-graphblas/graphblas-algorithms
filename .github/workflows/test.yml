@@ -42,4 +42,4 @@ jobs:
           coverage run --branch -m pytest
           coverage xml
       - name: Coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v1
