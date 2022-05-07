@@ -30,7 +30,8 @@ jobs:
           activate-environment: testing
       - name: Install dependencies
         run: |
-          conda install -c conda-forge python-graphblas networkx scipy pytest coverage black flake8 coveralls
+          conda install -c conda-forge python-graphblas networkx scipy \
+            pytest coverage black flake8 flake8-comprehensions flake8-bugbear
           pip install -e .
       - name: Style checks
         run: |
@@ -39,33 +40,6 @@ jobs:
       - name: PyTest
         run: |
           coverage run --branch -m pytest
+          coverage xml
       - name: Coverage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version}}/${{ matrix.os }}
-          COVERALLS_PARALLEL: true
-        run: |
-          coverage report --show-missing
-          # coveralls --service=github  # Broken :(
-
-#  finish:
-#    needs: test
-#    if: always()
-#    runs-on: ubuntu-latest
-#    defaults:
-#      run:
-#        shell: bash -l {0}
-#    steps:
-#      - name: Create env
-#        uses: conda-incubator/setup-miniconda@v2
-#        with:
-#          auto-update-conda: true
-#          python-version: "3.10"
-#          activate-environment: finishing
-#      - name: Update env
-#        run: conda install -c conda-forge coveralls
-#      - name: Coveralls finished
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          coveralls --finish
+        uses: codecov/codecov-action@v2
