@@ -1,42 +1,8 @@
-import inspect
-
 import graphblas as gb
 import networkx as nx
 
 import graphblas_algorithms as ga
-from graphblas_algorithms import average_clustering, clustering, transitivity, triangles
-
-nx_triangles = nx.triangles
-nx.triangles = triangles
-nx.algorithms.triangles = triangles
-nx.algorithms.cluster.triangles = triangles
-
-nx_transitivity = nx.transitivity
-nx.transitivity = transitivity
-nx.algorithms.transitivity = transitivity
-nx.algorithms.cluster.transitivity = transitivity
-
-nx_clustering = nx.clustering
-nx.clustering = clustering
-nx.algorithms.clustering = clustering
-nx.algorithms.cluster.clustering = clustering
-
-nx_average_clustering = nx.average_clustering
-nx.average_clustering = average_clustering
-nx.algorithms.average_clustering = average_clustering
-nx.algorithms.cluster.average_clustering = average_clustering
-
-
-def test_signatures():
-    nx_sig = inspect.signature(nx_triangles)
-    sig = inspect.signature(triangles)
-    assert nx_sig == sig
-    nx_sig = inspect.signature(nx_transitivity)
-    sig = inspect.signature(transitivity)
-    assert nx_sig == sig
-    nx_sig = inspect.signature(nx_clustering)
-    sig = inspect.signature(clustering)
-    assert nx_sig == sig
+from graphblas_algorithms import average_clustering, clustering, transitivity, triangles  # noqa
 
 
 def test_triangles_full():
@@ -89,32 +55,32 @@ def test_triangles_full():
     assert ga.cluster.average_clustering_core(G2, mask=mask.S) == 1
 
 
-def test_directed():
+def test_directed(orig):
     # XXX" is transitivity supposed to work on directed graphs like this?
     G = nx.complete_graph(5, create_using=nx.DiGraph())
     G.remove_edge(1, 2)
     G.remove_edge(2, 3)
     G.add_node(5)
-    expected = nx_transitivity(G)
+    expected = orig.transitivity(G)
     result = transitivity(G)
     assert expected == result
     # clustering
-    expected = nx_clustering(G)
+    expected = orig.clustering(G)
     result = clustering(G)
     assert result == expected
-    expected = nx_clustering(G, [0, 1, 2])
+    expected = orig.clustering(G, [0, 1, 2])
     result = clustering(G, [0, 1, 2])
     assert result == expected
     for i in range(6):
-        assert nx_clustering(G, i) == clustering(G, i)
+        assert orig.clustering(G, i) == clustering(G, i)
     # average_clustering
-    expected = nx_average_clustering(G)
+    expected = orig.average_clustering(G)
     result = average_clustering(G)
     assert result == expected
-    expected = nx_average_clustering(G, [0, 1, 2])
+    expected = orig.average_clustering(G, [0, 1, 2])
     result = average_clustering(G, [0, 1, 2])
     assert result == expected
-    expected = nx_average_clustering(G, count_zeros=False)
+    expected = orig.average_clustering(G, count_zeros=False)
     result = average_clustering(G, count_zeros=False)
     assert result == expected
 
