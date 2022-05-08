@@ -20,10 +20,10 @@ def pagerank_core(
 ):
     N = A.nrows
     if A.nvals == 0:
-        return Vector.new(float, N, name=name)
+        return Vector(float, N, name=name)
 
     # Initial vector
-    x = Vector.new(float, N, name="x")
+    x = Vector(float, N, name="x")
     if nstart is None:
         x[:] = 1.0 / N
     else:
@@ -61,7 +61,7 @@ def pagerank_core(
 
     is_dangling = S.nvals < N
     if is_dangling:
-        dangling_mask = Vector.new(float, N, name="dangling_mask")
+        dangling_mask = Vector(float, N, name="dangling_mask")
         dangling_mask(mask=~S.S) << 1.0
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
@@ -78,8 +78,8 @@ def pagerank_core(
     p *= 1 - alpha
 
     # Power iteration: make up to max_iter iterations
-    xprev = Vector.new(float, N, name="x_prev")
-    w = Vector.new(float, N, name="w")
+    xprev = Vector(float, N, name="x_prev")
+    w = Vector(float, N, name="w")
     for _ in range(max_iter):
         xprev, x = x, xprev
 
