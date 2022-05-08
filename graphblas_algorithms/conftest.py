@@ -23,9 +23,12 @@ def orig():
         for key, val in vars(ga).items()
         if not key.startswith("_") and hasattr(nx, key) and not isinstance(val, types.ModuleType)
     }
+    replacements["pagerank_scipy"] = (nx.pagerank_scipy, ga.pagerank)
+    replacements["pagerank_numpy"] = (nx.pagerank_numpy, ga.pagerank)
     for key, (orig_val, new_val) in replacements.items():
         setattr(orig, key, orig_val)
-        assert inspect.signature(orig_val) == inspect.signature(new_val)
+        if key not in {"pagerank_numpy"}:
+            assert inspect.signature(orig_val) == inspect.signature(new_val), key
     for name, module in sys.modules.items():
         if not name.startswith("networkx.") and name != "networkx":
             continue
