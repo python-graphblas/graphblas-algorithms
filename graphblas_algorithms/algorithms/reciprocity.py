@@ -2,7 +2,7 @@ from graphblas import binary
 from networkx import NetworkXError
 from networkx.utils import not_implemented_for
 
-from ._utils import graph_to_adjacency, list_to_mask, vector_to_dict
+from graphblas_algorithms._utils import graph_to_adjacency, list_to_mask, vector_to_dict
 
 
 def reciprocity_core(G, mask=None):
