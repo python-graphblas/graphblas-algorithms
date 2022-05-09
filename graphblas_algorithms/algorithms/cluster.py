@@ -6,7 +6,7 @@ from networkx import average_clustering as _nx_average_clustering
 from networkx import clustering as _nx_clustering
 from networkx.utils import not_implemented_for
 
-from ._utils import graph_to_adjacency, list_to_mask, vector_to_dict
+from graphblas_algorithms._utils import graph_to_adjacency, list_to_mask, vector_to_dict
 
 
 def get_properties(G, names, *, L=None, U=None, degrees=None, has_self_edges=True):

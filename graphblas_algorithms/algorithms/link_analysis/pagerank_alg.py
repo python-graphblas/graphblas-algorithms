@@ -4,7 +4,7 @@ import networkx as nx
 from graphblas import Vector, binary, unary
 from graphblas.semiring import plus_first, plus_times
 
-from ._utils import dict_to_vector, graph_to_adjacency, vector_to_dict
+from graphblas_algorithms._utils import dict_to_vector, graph_to_adjacency, vector_to_dict
 
 
 def pagerank_core(
