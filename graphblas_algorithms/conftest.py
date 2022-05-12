@@ -21,7 +21,10 @@ def orig():
     replacements = {
         key: (getattr(nx, key), val)
         for key, val in vars(ga).items()
-        if not key.startswith("_") and hasattr(nx, key) and not isinstance(val, types.ModuleType)
+        if not key.startswith("_")
+        and hasattr(nx, key)
+        and not isinstance(val, types.ModuleType)
+        and key not in {"Graph", "DiGraph"}
     }
     replacements["pagerank_scipy"] = (nx.pagerank_scipy, ga.pagerank)
     replacements["pagerank_numpy"] = (nx.pagerank_numpy, ga.pagerank)

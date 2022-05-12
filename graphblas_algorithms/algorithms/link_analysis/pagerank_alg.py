@@ -4,11 +4,11 @@ import networkx as nx
 from graphblas import Vector, binary, unary
 from graphblas.semiring import plus_first, plus_times
 
-from graphblas_algorithms._utils import dict_to_vector, graph_to_adjacency, vector_to_dict
+from graphblas_algorithms.classes.digraph import to_graph
 
 
 def pagerank_core(
-    A,
+    G,
     alpha=0.85,
     personalization=None,
     max_iter=100,
@@ -18,6 +18,7 @@ def pagerank_core(
     row_degrees=None,
     name="pagerank",
 ):
+    A = G._A
     N = A.nrows
     if A.nvals == 0:
         return Vector(float, N, name=name)
@@ -116,20 +117,21 @@ def pagerank(
     dangling=None,
 ):
     warn("", DeprecationWarning, stacklevel=2)
+    G = to_graph(G, weight=weight, dtype=float)
     N = len(G)
     if N == 0:
         return {}
-    A, key_to_id = graph_to_adjacency(G, weight=weight, dtype=float)
     # We'll normalize initial, personalization, and dangling vectors later
-    x = dict_to_vector(nstart, key_to_id, dtype=float, name="nstart")
-    p = dict_to_vector(personalization, key_to_id, dtype=float, name="personalization")
-    row_degrees = A.reduce_rowwise().new(name="row_degrees")  # XXX: What about self-edges?
+    x = G.dict_to_vector(nstart, dtype=float, name="nstart")
+    p = G.dict_to_vector(personalization, dtype=float, name="personalization")
+    row_degrees = G._A.reduce_rowwise().new(name="row_degrees")  # XXX: What about self-edges?
+    # row_degrees = G.get_property('plus_rowwise+')  # Maybe?
     if dangling is not None and row_degrees.nvals < N:
-        dangling_weights = dict_to_vector(dangling, key_to_id, dtype=float, name="dangling")
+        dangling_weights = G.dict_to_vector(dangling, dtype=float, name="dangling")
     else:
         dangling_weights = None
     result = pagerank_core(
-        A,
+        G,
         alpha=alpha,
         personalization=p,
         max_iter=max_iter,
@@ -138,4 +140,4 @@ def pagerank(
         dangling=dangling_weights,
         row_degrees=row_degrees,
     )
-    return vector_to_dict(result, key_to_id, fillvalue=0.0)
+    return G.vector_to_dict(result, fillvalue=0.0)

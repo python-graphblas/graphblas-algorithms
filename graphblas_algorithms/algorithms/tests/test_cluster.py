@@ -1,7 +1,14 @@
 import graphblas as gb
 import networkx as nx
 
-from graphblas_algorithms import average_clustering, clustering, transitivity, triangles
+from graphblas_algorithms import (
+    DiGraph,
+    Graph,
+    average_clustering,
+    clustering,
+    transitivity,
+    triangles,
+)
 from graphblas_algorithms.algorithms import cluster
 
 
@@ -10,13 +17,13 @@ def test_triangles_full():
     G = gb.Matrix(bool, 5, 5)
     G[:, :] = True
     G2 = gb.select.offdiag(G).new()
-    L = gb.select.tril(G, -1).new(name="L")
-    U = gb.select.triu(G, 1).new(name="U")
-    result = cluster.triangles_core(G, L=L, U=U)
+    G = Graph.from_graphblas(G)
+    G2 = Graph.from_graphblas(G2)
+    result = cluster.triangles_core(G)
     expected = gb.Vector(int, 5)
     expected[:] = 6
     assert result.isequal(expected)
-    result = cluster.triangles_core(G2, L=L, U=U)
+    result = cluster.triangles_core(G2)
     assert result.isequal(expected)
     mask = gb.Vector(bool, 5)
     mask[0] = True
@@ -29,11 +36,10 @@ def test_triangles_full():
     result = cluster.triangles_core(G2, mask=mask.S)
     assert result.isequal(expected)
     assert cluster.single_triangle_core(G, 1) == 6
-    assert cluster.single_triangle_core(G, 0, L=L) == 6
-    assert cluster.single_triangle_core(G2, 0, has_self_edges=False) == 6
+    assert cluster.single_triangle_core(G, 0) == 6
+    assert cluster.single_triangle_core(G2, 0) == 6
     assert cluster.total_triangles_core(G2) == 10
     assert cluster.total_triangles_core(G) == 10
-    assert cluster.total_triangles_core(G, L=L, U=U) == 10
     assert cluster.transitivity_core(G) == 1.0
     assert cluster.transitivity_core(G2) == 1.0
     result = cluster.clustering_core(G)
@@ -61,27 +67,28 @@ def test_directed(orig):
     G.remove_edge(1, 2)
     G.remove_edge(2, 3)
     G.add_node(5)
+    G2 = DiGraph.from_networkx(G)
     expected = orig.transitivity(G)
-    result = transitivity(G)
+    result = transitivity(G2)
     assert expected == result
     # clustering
     expected = orig.clustering(G)
-    result = clustering(G)
+    result = clustering(G2)
     assert result == expected
     expected = orig.clustering(G, [0, 1, 2])
-    result = clustering(G, [0, 1, 2])
+    result = clustering(G2, [0, 1, 2])
     assert result == expected
     for i in range(6):
-        assert orig.clustering(G, i) == clustering(G, i)
+        assert orig.clustering(G, i) == clustering(G2, i)
     # average_clustering
     expected = orig.average_clustering(G)
-    result = average_clustering(G)
+    result = average_clustering(G2)
     assert result == expected
     expected = orig.average_clustering(G, [0, 1, 2])
-    result = average_clustering(G, [0, 1, 2])
+    result = average_clustering(G2, [0, 1, 2])
     assert result == expected
     expected = orig.average_clustering(G, count_zeros=False)
-    result = average_clustering(G, count_zeros=False)
+    result = average_clustering(G2, count_zeros=False)
     assert result == expected
 
 
