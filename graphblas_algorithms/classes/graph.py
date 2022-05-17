@@ -1,19 +1,40 @@
+from collections import defaultdict
+
 import networkx as nx
-from graphblas import Matrix, Vector, agg, binary, select
+from graphblas import Matrix, Vector, select
 
 import graphblas_algorithms as ga
 
 from . import _utils
+from ._caching import get_reduce_to_scalar, get_reduce_to_vector
 
 
-def get_AT(A, cache, mask=None):
-    cache["AT"] = A
+def get_AT(G, mask=None):
+    A = G._A
+    G._cache["AT"] = A
     return A
 
 
-def get_Up(A, cache, mask=None):
+def get_offdiag(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "offdiag" not in cache:
+        if cache.get("has_self_edges") is False:
+            cache["offdiag"] = A
+        else:
+            cache["offdiag"] = select.offdiag(A).new(name="offdiag")
+    if "has_self_edges" not in cache:
+        cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
+    if not cache["has_self_edges"]:
+        cache["offdiag"] = A
+    return cache["offdiag"]
+
+
+def get_Up(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "U+" not in cache:
-        if "U-" in cache and not has_self_edges(A, cache):
+        if "U-" in cache and not G.get_property("has_self_edges"):
             cache["U+"] = cache["U-"]
         else:
             cache["U+"] = select.triu(A).new(name="U+")
@@ -24,9 +45,11 @@ def get_Up(A, cache, mask=None):
     return cache["U+"]
 
 
-def get_Lp(A, cache, mask=None):
+def get_Lp(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "L+" not in cache:
-        if "L-" in cache and not has_self_edges(A, cache):
+        if "L-" in cache and not G.get_property("has_self_edges"):
             cache["L+"] = cache["L-"]
         else:
             cache["L+"] = select.tril(A).new(name="L+")
@@ -37,13 +60,17 @@ def get_Lp(A, cache, mask=None):
     return cache["L+"]
 
 
-def get_Um(A, cache, mask=None):
+def get_Um(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "U-" not in cache:
         if "U+" in cache:
-            if has_self_edges(A, cache):
+            if G.get_property("has_self_edges"):
                 cache["U-"] = select.triu(cache["U+"], 1).new(name="U-")
             else:
                 cache["U-"] = cache["U+"]
+        elif "offdiag" in cache:
+            cache["U-"] = select.triu(cache["offdiag"], 1).new(name="U-")
         else:
             cache["U-"] = select.triu(A, 1).new(name="U-")
     if "has_self_edges" not in cache:
@@ -53,13 +80,17 @@ def get_Um(A, cache, mask=None):
     return cache["U-"]
 
 
-def get_Lm(A, cache, mask=None):
+def get_Lm(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "L-" not in cache:
         if "L+" in cache:
-            if has_self_edges(A, cache):
+            if G.get_property("has_self_edges"):
                 cache["L-"] = select.tril(cache["L+"], -1).new(name="L-")
             else:
                 cache["L-"] = cache["L+"]
+        elif "offdiag" in cache:
+            cache["L-"] = select.tril(cache["offdiag"], -1).new(name="L-")
         else:
             cache["L-"] = select.tril(A, -1).new(name="L-")
     if "has_self_edges" not in cache:
@@ -69,7 +100,9 @@ def get_Lm(A, cache, mask=None):
     return cache["L-"]
 
 
-def get_diag(A, cache, mask=None):
+def get_diag(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "diag" not in cache:
         if cache.get("has_self_edges") is False:
             cache["diag"] = Vector(A.dtype, size=A.nrows, name="diag")
@@ -84,7 +117,9 @@ def get_diag(A, cache, mask=None):
     return cache["diag"]
 
 
-def has_self_edges(A, cache, mask=None):
+def has_self_edges(G, mask=None):
+    A = G._A
+    cache = G._cache
     if "has_self_edges" not in cache:
         if "L+" in cache:
             cache["has_self_edges"] = 2 * cache["L+"].nvals > A.nvals
@@ -94,49 +129,11 @@ def has_self_edges(A, cache, mask=None):
             cache["has_self_edges"] = 2 * cache["U+"].nvals > A.nvals
         elif "U-" in cache:
             cache["has_self_edges"] = 2 * cache["U-"].nvals < A.nvals
+        elif "offdiag" in cache:
+            cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
         else:
-            get_diag(A, cache)
+            G.get_property("diag")
     return cache["has_self_edges"]
-
-
-def get_degreesp(A, cache, mask=None):
-    if mask is not None:
-        if "degrees+" not in cache:
-            return A.reduce_rowwise(agg.count).new(mask=mask, name="degrees+")
-        else:
-            return cache["degrees+"].dup(mask=mask)
-    if "degrees+" not in cache:
-        cache["degrees+"] = A.reduce_rowwise(agg.count).new(name="degrees+")
-    return cache["degrees+"]
-
-
-def get_degreesm(A, cache, mask=None):
-    if mask is not None:
-        if "degrees-" in cache:
-            return cache["degrees-"].dup(mask=mask)
-        elif "L-" in cache and "U-" in cache and has_self_edges(A, cache):
-            return (
-                cache["L-"].reduce_rowwise(agg.count).new(mask=mask)
-                + cache["U-"].reduce_rowwise(agg.count).new(mask=mask)
-            ).new(name="degrees-")
-        else:
-            return get_degreesm(A, cache).dup(mask=mask)
-    if "degrees-" not in cache:
-        if has_self_edges(A, cache):
-            if "L-" in cache and "U-" in cache:
-                cache["degrees-"] = (
-                    cache["L-"].reduce_rowwise(agg.count) + cache["U-"].reduce_rowwise(agg.count)
-                ).new(name="degrees-")
-            else:
-                # Is there a better way to do this?
-                degrees = get_degreesp(A, cache).dup()
-                diag = get_diag(A, cache)
-                degrees(binary.plus, diag.S) << -1
-                degrees(degrees.V, replace=True) << degrees  # drop 0s
-                cache["degrees-"] = degrees
-        else:
-            cache["degrees-"] = get_degreesp(A, cache)
-    return cache["degrees-"]
 
 
 def to_undirected_graph(G, weight=None, dtype=None):
@@ -151,34 +148,74 @@ def to_undirected_graph(G, weight=None, dtype=None):
         raise TypeError()
 
 
+class AutoDict(dict):
+    def __missing__(self, key):
+        # Automatically compute keys such as "plus_rowwise-" and "max_element+"
+        if key[-1] in {"-", "+"}:
+            keybase = key[:-1]
+            if keybase.endswith("_rowwise"):
+                opname = keybase[: -len("_rowwise")]
+                methodname = "reduce_rowwise"
+            elif keybase.endswith("_columnwise"):
+                opname = keybase[: -len("_columnwise")]
+                methodname = "reduce_rowwise"
+            elif keybase.endswith("_element"):
+                opname = keybase[: -len("_element")]
+                methodname = "reduce_scalar"
+            else:
+                raise KeyError(key)
+            if methodname == "reduce_scalar":
+                get_reduction = get_reduce_to_scalar(key, opname)
+            else:
+                get_reduction = get_reduce_to_vector(key, opname, methodname)
+                self[f"{opname}_columnwise{key[-1]}"] = get_reduction
+            self[key] = get_reduction
+            return get_reduction
+        raise KeyError(key)
+
+
 class Graph:
     # "-" properties ignore self-edges, "+" properties include self-edges
-    _property_priority = {
-        key: i
-        for i, key in enumerate(
-            [
-                "AT",
-                "U+",
-                "L+",
-                "U-",
-                "L-",
-                "diag",
-                "has_self_edges",
-                "degrees+",
-                "degrees-",
-            ]
-        )
-    }
-    _get_property = {
-        "AT": get_AT,
-        "U+": get_Up,
-        "L+": get_Lp,
-        "U-": get_Um,
-        "L-": get_Lm,
-        "diag": get_diag,
-        "has_self_edges": has_self_edges,
-        "degrees+": get_degreesp,
-        "degrees-": get_degreesm,
+    # Ideally, we would have "max_rowwise+" come before "max_element+".
+    _property_priority = defaultdict(
+        lambda: Graph._property_priority["has_self_edges"] - 0.5,
+        {
+            key: i
+            for i, key in enumerate(
+                [
+                    "AT",
+                    "offdiag",
+                    "U+",
+                    "L+",
+                    "U-",
+                    "L-",
+                    "diag",
+                    "count_rowwise+",
+                    "count_rowwise-",
+                    "has_self_edges",
+                ]
+            )
+        },
+    )
+    _get_property = AutoDict(
+        {
+            "AT": get_AT,
+            "offdiag": get_offdiag,
+            "U+": get_Up,
+            "L+": get_Lp,
+            "U-": get_Um,
+            "L-": get_Lm,
+            "diag": get_diag,
+            "has_self_edges": has_self_edges,
+        }
+    )
+    _cache_aliases = {
+        "degrees+": "count_rowwise+",
+        "degrees-": "count_rowwise-",
+        "row_degrees+": "count_rowwise+",
+        "row_degrees-": "count_rowwise-",
+        "column_degrees+": "count_rowwise+",
+        "column_degrees-": "count_rowwise-",
     }
     graph_attr_dict_factory = dict
 
@@ -204,6 +241,7 @@ class Graph:
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
     vector_to_dict = _utils.vector_to_dict
+    _cacheit = _utils._cacheit
 
     def to_directed_class(self):
         return ga.DiGraph

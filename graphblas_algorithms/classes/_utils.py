@@ -23,15 +23,21 @@ def from_graphblas(cls, A):
 
 
 def get_property(self, name, *, mask=None):
-    return self._get_property[name](self._A, self._cache, mask)
+    return self._get_property[self._cache_aliases.get(name, name)](self, mask)
 
 
 def get_properties(self, names, *, mask=None):
     if isinstance(names, str):
         # Separated by commas and/or spaces
-        names = [name for name in names.replace(" ", ",").split(",") if name]
+        names = [
+            self._cache_aliases.get(name, name)
+            for name in names.replace(" ", ",").split(",")
+            if name
+        ]
+    else:
+        names = [self._cache_aliases.get(name, name) for name in names]
     results = {
-        name: self._get_property[name](self._A, self._cache, mask)
+        name: self._get_property[name](self, mask)
         for name in sorted(names, key=self._property_priority.__getitem__)
     }
     return [results[name] for name in names]
@@ -70,3 +76,9 @@ def vector_to_dict(self, v, *, mask=None, fillvalue=None):
     elif fillvalue is not None and v.nvals < v.size:
         v(mask=~v.S) << fillvalue
     return {self._id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+
+
+def _cacheit(self, key, func, *args, **kwargs):
+    if key not in self._cache:
+        self._cache[key] = func(*args, **kwargs)
+    return self._cache[key]
