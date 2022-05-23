@@ -134,7 +134,7 @@ def get_reduce_to_scalar(key, opname):
                         cache["L-"].reduce(op_)._as_vector() | cache["U-"].reduce(op_)._as_vector()
                     )[0].new(name=key)
                 elif not G.get_property("has_self_edges"):
-                    cache[key] = cache[f"{keybase}+"]
+                    cache[key] = G.get_property(f"{keybase}+")
                 else:
                     cache[key] = G.get_property("offdiag").reduce_scalar(op_).new(name=key)
             if (
@@ -174,3 +174,5 @@ def get_reduce_to_scalar(key, opname):
             elif cache.get("has_self_edges") is False:
                 cache[f"{keybase}-"] = cache[key]
             return cache[key]
+
+    return get_reduction
