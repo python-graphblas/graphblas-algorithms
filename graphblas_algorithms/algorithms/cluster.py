@@ -66,8 +66,8 @@ def transitivity_directed_core(G):
     numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar(allow_empty=False).value
     if numerator == 0:
         return 0
-    deg = A.reduce_rowwise("count")
-    denom = (deg * (deg - 1)).reduce().value
+    degrees = G.get_property("row_degrees-")
+    denom = (degrees * (degrees - 1)).reduce().value
     return numerator / denom
 
 
@@ -76,9 +76,10 @@ def transitivity(G):
     if len(G) == 0:
         return 0
     if G.is_directed():
-        return transitivity_directed_core(G)
+        func = transitivity_directed_core
     else:
-        return transitivity_core(G)
+        func = transitivity_core
+    return G._cacheit("transitivity", func, G)
 
 
 def clustering_core(G, mask=None):
@@ -101,10 +102,7 @@ def clustering_directed_core(G, mask=None):
         + plus_pair(AT @ A.T).new(mask=A.S).reduce_rowwise().new(mask=mask)
         + plus_pair(AT @ AT.T).new(mask=A.S).reduce_columnwise().new(mask=mask)
     )
-    recip_degrees = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
-    total_degrees = A.reduce_rowwise("count").new(mask=mask) + A.reduce_columnwise("count").new(
-        mask=mask
-    )
+    recip_degrees, total_degrees = G.get_properties("recip_degrees- total_degrees-", mask=mask)
     return (tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)).new(name="clustering")
 
 
@@ -200,6 +198,12 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
         raise ZeroDivisionError()  # Not covered
     mask = G.list_to_mask(nodes)
     if G.is_directed():
-        return average_clustering_directed_core(G, mask=mask, count_zeros=count_zeros)
+        func = average_clustering_directed_core
     else:
-        return average_clustering_core(G, mask=mask, count_zeros=count_zeros)
+        func = average_clustering_core
+    if mask is None:
+        return G._cacheit(
+            f"average_clustering(count_zeros={count_zeros})", func, G, count_zeros=count_zeros
+        )
+    else:
+        return func(G, mask=mask, count_zeros=count_zeros)

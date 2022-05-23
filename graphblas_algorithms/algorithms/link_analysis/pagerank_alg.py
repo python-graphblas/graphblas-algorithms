@@ -45,10 +45,8 @@ def pagerank_core(
     # Inverse of row_degrees
     # Fold alpha constant into S
     if row_degrees is None:
-        S = A.reduce_rowwise().new(float, name="S")  # XXX: What about self-edges
-        S << alpha / S
-    else:
-        S = (alpha / row_degrees).new(name="S")
+        row_degrees = G.get_property("plus_rowwise+")  # XXX: What about self-edges?
+    S = (alpha / row_degrees).new(name="S")
 
     if A.ss.is_iso:
         # Fold iso-value of A into S
@@ -124,8 +122,7 @@ def pagerank(
     # We'll normalize initial, personalization, and dangling vectors later
     x = G.dict_to_vector(nstart, dtype=float, name="nstart")
     p = G.dict_to_vector(personalization, dtype=float, name="personalization")
-    row_degrees = G._A.reduce_rowwise().new(name="row_degrees")  # XXX: What about self-edges?
-    # row_degrees = G.get_property('plus_rowwise+')  # Maybe?
+    row_degrees = G.get_property("plus_rowwise+")  # XXX: What about self-edges?
     if dangling is not None and row_degrees.nvals < N:
         dangling_weights = G.dict_to_vector(dangling, dtype=float, name="dangling")
     else:
