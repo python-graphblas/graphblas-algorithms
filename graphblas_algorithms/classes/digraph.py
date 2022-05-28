@@ -4,12 +4,19 @@ import networkx as nx
 from graphblas import Matrix, Vector, binary, select, unary
 
 import graphblas_algorithms as ga
+from graphblas_algorithms.utils import get_all
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
 
 
+def get_A(G, mask=None):
+    """A"""
+    return G._A
+
+
 def get_AT(G, mask=None):
+    """A.T"""
     A = G._A
     cache = G._cache
     if "AT" not in cache:
@@ -18,6 +25,7 @@ def get_AT(G, mask=None):
 
 
 def get_offdiag(G, mask=None):
+    """select.offdiag(A)"""
     A = G._A
     cache = G._cache
     if "offdiag" not in cache:
@@ -33,6 +41,7 @@ def get_offdiag(G, mask=None):
 
 
 def get_Up(G, mask=None):
+    """select.triu(A)"""
     A = G._A
     cache = G._cache
     if "U+" not in cache:
@@ -51,6 +60,7 @@ def get_Up(G, mask=None):
 
 
 def get_Lp(G, mask=None):
+    """select.tril(A)"""
     A = G._A
     cache = G._cache
     if "L+" not in cache:
@@ -69,6 +79,7 @@ def get_Lp(G, mask=None):
 
 
 def get_Um(G, mask=None):
+    """select.triu(A, 1)"""
     A = G._A
     cache = G._cache
     if "U-" not in cache:
@@ -92,6 +103,7 @@ def get_Um(G, mask=None):
 
 
 def get_Lm(G, mask=None):
+    """select.tril(A, -1)"""
     A = G._A
     cache = G._cache
     if "L-" not in cache:
@@ -115,6 +127,7 @@ def get_Lm(G, mask=None):
 
 
 def get_diag(G, mask=None):
+    """select.diag(A)"""
     A = G._A
     cache = G._cache
     if "diag" not in cache:
@@ -134,6 +147,7 @@ def get_diag(G, mask=None):
 
 
 def get_recip_degreesp(G, mask=None):
+    """pair(A & A.T).reduce_rowwise()"""
     A = G._A
     cache = G._cache
     if "AT" in cache:
@@ -179,6 +193,7 @@ def get_recip_degreesp(G, mask=None):
 
 
 def get_recip_degreesm(G, mask=None):
+    """C = select.offdiag(A) ; pair(C & C.T).reduce_rowwise()"""
     A = G._A
     cache = G._cache
     if "AT" in cache:
@@ -194,9 +209,9 @@ def get_recip_degreesm(G, mask=None):
             cache["recip_degrees-"] = cache["recip_degrees+"]
             return cache["recip_degrees-"].dup(mask=mask)
         elif "recip_degrees+" in cache and "diag" in cache:
-            rv = binary.minus(
-                cache["recip_degrees+"] | unary.one(cache["diag"]), require_monoid=False
-            ).new(mask=mask, name="recip_degrees-")
+            rv = binary.minus(cache["recip_degrees+"] | unary.one(cache["diag"])).new(
+                mask=mask, name="recip_degrees-"
+            )
             rv(rv.V, replace=True) << rv  # drop 0s
             return rv
         elif not G.get_property("has_self_edges"):
@@ -215,18 +230,16 @@ def get_recip_degreesm(G, mask=None):
         else:
             diag = G.get_property("diag", mask=mask)
             overlap = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
-            rv = binary.minus(overlap | unary.one(diag), require_monoid=False).new(
-                name="recip_degrees-"
-            )
+            rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
             rv(rv.V, replace=True) << rv  # drop 0s
             return rv
     if "recip_degrees-" not in cache:
         if cache.get("has_self_edges") is False and "recip_degrees+" in cache:
             cache["recip_degrees-"] = cache["recip_degrees+"]
         elif "recip_degrees+" in cache and "diag" in cache:
-            rv = binary.minus(
-                cache["recip_degrees+"] | unary.one(cache["diag"]), require_monoid=False
-            ).new(name="recip_degrees-")
+            rv = binary.minus(cache["recip_degrees+"] | unary.one(cache["diag"])).new(
+                name="recip_degrees-"
+            )
             rv(rv.V, replace=True) << rv  # drop 0s
             cache["recip_degrees-"] = rv
         elif not G.get_property("has_self_edges"):
@@ -243,9 +256,7 @@ def get_recip_degreesm(G, mask=None):
         else:
             diag = G.get_property("diag")
             overlap = binary.pair(A & AT).reduce_rowwise().new()
-            rv = binary.minus(overlap | unary.one(diag), require_monoid=False).new(
-                name="recip_degrees-"
-            )
+            rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
             rv(rv.V, replace=True) << rv  # drop 0s
             cache["recip_degrees-"] = rv
     if (
@@ -260,6 +271,7 @@ def get_recip_degreesm(G, mask=None):
 
 
 def get_total_degreesp(G, mask=None):
+    """A.reduce_rowwise(agg.count) + A.reduce_columnwise(agg.count)"""
     cache = G._cache
     if mask is not None:
         if "total_degrees+" in cache:
@@ -291,6 +303,7 @@ def get_total_degreesp(G, mask=None):
 
 
 def get_total_degreesm(G, mask=None):
+    """C = select.offdiag(A) ; C.reduce_rowwise(agg.count) + C.reduce_columnwise(agg.count)"""
     cache = G._cache
     if mask is not None:
         if "total_degrees-" in cache:
@@ -322,19 +335,20 @@ def get_total_degreesm(G, mask=None):
 
 
 def get_total_recipp(G, mask=None):
+    """pair(A & A.T).reduce_scalar()"""
     A = G._A
     cache = G._cache
     if "total_recip+" not in cache:
         if "total_recip-" in cache and cache.get("has_self_edges") is False:
             cache["total_recip+"] = cache["total_recip-"]
         elif "recip_degrees+" in cache:
-            cache["total_recip+"] = cache["recip_degrees+"].reduce(allow_empty=False).value
+            cache["total_recip+"] = cache["recip_degrees+"].reduce().get(0)
         else:
             if "AT" in cache:
                 AT = cache["AT"]
             else:
                 AT = A.T
-            cache["total_recip+"] = binary.pair(A & AT).reduce_scalar(allow_empty=False).value
+            cache["total_recip+"] = binary.pair(A & AT).reduce_scalar().get(0)
     if "has_self_edges" not in cache and "total_recip-" in cache:
         cache["has_self_edges"] = cache["total_recip+"] > cache["total_recip-"]
     if cache.get("has_self_edges") is False:
@@ -343,12 +357,13 @@ def get_total_recipp(G, mask=None):
 
 
 def get_total_recipm(G, mask=None):
+    """C = select.offdiag(A) ; pair(C & C.T).reduce_scalar()"""
     cache = G._cache
     if "total_recip-" not in cache:
         if "total_recip+" in cache and cache.get("has_self_edges") is False:
             cache["total_recip-"] = cache["total_recip+"]
         else:
-            cache["total_recip-"] = G.get_property("recip_degrees-").reduce(allow_empty=False).value
+            cache["total_recip-"] = G.get_property("recip_degrees-").reduce().get(0)
     if "has_self_edges" not in cache and "total_recip+" in cache:
         cache["has_self_edges"] = cache["total_recip+"] > cache["total_recip-"]
     if cache.get("has_self_edges") is False:
@@ -357,6 +372,7 @@ def get_total_recipm(G, mask=None):
 
 
 def has_self_edges(G, mask=None):
+    """A.diag().nvals > 0"""
     A = G._A
     cache = G._cache
     if "has_self_edges" not in cache:
@@ -383,21 +399,13 @@ def has_self_edges(G, mask=None):
         elif "recip_degrees-" in cache and "recip_degrees+" in cache:
             cache["has_self_edges"] = not cache["recip_degrees-"].isequal(cache["recip_degrees+"])
         elif "row_degrees-" in cache:
-            cache["has_self_edges"] = (
-                cache["row_degrees-"].reduce(allow_empty=False).value < A.nvals
-            )
+            cache["has_self_edges"] = cache["row_degrees-"].reduce().get(0) < A.nvals
         elif "column_degrees-" in cache:
-            cache["has_self_edges"] = (
-                cache["column_degrees-"].reduce(allow_empty=False).value < A.nvals
-            )
+            cache["has_self_edges"] = cache["column_degrees-"].reduce().get(0) < A.nvals
         elif "total_degrees-" in cache:
-            cache["has_self_edges"] = (
-                cache["total_degrees-"].reduce(allow_empty=False).value < 2 * A.nvals
-            )
+            cache["has_self_edges"] = cache["total_degrees-"].reduce().get(0) < 2 * A.nvals
         elif "total_degrees+" in cache:
-            cache["has_self_edges"] = (
-                cache["total_degrees+"].reduce(allow_empty=False).value > 2 * A.nvals
-            )
+            cache["has_self_edges"] = cache["total_degrees+"].reduce().get(0) > 2 * A.nvals
         else:
             G.get_property("diag")
     return cache["has_self_edges"]
@@ -463,6 +471,7 @@ class DiGraph:
             key: i
             for i, key in enumerate(
                 [
+                    "A",
                     "AT",
                     "offdiag",
                     "U+",
@@ -487,6 +496,7 @@ class DiGraph:
     )
     _get_property = AutoDict(
         {
+            "A": get_A,
             "AT": get_AT,
             "offdiag": get_offdiag,
             "U+": get_Up,
@@ -532,6 +542,7 @@ class DiGraph:
     dict_to_vector = _utils.dict_to_vector
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
+    list_to_ids = _utils.list_to_ids
     vector_to_dict = _utils.vector_to_dict
     _cacheit = _utils._cacheit
 
@@ -573,3 +584,6 @@ class DiGraph:
 
     def is_directed(self):
         return True
+
+
+__all__ = get_all(__name__)

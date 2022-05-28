@@ -1,9 +1,9 @@
-from graphblas import binary, unary
+from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
 from graphblas.semiring import plus_pair, plus_times
 
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
-from graphblas_algorithms.utils import not_implemented_for
+from graphblas_algorithms.utils import get_all, not_implemented_for
 
 
 def single_triangle_core(G, node, *, weighted=False):
@@ -23,7 +23,7 @@ def single_triangle_core(G, node, *, weighted=False):
     val = semiring(L @ r).new(mask=r.S)
     if weighted:
         val *= r
-    return val.reduce(allow_empty=False).value
+    return val.reduce().get(0)
 
 
 def triangles_core(G, *, weighted=False, mask=None):
@@ -64,7 +64,7 @@ def total_triangles_core(G):
     # We use SandiaDot method, because it's usually the fastest on large graphs.
     # For smaller graphs, Sandia method is usually faster: plus_pair(L @ L).new(mask=L.S)
     L, U = G.get_properties("L- U-")
-    return plus_pair(L @ U.T).new(mask=L.S).reduce_scalar(allow_empty=False).value
+    return plus_pair(L @ U.T).new(mask=L.S).reduce_scalar().get(0)
 
 
 def transitivity_core(G):
@@ -79,7 +79,7 @@ def transitivity_core(G):
 def transitivity_directed_core(G):
     # XXX" is transitivity supposed to work on directed graphs like this?
     A, AT = G.get_properties("offdiag AT")
-    numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar(allow_empty=False).value
+    numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar().get(0)
     if numerator == 0:
         return 0
     degrees = G.get_property("row_degrees-")
@@ -136,16 +136,17 @@ def single_clustering_core(G, node, *, weighted=False):
     if tri == 0:
         return 0
     index = G._key_to_id[node]
+    # TODO: it would be nice if we could clean this up, but still be fast
     if "degrees-" in G._cache:
-        degrees = G.get_property("degrees-")[index].value
+        degrees = G.get_property("degrees-").get(index)
     elif "degrees+" in G._cache:
-        degrees = G.get_property("degrees+")[index].value
-        if G.get_property("has_self_edges") and G._A[index, index].value is not None:
+        degrees = G.get_property("degrees+").get(index)
+        if G.get_property("has_self_edges") and G._A.get(index, index) is not None:
             degrees -= 1
     else:
         row = G._A[index, :]
         degrees = row.nvals
-        if G.get_property("has_self_edges") and row[index].value is not None:
+        if G.get_property("has_self_edges") and row.get(index) is not None:
             degrees -= 1
     denom = degrees * (degrees - 1)
     return 2 * tri / denom
@@ -162,21 +163,14 @@ def single_clustering_directed_core(G, node, *, weighted=False):
         semiring = plus_pair
     r = A[index, :]
     c = A[:, index]
-    v1 = semiring(A @ c).new(mask=c.S)
-    v2 = semiring(A @ c).new(mask=r.S)
-    v3 = semiring(A @ r).new(mask=c.S)
-    v4 = semiring(A @ r).new(mask=r.S)
-    if weighted:
-        v1 *= c
-        v2 *= r
-        v3 *= c
-        v4 *= r
-    tri = (
-        v1.reduce(allow_empty=False).value
-        + v2.reduce(allow_empty=False).value
-        + v3.reduce(allow_empty=False).value
-        + v4.reduce(allow_empty=False).value
-    )
+    tris = []
+    for x, y in [(c, c), (c, r), (r, c), (r, r)]:
+        v = semiring(A @ x).new(mask=y.S)
+        if weighted:
+            v *= y
+        tris.append(v.reduce().new())
+    # Getting Python scalars are blocking operations, so we do them last
+    tri = sum(t.get(0) for t in tris)
     if tri == 0:
         return 0
     total_degrees = c.nvals + r.nvals
@@ -204,7 +198,7 @@ def clustering(G, nodes=None, weight=None):
 
 def average_clustering_core(G, *, count_zeros=True, weighted=False, mask=None):
     c = clustering_core(G, weighted=weighted, mask=mask)
-    val = c.reduce(allow_empty=False).value
+    val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
     elif mask is not None:
@@ -215,7 +209,7 @@ def average_clustering_core(G, *, count_zeros=True, weighted=False, mask=None):
 
 def average_clustering_directed_core(G, *, count_zeros=True, weighted=False, mask=None):
     c = clustering_directed_core(G, weighted=weighted, mask=mask)
-    val = c.reduce(allow_empty=False).value
+    val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
     elif mask is not None:
@@ -227,7 +221,7 @@ def average_clustering_directed_core(G, *, count_zeros=True, weighted=False, mas
 def average_clustering(G, nodes=None, weight=None, count_zeros=True):
     G = to_graph(G, weight=weight)  # to directed or undirected
     if len(G) == 0:
-        raise ZeroDivisionError()  # Not covered
+        raise ZeroDivisionError()
     weighted = weight is not None
     mask = G.list_to_mask(nodes)
     if G.is_directed():
@@ -244,3 +238,59 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
         )
     else:
         return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
+
+
+def square_clustering_core(G, node_ids=None):
+    # node_ids argument is a bit different from what we do elsewhere.
+    # Normally, we take a mask or vector in a `_core` function.
+    # By accepting an iterable here, it could be of node ids or node keys.
+    A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
+    if node_ids is None:
+        # Can we do this better using SuiteSparse:GraphBLAS iteration?
+        node_ids = A.reduce_rowwise(monoid.any).new(name="node_ids")  # all nodes with edges
+    C = unary.positionj(A).new(name="C")
+    rv = Vector(float, A.nrows, name="square_clustering")
+    row = Vector(A.dtype, A.ncols, name="row")
+    M = Matrix(int, A.nrows, A.ncols, name="M")
+    Q = Matrix(int, A.nrows, A.ncols, name="Q")
+    for v in node_ids:
+        # Th mask M indicates the u and w neighbors of v to "iterate" over
+        row << A[v, :]
+        M << row.outer(row, binary.pair)
+        M << select.tril(M, -1)
+        # To compute q_v(u, w), the number of common neighbors of u and w other than v (squares),
+        # we first set the v'th column to zero, which lets us ignore v as a common neighbor.
+        Q << binary.isne(C, v)  # `isne` keeps the dtype as int
+        # Q: count the number of squares for each u-w combination!
+        Q(M.S, replace) << plus_times(Q @ Q.T)
+        # Total squares for v
+        squares = Q.reduce_scalar().get(0)
+        if squares == 0:
+            rv[v] = 0
+            continue
+        # Denominator is the total number of squares that could exist.
+        # First contribution is degrees[u] + degrees[w] for each u-w combo.
+        Q(M.S, replace) << degrees.outer(degrees, binary.plus)
+        deg_uw = Q.reduce_scalar().new()
+        # Then we subtract off # squares, 1 for each u and 1 for each w for all combos,
+        # and 1 for each edge where u-w or w-u are connected (which would make triangles).
+        Q << binary.pair(A & M)  # Are u-w connected?  Can skip if bipartite
+        denom = deg_uw.get(0) - (squares + 2 * M.nvals + 2 * Q.nvals)
+        rv[v] = squares / denom
+    return rv
+
+
+def square_clustering(G, nodes=None):
+    G = to_undirected_graph(G)
+    if len(G) == 0:
+        return {}
+    if nodes in G:
+        idx = G._key_to_id[nodes]
+        result = square_clustering_core(G, [idx])
+        return result.get(idx)
+    ids = G.list_to_ids(nodes)
+    result = square_clustering_core(G, ids)
+    return G.vector_to_dict(result)
+
+
+__all__ = get_all(__name__)

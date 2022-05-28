@@ -1,1 +1,1 @@
-from .pagerank_alg import pagerank
+from .pagerank_alg import *

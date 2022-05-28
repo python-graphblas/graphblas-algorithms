@@ -67,6 +67,12 @@ def list_to_mask(self, nodes, *, size=None, name="mask"):
     return self.list_to_vector(nodes, size=size, name=name).S
 
 
+def list_to_ids(self, nodes):
+    if nodes is None:
+        return None
+    return [self._key_to_id[key] for key in nodes]
+
+
 def vector_to_dict(self, v, *, mask=None, fillvalue=None):
     if self._id_to_key is None:
         self._id_to_key = {val: key for key, val in self._key_to_id.items()}

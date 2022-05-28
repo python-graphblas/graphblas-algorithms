@@ -1,8 +1,8 @@
 from graphblas import binary
 from networkx import NetworkXError
-from networkx.utils import not_implemented_for
 
 from graphblas_algorithms.classes.digraph import to_directed_graph
+from graphblas_algorithms.utils import get_all, not_implemented_for
 
 
 def reciprocity_core(G, mask=None):
@@ -45,3 +45,6 @@ def overall_reciprocity_core(G):
 def overall_reciprocity(G):
     G = to_directed_graph(G, dtype=bool)
     return overall_reciprocity_core(G)
+
+
+__all__ = get_all(__name__)

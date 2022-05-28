@@ -4,18 +4,26 @@ import networkx as nx
 from graphblas import Matrix, Vector, select
 
 import graphblas_algorithms as ga
+from graphblas_algorithms.utils import get_all
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
 
 
+def get_A(G, mask=None):
+    """A"""
+    return G._A
+
+
 def get_AT(G, mask=None):
+    """A.T"""
     A = G._A
     G._cache["AT"] = A
     return A
 
 
 def get_offdiag(G, mask=None):
+    """select.offdiag(A)"""
     A = G._A
     cache = G._cache
     if "offdiag" not in cache:
@@ -31,6 +39,7 @@ def get_offdiag(G, mask=None):
 
 
 def get_Up(G, mask=None):
+    """select.triu(A)"""
     A = G._A
     cache = G._cache
     if "U+" not in cache:
@@ -46,6 +55,7 @@ def get_Up(G, mask=None):
 
 
 def get_Lp(G, mask=None):
+    """select.tril(A)"""
     A = G._A
     cache = G._cache
     if "L+" not in cache:
@@ -61,6 +71,7 @@ def get_Lp(G, mask=None):
 
 
 def get_Um(G, mask=None):
+    """select.triu(A, 1)"""
     A = G._A
     cache = G._cache
     if "U-" not in cache:
@@ -81,6 +92,7 @@ def get_Um(G, mask=None):
 
 
 def get_Lm(G, mask=None):
+    """select.tril(A, -1)"""
     A = G._A
     cache = G._cache
     if "L-" not in cache:
@@ -101,6 +113,7 @@ def get_Lm(G, mask=None):
 
 
 def get_diag(G, mask=None):
+    """A.diag()"""
     A = G._A
     cache = G._cache
     if "diag" not in cache:
@@ -118,6 +131,7 @@ def get_diag(G, mask=None):
 
 
 def has_self_edges(G, mask=None):
+    """A.diag().nvals > 0"""
     A = G._A
     cache = G._cache
     if "has_self_edges" not in cache:
@@ -183,6 +197,7 @@ class Graph:
             key: i
             for i, key in enumerate(
                 [
+                    "A",
                     "AT",
                     "offdiag",
                     "U+",
@@ -199,6 +214,7 @@ class Graph:
     )
     _get_property = AutoDict(
         {
+            "A": get_A,
             "AT": get_AT,
             "offdiag": get_offdiag,
             "U+": get_Up,
@@ -240,6 +256,7 @@ class Graph:
     dict_to_vector = _utils.dict_to_vector
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
+    list_to_ids = _utils.list_to_ids
     vector_to_dict = _utils.vector_to_dict
     _cacheit = _utils._cacheit
 
@@ -281,3 +298,6 @@ class Graph:
 
     def is_directed(self):
         return False
+
+
+__all__ = get_all(__name__)
