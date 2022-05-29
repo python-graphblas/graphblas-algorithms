@@ -251,12 +251,14 @@ class Graph:
     # Graphblas-specific methods
     from_networkx = classmethod(_utils.from_networkx)
     from_graphblas = classmethod(_utils.from_graphblas)
+    id_to_key = property(_utils.id_to_key)
     get_property = _utils.get_property
     get_properties = _utils.get_properties
     dict_to_vector = _utils.dict_to_vector
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
+    matrix_to_dicts = _utils.matrix_to_dicts
     vector_to_dict = _utils.vector_to_dict
     _cacheit = _utils._cacheit
 

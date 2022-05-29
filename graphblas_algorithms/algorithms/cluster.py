@@ -1,3 +1,4 @@
+import numpy as np
 from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
 from graphblas.semiring import plus_pair, plus_times
 
@@ -28,6 +29,7 @@ def single_triangle_core(G, node, *, weighted=False):
 
 def triangles_core(G, *, weighted=False, mask=None):
     # Ignores self-edges
+    # Can we apply the mask earlier in the computation?
     L, U = G.get_properties("L- U-")
     if weighted:
         maxval = G.get_property("max_element-")
@@ -106,6 +108,7 @@ def clustering_core(G, *, weighted=False, mask=None):
 
 
 def clustering_directed_core(G, *, weighted=False, mask=None):
+    # Can we apply the mask earlier in the computation?
     A, AT = G.get_properties("offdiag AT")
     if weighted:
         maxval = G.get_property("max_element-")
@@ -128,7 +131,8 @@ def clustering_directed_core(G, *, weighted=False, mask=None):
         + E.reduce_columnwise().new(mask=mask)
     )
     recip_degrees, total_degrees = G.get_properties("recip_degrees- total_degrees-", mask=mask)
-    return (tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)).new(name="clustering")
+    denom = total_degrees * (total_degrees - 1) - 2 * recip_degrees
+    return (tri / denom).new(name="clustering")
 
 
 def single_clustering_core(G, node, *, weighted=False):
@@ -291,6 +295,55 @@ def square_clustering(G, nodes=None):
     ids = G.list_to_ids(nodes)
     result = square_clustering_core(G, ids)
     return G.vector_to_dict(result)
+
+
+def generalized_degree_core(G, *, mask=None):
+    # Not benchmarked or optimized
+    A = G.get_property("offdiag")
+    Tri = Matrix(int, A.nrows, A.ncols, name="Tri")
+    if mask is not None:
+        if mask.structure and not mask.value:
+            v_mask = mask.parent
+        else:
+            v_mask = mask.new()  # Not covered
+        Tri << binary.pair(v_mask & A)  # Mask out rows
+        Tri(Tri.S) << 0
+    else:
+        Tri(A.S) << 0
+    Tri(Tri.S, binary.second) << plus_pair(Tri @ A.T)
+    rows, cols, vals = Tri.to_values()
+    # The column index indicates the number of triangles an edge participates in.
+    # The largest this can be is `A.ncols - 1`.  Values is count of edges.
+    return Matrix.from_values(
+        rows,
+        vals,
+        np.ones(vals.size, dtype=int),
+        dup_op=binary.plus,
+        nrows=A.nrows,
+        ncols=A.ncols - 1,
+        name="generalized_degree",
+    )
+
+
+def single_generalized_degree_core(G, node):
+    # Not benchmarked or optimized
+    index = G._key_to_id[node]
+    v = Vector(bool, len(G))
+    v[index] = True
+    return generalized_degree_core(G, mask=v.S)[index, :].new(name=f"generalized_degree_{index}")
+
+
+@not_implemented_for("directed")
+def generalized_degree(G, nodes=None):
+    G = to_undirected_graph(G)
+    if len(G) == 0:
+        return {}
+    if nodes in G:
+        result = single_generalized_degree_core(G, nodes)
+        return G.vector_to_dict(result)
+    mask = G.list_to_mask(nodes)
+    result = generalized_degree_core(G, mask=mask)
+    return G.matrix_to_dicts(result)
 
 
 __all__ = get_all(__name__)

@@ -1,5 +1,11 @@
 import graphblas as gb
+import numpy as np
 from graphblas import Matrix, Vector, binary
+from graphblas.matrix import TransposedMatrix
+
+################
+# Classmethods #
+################
 
 
 def from_networkx(cls, G, weight=None, dtype=None):
@@ -20,6 +26,22 @@ def from_graphblas(cls, A):
     rv._key_to_id = {i: i for i in range(A.nrows)}
     rv._A = A
     return rv
+
+
+##############
+# Properties #
+##############
+
+
+def id_to_key(self):
+    if self._id_to_key is None:
+        self._id_to_key = {val: key for key, val in self._key_to_id.items()}
+    return self._id_to_key
+
+
+###########
+# Methods #
+###########
 
 
 def get_property(self, name, *, mask=None):
@@ -74,14 +96,37 @@ def list_to_ids(self, nodes):
 
 
 def vector_to_dict(self, v, *, mask=None, fillvalue=None):
-    if self._id_to_key is None:
-        self._id_to_key = {val: key for key, val in self._key_to_id.items()}
     if mask is not None:
         if fillvalue is not None and v.nvals < mask.parent.nvals:
             v(mask, binary.first) << fillvalue
     elif fillvalue is not None and v.nvals < v.size:
         v(mask=~v.S) << fillvalue
-    return {self._id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+    id_to_key = self.id_to_key
+    return {id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+
+
+def matrix_to_dicts(self, A):
+    """{row: {col: val}}"""
+    if isinstance(A, TransposedMatrix):
+        # Not covered
+        d = A.T.ss.export("hypercsc")
+        rows = d["cols"].tolist()
+        col_indices = d["row_indices"].tolist()
+    else:
+        d = A.ss.export("hypercsr")
+        rows = d["rows"].tolist()
+        col_indices = d["col_indices"].tolist()
+    indptr = d["indptr"]
+    values = d["values"].tolist()
+    id_to_key = self.id_to_key
+    return {
+        id_to_key[row]: {
+            id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+        }
+        for row, (start, stop) in zip(
+            rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist()
+        )
+    }
 
 
 def _cacheit(self, key, func, *args, **kwargs):
