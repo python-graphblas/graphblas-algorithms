@@ -1,4 +1,5 @@
 import graphblas as gb
+import networkx as nx
 import numpy as np
 from graphblas import Matrix, Vector, binary
 from graphblas.matrix import TransposedMatrix
@@ -18,12 +19,16 @@ def from_networkx(cls, G, weight=None, dtype=None):
     return rv
 
 
-def from_graphblas(cls, A):
+def from_graphblas(cls, A, *, key_to_id=None):
     # Does not copy!
     if A.nrows != A.ncols:
         raise ValueError(f"Adjacency matrix must be square; got {A.nrows} x {A.ncols}")
     rv = cls()
-    rv._key_to_id = {i: i for i in range(A.nrows)}
+    # If there is no mapping, it may be nice to keep this as None
+    if key_to_id is None:
+        rv._key_to_id = {i: i for i in range(A.nrows)}
+    else:
+        rv._key_to_id = key_to_id
     rv._A = A
     return rv
 
@@ -127,6 +132,27 @@ def matrix_to_dicts(self, A):
             rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist()
         )
     }
+
+
+def to_networkx(self, edge_attribute="weight"):
+    # Not covered yet, but will probably be useful soon
+    if self.is_directed():
+        G = nx.DiGraph()
+        A = self._A
+    else:
+        G = nx.Graph()
+        A = self.get_property("L+")
+    G.add_nodes_from(self._key_to_id)
+    id_to_key = self.id_to_key
+    rows, cols, vals = A.to_values()
+    rows = (id_to_key[row] for row in rows.tolist())
+    cols = (id_to_key[col] for col in cols.tolist())
+    if edge_attribute is None:
+        G.add_edges_from(zip(rows, cols))
+    else:
+        G.add_weighted_edges_from(zip(rows, cols, vals), weight=edge_attribute)
+    # What else should we copy over?
+    return G
 
 
 def _cacheit(self, key, func, *args, **kwargs):

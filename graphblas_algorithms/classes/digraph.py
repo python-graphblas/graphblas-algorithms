@@ -545,9 +545,11 @@ class DiGraph:
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
     matrix_to_dicts = _utils.matrix_to_dicts
+    to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
     _cacheit = _utils._cacheit
 
+    # NetworkX methods
     def to_directed_class(self):
         return DiGraph
 
