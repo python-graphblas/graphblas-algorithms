@@ -5,6 +5,7 @@ from graphblas import Vector, binary, unary
 from graphblas.semiring import plus_first, plus_times
 
 from graphblas_algorithms.classes.digraph import to_graph
+from graphblas_algorithms.utils import get_all
 
 
 def pagerank_core(
@@ -28,18 +29,18 @@ def pagerank_core(
     if nstart is None:
         x[:] = 1.0 / N
     else:
-        denom = nstart.reduce(allow_empty=False).value
+        denom = nstart.reduce().get(0)
         if denom == 0:
-            raise ZeroDivisionError()
+            raise ZeroDivisionError("nstart sums to 0")
         x << nstart / denom
 
     # Personalization vector or scalar
     if personalization is None:
         p = 1.0 / N
     else:
-        denom = personalization.reduce(allow_empty=False).value
+        denom = personalization.reduce().get(0)
         if denom == 0:
-            raise ZeroDivisionError()
+            raise ZeroDivisionError("personalization sums to 0")
         p = (personalization / denom).new(name="p")
 
     # Inverse of row_degrees
@@ -64,7 +65,7 @@ def pagerank_core(
         dangling_mask(mask=~S.S) << 1.0
         # Fold alpha constant into dangling_weights (or dangling_mask)
         if dangling is not None:
-            dangling_weights = (alpha / dangling.reduce(allow_empty=False).value * dangling).new(
+            dangling_weights = (alpha / dangling.reduce().get(0) * dangling).new(
                 name="dangling_weights"
             )
         elif personalization is None:
@@ -95,7 +96,7 @@ def pagerank_core(
         x += semiring(w @ A)  # plus_first if A.ss.is_iso else plus_times
 
         # Check convergence, l1 norm: err = sum(abs(xprev - x))
-        xprev << binary.minus(xprev | x, require_monoid=False)
+        xprev << binary.minus(xprev | x)
         xprev << unary.abs(xprev)
         err = xprev.reduce().value
         if err < N * tol:
@@ -138,3 +139,6 @@ def pagerank(
         row_degrees=row_degrees,
     )
     return G.vector_to_dict(result, fillvalue=0.0)
+
+
+__all__ = get_all(__name__)

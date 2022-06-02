@@ -1,11 +1,8 @@
-from graphblas import agg, op, operator
+from graphblas import op, operator
 
 
 def get_reduce_to_vector(key, opname, methodname):
-    try:
-        op_ = op.from_string(opname)
-    except ValueError:
-        op_ = agg.from_string(opname)
+    op_ = op.from_string(opname)
     op_, opclass = operator.find_opclass(op_)
     keybase = key[:-1]
     if key[-1] == "-":
@@ -101,10 +98,7 @@ def get_reduce_to_vector(key, opname, methodname):
 
 
 def get_reduce_to_scalar(key, opname):
-    try:
-        op_ = op.from_string(opname)
-    except ValueError:
-        op_ = agg.from_string(opname)
+    op_ = op.from_string(opname)
     op_, opclass = operator.find_opclass(op_)
     keybase = key[:-1]
     if key[-1] == "-":

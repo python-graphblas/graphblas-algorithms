@@ -1,2 +1,2 @@
-from .digraph import DiGraph
-from .graph import Graph
+from .digraph import *
+from .graph import *
