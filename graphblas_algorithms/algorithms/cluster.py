@@ -1,6 +1,6 @@
 import numpy as np
 from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
-from graphblas.semiring import plus_pair, plus_times
+from graphblas.semiring import any_times, plus_pair, plus_times
 
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
@@ -284,17 +284,61 @@ def square_clustering_core(G, node_ids=None):
     return rv
 
 
+def square_clustering_core_full(G):
+    # Warning: only tested on undirected graphs
+    # Read-only matrices we'll use throughout the calculation
+    A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
+    D = degrees.diag(name="D")
+    P2 = plus_pair(A @ A.T).new(mask=~D.S, name="P2")
+
+    # Numerator: number of squares
+    # Based on https://arxiv.org/pdf/2007.11111.pdf (sigma_12, c_4)
+    Q = (P2 - 1).new(name="Q")
+    Q << Q * P2
+    squares = Q.reduce_rowwise().new(name="squares")
+    squares(squares.V, replace=True) << squares // 2  # Drop zeros
+
+    # Denominator is thought of as the total number of squares that could exist.
+    # We use the definition from https://arxiv.org/pdf/0710.0117v1.pdf (equation 2).
+    # First three contributions will become negative in the final step.
+    #
+    # (1) Subtract 1 for each u and 1 for each w for all combos: degrees * (degrees - 1)
+    denom = (degrees - 1).new(name="denom")
+    denom << denom * degrees
+
+    # (2) Subtract the number of squares
+    denom << binary.plus(denom & squares)
+
+    # (3) Subtract 1 for each edge where u-w or w-u are connected (which would make triangles)
+    Q << binary.first(P2 & A)
+    denom(binary.plus) << Q.reduce_rowwise()
+
+    # The main contribution to the denominator: degrees[u] + degrees[w] for each u-w combo.
+    # This is the only positive term.  We subtract all other terms from this one, hence rminus.
+    Q(A.S, replace=True) << plus_pair(A @ P2.T)
+    Q << any_times(Q @ D)
+    denom(binary.rminus) << Q.reduce_rowwise()
+
+    # And we're done!  This result does not include 0s
+    return (squares / denom).new(name="square_clustering")
+
+
 def square_clustering(G, nodes=None):
     G = to_undirected_graph(G)
     if len(G) == 0:
         return {}
-    if nodes in G:
+    elif nodes is None:
+        # Should we use this one for subsets of nodes as well?
+        result = square_clustering_core_full(G)
+        return G.vector_to_dict(result, fillvalue=0)
+    elif nodes in G:
         idx = G._key_to_id[nodes]
         result = square_clustering_core(G, [idx])
         return result.get(idx)
-    ids = G.list_to_ids(nodes)
-    result = square_clustering_core(G, ids)
-    return G.vector_to_dict(result)
+    else:
+        ids = G.list_to_ids(nodes)
+        result = square_clustering_core(G, ids)
+        return G.vector_to_dict(result)
 
 
 def generalized_degree_core(G, *, mask=None):
