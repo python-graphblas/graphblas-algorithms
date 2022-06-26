@@ -1,6 +1,6 @@
 import numpy as np
-from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
-from graphblas.semiring import any_times, plus_pair, plus_times
+from graphblas import Matrix, Vector, binary, monoid, replace, unary
+from graphblas.semiring import plus_first, plus_pair, plus_times
 
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
@@ -244,100 +244,141 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
         return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
 
 
-def square_clustering_core(G, node_ids=None):
-    # node_ids argument is a bit different from what we do elsewhere.
-    # Normally, we take a mask or vector in a `_core` function.
-    # By accepting an iterable here, it could be of node ids or node keys.
+def single_square_clustering_core(G, idx):
     A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
-    if node_ids is None:
-        # Can we do this better using SuiteSparse:GraphBLAS iteration?
-        node_ids = A.reduce_rowwise(monoid.any).new(name="node_ids")  # all nodes with edges
-    C = unary.positionj(A).new(name="C")
-    rv = Vector(float, A.nrows, name="square_clustering")
-    row = Vector(A.dtype, A.ncols, name="row")
-    M = Matrix(int, A.nrows, A.ncols, name="M")
-    Q = Matrix(int, A.nrows, A.ncols, name="Q")
-    for v in node_ids:
-        # Th mask M indicates the u and w neighbors of v to "iterate" over
-        row << A[v, :]
-        M << row.outer(row, binary.pair)
-        M << select.tril(M, -1)
-        # To compute q_v(u, w), the number of common neighbors of u and w other than v (squares),
-        # we first set the v'th column to zero, which lets us ignore v as a common neighbor.
-        Q << binary.isne(C, v)  # `isne` keeps the dtype as int
-        # Q: count the number of squares for each u-w combination!
-        Q(M.S, replace) << plus_times(Q @ Q.T)
-        # Total squares for v
-        squares = Q.reduce_scalar().get(0)
-        if squares == 0:
-            rv[v] = 0
-            continue
-        # Denominator is the total number of squares that could exist.
-        # First contribution is degrees[u] + degrees[w] for each u-w combo.
-        Q(M.S, replace) << degrees.outer(degrees, binary.plus)
-        deg_uw = Q.reduce_scalar().new()
-        # Then we subtract off # squares, 1 for each u and 1 for each w for all combos,
-        # and 1 for each edge where u-w or w-u are connected (which would make triangles).
-        Q << binary.pair(A & M)  # Are u-w connected?  Can skip if bipartite
-        denom = deg_uw.get(0) - (squares + 2 * M.nvals + 2 * Q.nvals)
-        rv[v] = squares / denom
-    return rv
-
-
-def square_clustering_core_full(G):
-    # Warning: only tested on undirected graphs
-    # Read-only matrices we'll use throughout the calculation
-    A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
-    D = degrees.diag(name="D")
-    P2 = plus_pair(A @ A.T).new(mask=~D.S, name="P2")
-
+    deg = degrees.get(idx, 0)
+    if deg <= 1:
+        return 0
+    # P2 from https://arxiv.org/pdf/2007.11111.pdf; we'll also use it as scratch
+    v = A[idx, :].new(name="v")
+    p2 = plus_pair(A.T @ v).new(name="p2")
+    del p2[idx]
+    # Denominator is thought of as the total number of squares that could exist.
+    # We use the definition from https://arxiv.org/pdf/0710.0117v1.pdf (equation 2).
+    #
+    # (1) Subtract 1 for each edge where u-w or w-u are connected (which would make triangles)
+    denom = -plus_first(p2 @ v).get(0)
     # Numerator: number of squares
     # Based on https://arxiv.org/pdf/2007.11111.pdf (sigma_12, c_4)
-    Q = (P2 - 1).new(name="Q")
-    Q << Q * P2
-    squares = Q.reduce_rowwise().new(name="squares")
-    squares(squares.V, replace=True) << squares // 2  # Drop zeros
+    p2(binary.times) << p2 - 1
+    squares = p2.reduce().get(0) // 2
+    if squares == 0:
+        return 0
+    # (2) Subtract 1 for each u and 1 for each w for all combos: degrees * (degrees - 1)
+    denom -= deg * (deg - 1)
+    # (3) The main contribution to the denominator: degrees[u] + degrees[w] for each u-w combo.
+    # This is the only positive term.
+    denom += plus_times(v @ degrees).value * (deg - 1)
+    # (4) Subtract the number of squares
+    denom -= squares
+    # And we're done!
+    return squares / denom
+
+
+def square_clustering_core(G, node_ids=None):
+    # Warning: only tested on undirected graphs.
+    # Also, it may use a lot of memory, because we compute `P2 = A @ A.T`
+    #
+    # Pseudocode:
+    #   P2(~degrees.diag().S) = plus_pair(A @ A.T)
+    #   tri = first(P2 & A).reduce_rowwise()
+    #   squares = (P2 * (P2 - 1)).reduce_rowwise() / 2
+    #   uw_count = degrees * (degrees - 1)
+    #   uw_degrees = plus_times(A @ degrees) * (degrees - 1)
+    #   square_clustering = squares / (uw_degrees - uw_count - tri - squares)
+    #
+    A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
+    # P2 from https://arxiv.org/pdf/2007.11111.pdf; we'll also use it as scratch
+    if node_ids is not None:
+        v = Vector.from_values(node_ids, True, size=degrees.size)
+        Asubset = binary.second(v & A).new(name="A_subset")
+    else:
+        Asubset = A
+        A = A.T
+    D = degrees.diag(name="D")
+    P2 = plus_pair(Asubset @ A).new(mask=~D.S, name="P2")
 
     # Denominator is thought of as the total number of squares that could exist.
     # We use the definition from https://arxiv.org/pdf/0710.0117v1.pdf (equation 2).
-    # First three contributions will become negative in the final step.
+    #   denom = uw_degrees - uw_count - tri - squares
     #
-    # (1) Subtract 1 for each u and 1 for each w for all combos: degrees * (degrees - 1)
-    denom = (degrees - 1).new(name="denom")
-    denom << denom * degrees
+    # (1) Subtract 1 for each edge where u-w or w-u are connected (i.e., triangles)
+    #   tri = first(P2 & A).reduce_rowwise()
+    D << binary.first(P2 & Asubset)
+    neg_denom = D.reduce_rowwise().new(name="neg_denom")
+    del D
 
-    # (2) Subtract the number of squares
-    denom << binary.plus(denom & squares)
+    # Numerator: number of squares
+    # Based on https://arxiv.org/pdf/2007.11111.pdf (sigma_12, c_4)
+    #   squares = (P2 * (P2 - 1)).reduce_rowwise() / 2
+    P2(binary.times) << P2 - 1
+    squares = P2.reduce_rowwise().new(name="squares")
+    del P2
+    squares(squares.V, replace) << binary.cdiv(squares, 2)  # Drop zeros
 
-    # (3) Subtract 1 for each edge where u-w or w-u are connected (which would make triangles)
-    Q << binary.first(P2 & A)
-    denom(binary.plus) << Q.reduce_rowwise()
+    # (2) Subtract 1 for each u and 1 for each w for all combos: degrees * (degrees - 1)
+    #   uw_count = degrees * (degrees - 1)
+    denom = (degrees - 1).new(mask=squares.S, name="denom")
+    neg_denom(binary.plus) << degrees * denom
 
-    # The main contribution to the denominator: degrees[u] + degrees[w] for each u-w combo.
-    # This is the only positive term.  We subtract all other terms from this one, hence rminus.
-    Q(A.S, replace=True) << plus_pair(A @ P2.T)
-    Q << any_times(Q @ D)
-    denom(binary.rminus) << Q.reduce_rowwise()
+    # (3) The main contribution to the denominator: degrees[u] + degrees[w] for each u-w combo.
+    #   uw_degrees = plus_times(A @ degrees) * (degrees - 1)
+    # denom(binary.times) << plus_times(A @ degrees)
+    denom(binary.times, denom.S) << plus_times(Asubset @ degrees)
+
+    # (4) Subtract the number of squares
+    denom(binary.minus) << binary.plus(neg_denom & squares)
 
     # And we're done!  This result does not include 0s
     return (squares / denom).new(name="square_clustering")
 
 
-def square_clustering(G, nodes=None):
+def _split(L, k):
+    """Split a list into approximately-equal parts"""
+    N = len(L)
+    start = 0
+    for i in range(1, k):
+        stop = (N * i + k - 1) // k
+        if stop != start:
+            yield L[start:stop]
+            start = stop
+    if stop != N:
+        yield L[stop:]
+
+
+def _square_clustering_split(G, node_ids=None, *, nsplits):
+    if node_ids is None:
+        node_ids = G._A.reduce_rowwise(monoid.any).to_values()[0]
+    result = None
+    for chunk_ids in _split(node_ids, nsplits):
+        res = square_clustering_core(G, chunk_ids)
+        if result is None:
+            result = res
+        else:
+            result << monoid.any(result | res)
+    return result
+
+
+def square_clustering(G, nodes=None, *, nsplits=None):
     G = to_undirected_graph(G)
     if len(G) == 0:
         return {}
     elif nodes is None:
         # Should we use this one for subsets of nodes as well?
-        result = square_clustering_core_full(G)
+        if nsplits is None:
+            result = square_clustering_core(G)
+        else:
+            result = _square_clustering_split(G, nsplits=nsplits)
         return G.vector_to_dict(result, fillvalue=0)
     elif nodes in G:
         idx = G._key_to_id[nodes]
-        result = square_clustering_core(G, [idx])
-        return result.get(idx)
+        return single_square_clustering_core(G, idx)
     else:
         ids = G.list_to_ids(nodes)
-        result = square_clustering_core(G, ids)
+        if nsplits is None:
+            result = square_clustering_core(G, ids)
+        else:
+            result = _square_clustering_split(G, ids, nsplits=nsplits)
         return G.vector_to_dict(result)
 
 
