@@ -26,11 +26,9 @@ def orig():
         and not isinstance(val, types.ModuleType)
         and key not in {"Graph", "DiGraph"}
     }
-    replacements["pagerank_scipy"] = (nx.pagerank_scipy, ga.pagerank)
-    replacements["pagerank_numpy"] = (nx.pagerank_numpy, ga.pagerank)
     for key, (orig_val, new_val) in replacements.items():
         setattr(orig, key, orig_val)
-        if key not in {"pagerank_numpy"}:
+        if key not in {}:
             # Ignore keyword-only parameters (works until NetworkX has keyword-only arguments)
             sig = inspect.signature(new_val)
             sig = sig.replace(
