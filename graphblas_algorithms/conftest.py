@@ -26,12 +26,15 @@ def orig():
         and not isinstance(val, types.ModuleType)
         and key not in {"Graph", "DiGraph"}
     }
-    replacements["pagerank_scipy"] = (nx.pagerank_scipy, ga.pagerank)
-    replacements["pagerank_numpy"] = (nx.pagerank_numpy, ga.pagerank)
     for key, (orig_val, new_val) in replacements.items():
         setattr(orig, key, orig_val)
-        if key not in {"pagerank_numpy"}:
-            assert inspect.signature(orig_val) == inspect.signature(new_val), key
+        if key not in {}:
+            # Ignore keyword-only parameters (works until NetworkX has keyword-only arguments)
+            sig = inspect.signature(new_val)
+            sig = sig.replace(
+                parameters=[x for x in sig.parameters.values() if x.kind != x.KEYWORD_ONLY]
+            )
+            assert inspect.signature(orig_val) == sig, key
     for name, module in sys.modules.items():
         if not name.startswith("networkx.") and name != "networkx":
             continue
