@@ -100,6 +100,13 @@ def list_to_ids(self, nodes):
     return [self._key_to_id[key] for key in nodes]
 
 
+def list_to_keys(self, indices):
+    if indices is None:
+        return None
+    id2key = self.id_to_key
+    return [id2key[idx] for idx in indices]
+
+
 def vector_to_dict(self, v, *, mask=None, fillvalue=None):
     if mask is not None:
         if fillvalue is not None and v.nvals < mask.parent.nvals:
