@@ -258,6 +258,7 @@ class Graph:
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
+    list_to_keys = _utils.list_to_keys
     matrix_to_dicts = _utils.matrix_to_dicts
     to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
