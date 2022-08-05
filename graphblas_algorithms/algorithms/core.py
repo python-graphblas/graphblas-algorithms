@@ -36,6 +36,7 @@ def k_truss_core(G, k):
 
 
 @not_implemented_for("directed")
+@not_implemented_for("multigraph")
 def k_truss(G, k):
     G = to_undirected_graph(G, dtype=bool)
     result = k_truss_core(G, k)
