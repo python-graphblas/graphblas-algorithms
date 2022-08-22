@@ -16,6 +16,7 @@ setup(
     name="graphblas-algorithms",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
+    entry_points={'networkx.plugins': 'graphblas = graphblas_algorithms.interface:Dispatcher'},
     description="Graph algorithms written in GraphBLAS",
     long_description=long_description,
     long_description_content_type="text/markdown",

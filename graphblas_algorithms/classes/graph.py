@@ -189,6 +189,8 @@ class AutoDict(dict):
 
 
 class Graph:
+    __networkx_plugin__ = "graphblas"
+
     # "-" properties ignore self-edges, "+" properties include self-edges
     # Ideally, we would have "max_rowwise+" come before "max_element+".
     _property_priority = defaultdict(
