@@ -13,19 +13,32 @@ class Orig:
     pass
 
 
+def do_replace(nx_mod, key, val):
+    return (
+        not key.startswith("_")
+        and hasattr(nx_mod, key)
+        and not isinstance(val, types.ModuleType)
+        and key not in {"Graph", "DiGraph"}
+    )
+
+
 @pytest.fixture(scope="session", autouse=True)
 def orig():
     """Monkey-patch networkx with functions from graphblas-algorithms"""
     # This doesn't replace functions that have been renamed such as via `import xxx as _xxx`
     orig = Orig()
     replacements = {
-        key: (getattr(nx, key), val)
-        for key, val in vars(ga).items()
-        if not key.startswith("_")
-        and hasattr(nx, key)
-        and not isinstance(val, types.ModuleType)
-        and key not in {"Graph", "DiGraph"}
+        key: (getattr(nx, key), val) for key, val in vars(ga).items() if do_replace(nx, key, val)
     }
+    for modname in ["structuralholes", "tournament"]:
+        nx_mod = getattr(nx.algorithms, modname)
+        ga_mod = getattr(ga.algorithms, modname)
+        replacements.update(
+            (key, (getattr(nx_mod, key), val))
+            for key, val in vars(ga_mod).items()
+            if do_replace(nx_mod, key, val)
+        )
+
     for key, (orig_val, new_val) in replacements.items():
         setattr(orig, key, orig_val)
         if key not in {}:
