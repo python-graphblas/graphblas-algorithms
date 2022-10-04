@@ -545,8 +545,10 @@ class DiGraph:
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
     matrix_to_dicts = _utils.matrix_to_dicts
+    set_to_vector = _utils.set_to_vector
     to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
+    vector_to_set = _utils.vector_to_set
     _cacheit = _utils._cacheit
 
     # NetworkX methods

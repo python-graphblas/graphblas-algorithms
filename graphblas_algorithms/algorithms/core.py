@@ -1,5 +1,6 @@
-from graphblas import Matrix, select, monoid, semiring
-from graphblas_algorithms.classes.graph import to_undirected_graph, Graph
+from graphblas import Matrix, monoid, select, semiring
+
+from graphblas_algorithms.classes.graph import Graph, to_undirected_graph
 from graphblas_algorithms.utils import get_all, not_implemented_for
 
 
