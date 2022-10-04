@@ -75,7 +75,8 @@ def dict_to_vector(self, d, *, size=None, dtype=None, name=None):
         return None
     if size is None:
         size = len(self)
-    indices, values = zip(*((self._key_to_id[key], val) for key, val in d.items()))
+    key_to_id = self._key_to_id
+    indices, values = zip(*((key_to_id[key], val) for key, val in d.items()))
     return Vector.from_values(indices, values, size=size, dtype=dtype, name=name)
 
 
@@ -84,7 +85,8 @@ def list_to_vector(self, nodes, dtype=bool, *, size=None, name=None):
         return None
     if size is None:
         size = len(self)
-    index = [self._key_to_id[key] for key in nodes]
+    key_to_id = self._key_to_id
+    index = [key_to_id[key] for key in nodes]
     return Vector.from_values(index, True, size=size, dtype=dtype, name=name)
 
 
@@ -97,14 +99,29 @@ def list_to_mask(self, nodes, *, size=None, name="mask"):
 def list_to_ids(self, nodes):
     if nodes is None:
         return None
-    return [self._key_to_id[key] for key in nodes]
+    key_to_id = self._key_to_id
+    return [key_to_id[key] for key in nodes]
 
 
 def list_to_keys(self, indices):
     if indices is None:
         return None
-    id2key = self.id_to_key
-    return [id2key[idx] for idx in indices]
+    id_to_key = self.id_to_key
+    return [id_to_key[idx] for idx in indices]
+
+
+def set_to_vector(self, nodes, dtype=bool, *, ignore_extra=False, size=None, name=None):
+    if nodes is None:
+        return None
+    if size is None:
+        size = len(self)
+    key_to_id = self._key_to_id
+    if ignore_extra:
+        if not isinstance(nodes, set):
+            nodes = set(nodes)
+        nodes = nodes & key_to_id.keys()
+    index = [key_to_id[key] for key in nodes]
+    return Vector.from_values(index, True, size=size, dtype=dtype, name=name)
 
 
 def vector_to_dict(self, v, *, mask=None, fillvalue=None):
@@ -115,6 +132,12 @@ def vector_to_dict(self, v, *, mask=None, fillvalue=None):
         v(mask=~v.S) << fillvalue
     id_to_key = self.id_to_key
     return {id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+
+
+def vector_to_set(self, v):
+    id_to_key = self.id_to_key
+    indices, _ = v.to_values(values=False, sort=False)
+    return {id_to_key[index] for index in indices}
 
 
 def matrix_to_dicts(self, A):
