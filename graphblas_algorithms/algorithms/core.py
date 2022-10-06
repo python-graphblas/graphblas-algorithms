@@ -1,10 +1,11 @@
 from graphblas import Matrix, monoid, select, semiring
 
-from graphblas_algorithms.classes.graph import Graph, to_undirected_graph
-from graphblas_algorithms.utils import get_all, not_implemented_for
+from graphblas_algorithms.classes.graph import Graph
+
+__all__ = ["k_truss"]
 
 
-def k_truss_core(G, k):
+def k_truss(G: Graph, k) -> Graph:
     # Ignore self-edges
     S = G.get_property("offdiag")
 
@@ -34,14 +35,3 @@ def k_truss_core(G, k):
     keys = G.list_to_keys(indices)
     key_to_id = dict(zip(keys, range(len(indices))))
     return Graph.from_graphblas(Ktruss, key_to_id=key_to_id)
-
-
-@not_implemented_for("directed")
-@not_implemented_for("multigraph")
-def k_truss(G, k):
-    G = to_undirected_graph(G, dtype=bool)
-    result = k_truss_core(G, k)
-    return result.to_networkx()
-
-
-__all__ = get_all(__name__)

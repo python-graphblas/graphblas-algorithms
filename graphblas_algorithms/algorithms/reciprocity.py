@@ -1,37 +1,17 @@
 from graphblas import binary
 from networkx import NetworkXError
 
-from graphblas_algorithms.classes.digraph import to_directed_graph
-from graphblas_algorithms.utils import get_all, not_implemented_for
+__all__ = ["reciprocity", "overall_reciprocity"]
 
 
-def reciprocity_core(G, mask=None):
+def reciprocity(G, mask=None):
     overlap, total_degrees = G.get_properties("recip_degrees+ total_degrees+", mask=mask)
     return binary.truediv(2 * overlap | total_degrees, left_default=0, right_default=0).new(
         name="reciprocity"
     )
 
 
-@not_implemented_for("undirected", "multigraph")
-def reciprocity(G, nodes=None):
-    if nodes is None:
-        return overall_reciprocity(G)
-    G = to_directed_graph(G, dtype=bool)
-    if nodes in G:
-        mask = G.list_to_mask([nodes])
-        result = reciprocity_core(G, mask=mask)
-        rv = result[G._key_to_id[nodes]].value
-        if rv is None:
-            raise NetworkXError("Not defined for isolated nodes.")
-        else:
-            return rv
-    else:
-        mask = G.list_to_mask(nodes)
-        result = reciprocity_core(G, mask=mask)
-        return G.vector_to_dict(result, mask=mask)
-
-
-def overall_reciprocity_core(G):
+def overall_reciprocity(G):
     n_all_edge = G._A.nvals
     if n_all_edge == 0:
         raise NetworkXError("Not defined for empty graphs")
@@ -39,12 +19,3 @@ def overall_reciprocity_core(G):
     if has_self_edges:
         n_overlap_edges -= G.get_property("diag").nvals
     return n_overlap_edges / n_all_edge
-
-
-@not_implemented_for("undirected", "multigraph")
-def overall_reciprocity(G):
-    G = to_directed_graph(G, dtype=bool)
-    return overall_reciprocity_core(G)
-
-
-__all__ = get_all(__name__)

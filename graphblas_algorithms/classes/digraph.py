@@ -4,10 +4,10 @@ import networkx as nx
 from graphblas import Matrix, Vector, binary, select, unary
 
 import graphblas_algorithms as ga
-from graphblas_algorithms.utils import get_all
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
+from .graph import Graph
 
 
 def get_A(G, mask=None):
@@ -462,7 +462,7 @@ class AutoDict(dict):
         raise KeyError(key)
 
 
-class DiGraph:
+class DiGraph(Graph):
     __networkx_plugin__ = "graphblas"
 
     # "-" properties ignore self-edges, "+" properties include self-edges
@@ -594,4 +594,9 @@ class DiGraph:
         return True
 
 
-__all__ = get_all(__name__)
+class MultiDiGraph(DiGraph):
+    def is_multigraph(self):
+        return True
+
+
+__all__ = ["DiGraph", "MultiDiGraph"]

@@ -4,7 +4,6 @@ import networkx as nx
 from graphblas import Matrix, Vector, select
 
 import graphblas_algorithms as ga
-from graphblas_algorithms.utils import get_all
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
@@ -309,4 +308,9 @@ class Graph:
         return False
 
 
-__all__ = get_all(__name__)
+class MultiGraph(Graph):
+    def is_multigraph(self):
+        return True
+
+
+__all__ = ["Graph", "MultiGraph"]

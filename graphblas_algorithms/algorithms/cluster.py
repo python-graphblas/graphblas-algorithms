@@ -1,13 +1,27 @@
 import numpy as np
-from graphblas import Matrix, Vector, binary, monoid, replace, unary
+from graphblas import Matrix, Vector, binary, replace, unary
 from graphblas.semiring import plus_first, plus_pair, plus_times
 
-from graphblas_algorithms.classes.digraph import to_graph
-from graphblas_algorithms.classes.graph import to_undirected_graph
-from graphblas_algorithms.utils import get_all, not_implemented_for
+__all__ = [
+    "single_triangle",
+    "triangles",
+    "total_triangles",
+    "transitivity",
+    "transitivity_directed",
+    "clustering",
+    "clustering_directed",
+    "single_clustering",
+    "single_clustering_directed",
+    "average_clustering",
+    "average_clustering_directed",
+    "single_square_clustering",
+    "square_clustering",
+    "generalized_degree",
+    "single_generalized_degree",
+]
 
 
-def single_triangle_core(G, node, *, weighted=False):
+def single_triangle(G, node, *, weighted=False):
     index = G._key_to_id[node]
     r = G._A[index, :].new()
     # Pretty much all the time is spent here taking TRIL, which is used to ignore self-edges
@@ -27,7 +41,7 @@ def single_triangle_core(G, node, *, weighted=False):
     return val.reduce().get(0)
 
 
-def triangles_core(G, *, weighted=False, mask=None):
+def triangles(G, *, weighted=False, mask=None):
     # Ignores self-edges
     # Can we apply the mask earlier in the computation?
     L, U = G.get_properties("L- U-")
@@ -50,27 +64,15 @@ def triangles_core(G, *, weighted=False, mask=None):
     ).new(name="triangles")
 
 
-@not_implemented_for("directed")
-def triangles(G, nodes=None):
-    G = to_undirected_graph(G, dtype=bool)
-    if len(G) == 0:
-        return {}
-    if nodes in G:
-        return single_triangle_core(G, nodes)
-    mask = G.list_to_mask(nodes)
-    result = triangles_core(G, mask=mask)
-    return G.vector_to_dict(result, mask=mask, fillvalue=0)
-
-
-def total_triangles_core(G):
+def total_triangles(G):
     # We use SandiaDot method, because it's usually the fastest on large graphs.
     # For smaller graphs, Sandia method is usually faster: plus_pair(L @ L).new(mask=L.S)
     L, U = G.get_properties("L- U-")
     return plus_pair(L @ U.T).new(mask=L.S).reduce_scalar().get(0)
 
 
-def transitivity_core(G):
-    numerator = total_triangles_core(G)
+def transitivity(G):
+    numerator = total_triangles(G)
     if numerator == 0:
         return 0
     degrees = G.get_property("degrees-")
@@ -78,7 +80,7 @@ def transitivity_core(G):
     return 6 * numerator / denom
 
 
-def transitivity_directed_core(G):
+def transitivity_directed(G):
     # XXX" is transitivity supposed to work on directed graphs like this?
     A, AT = G.get_properties("offdiag AT")
     numerator = plus_pair(A @ A.T).new(mask=A.S).reduce_scalar().get(0)
@@ -89,25 +91,14 @@ def transitivity_directed_core(G):
     return numerator / denom
 
 
-def transitivity(G):
-    G = to_graph(G, dtype=bool)  # directed or undirected
-    if len(G) == 0:
-        return 0
-    if G.is_directed():
-        func = transitivity_directed_core
-    else:
-        func = transitivity_core
-    return G._cacheit("transitivity", func, G)
-
-
-def clustering_core(G, *, weighted=False, mask=None):
-    tri = triangles_core(G, weighted=weighted, mask=mask)
+def clustering(G, *, weighted=False, mask=None):
+    tri = triangles(G, weighted=weighted, mask=mask)
     degrees = G.get_property("degrees-")
     denom = degrees * (degrees - 1)
     return (2 * tri / denom).new(name="clustering")
 
 
-def clustering_directed_core(G, *, weighted=False, mask=None):
+def clustering_directed(G, *, weighted=False, mask=None):
     # Can we apply the mask earlier in the computation?
     A, AT = G.get_properties("offdiag AT")
     if weighted:
@@ -135,8 +126,8 @@ def clustering_directed_core(G, *, weighted=False, mask=None):
     return (tri / denom).new(name="clustering")
 
 
-def single_clustering_core(G, node, *, weighted=False):
-    tri = single_triangle_core(G, node, weighted=weighted)
+def single_clustering(G, node, *, weighted=False):
+    tri = single_triangle(G, node, weighted=weighted)
     if tri == 0:
         return 0
     index = G._key_to_id[node]
@@ -156,7 +147,7 @@ def single_clustering_core(G, node, *, weighted=False):
     return 2 * tri / denom
 
 
-def single_clustering_directed_core(G, node, *, weighted=False):
+def single_clustering_directed(G, node, *, weighted=False):
     A = G.get_property("offdiag")
     index = G._key_to_id[node]
     if weighted:
@@ -182,26 +173,8 @@ def single_clustering_directed_core(G, node, *, weighted=False):
     return tri / (total_degrees * (total_degrees - 1) - 2 * recip_degrees)
 
 
-def clustering(G, nodes=None, weight=None):
-    G = to_graph(G, weight=weight)  # to directed or undirected
-    if len(G) == 0:
-        return {}
-    weighted = weight is not None
-    if nodes in G:
-        if G.is_directed():
-            return single_clustering_directed_core(G, nodes, weighted=weighted)
-        else:
-            return single_clustering_core(G, nodes, weighted=weighted)
-    mask = G.list_to_mask(nodes)
-    if G.is_directed():
-        result = clustering_directed_core(G, weighted=weighted, mask=mask)
-    else:
-        result = clustering_core(G, weighted=weighted, mask=mask)
-    return G.vector_to_dict(result, mask=mask, fillvalue=0.0)
-
-
-def average_clustering_core(G, *, count_zeros=True, weighted=False, mask=None):
-    c = clustering_core(G, weighted=weighted, mask=mask)
+def average_clustering(G, *, count_zeros=True, weighted=False, mask=None):
+    c = clustering(G, weighted=weighted, mask=mask)
     val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
@@ -211,8 +184,8 @@ def average_clustering_core(G, *, count_zeros=True, weighted=False, mask=None):
         return val / c.size
 
 
-def average_clustering_directed_core(G, *, count_zeros=True, weighted=False, mask=None):
-    c = clustering_directed_core(G, weighted=weighted, mask=mask)
+def average_clustering_directed(G, *, count_zeros=True, weighted=False, mask=None):
+    c = clustering_directed(G, weighted=weighted, mask=mask)
     val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
@@ -222,29 +195,7 @@ def average_clustering_directed_core(G, *, count_zeros=True, weighted=False, mas
         return val / c.size
 
 
-def average_clustering(G, nodes=None, weight=None, count_zeros=True):
-    G = to_graph(G, weight=weight)  # to directed or undirected
-    if len(G) == 0:
-        raise ZeroDivisionError()
-    weighted = weight is not None
-    mask = G.list_to_mask(nodes)
-    if G.is_directed():
-        func = average_clustering_directed_core
-    else:
-        func = average_clustering_core
-    if mask is None:
-        return G._cacheit(
-            f"average_clustering(count_zeros={count_zeros})",
-            func,
-            G,
-            weighted=weighted,
-            count_zeros=count_zeros,
-        )
-    else:
-        return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
-
-
-def single_square_clustering_core(G, idx):
+def single_square_clustering(G, idx):
     A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
     deg = degrees.get(idx, 0)
     if deg <= 1:
@@ -275,7 +226,7 @@ def single_square_clustering_core(G, idx):
     return squares / denom
 
 
-def square_clustering_core(G, node_ids=None):
+def square_clustering(G, node_ids=None):
     # Warning: only tested on undirected graphs.
     # Also, it may use a lot of memory, because we compute `P2 = A @ A.T`
     #
@@ -333,56 +284,7 @@ def square_clustering_core(G, node_ids=None):
     return (squares / denom).new(name="square_clustering")
 
 
-def _split(L, k):
-    """Split a list into approximately-equal parts"""
-    N = len(L)
-    start = 0
-    for i in range(1, k):
-        stop = (N * i + k - 1) // k
-        if stop != start:
-            yield L[start:stop]
-            start = stop
-    if stop != N:
-        yield L[stop:]
-
-
-def _square_clustering_split(G, node_ids=None, *, nsplits):
-    if node_ids is None:
-        node_ids = G._A.reduce_rowwise(monoid.any).to_values()[0]
-    result = None
-    for chunk_ids in _split(node_ids, nsplits):
-        res = square_clustering_core(G, chunk_ids)
-        if result is None:
-            result = res
-        else:
-            result << monoid.any(result | res)
-    return result
-
-
-def square_clustering(G, nodes=None, *, nsplits=None):
-    G = to_undirected_graph(G)
-    if len(G) == 0:
-        return {}
-    elif nodes is None:
-        # Should we use this one for subsets of nodes as well?
-        if nsplits is None:
-            result = square_clustering_core(G)
-        else:
-            result = _square_clustering_split(G, nsplits=nsplits)
-        return G.vector_to_dict(result, fillvalue=0)
-    elif nodes in G:
-        idx = G._key_to_id[nodes]
-        return single_square_clustering_core(G, idx)
-    else:
-        ids = G.list_to_ids(nodes)
-        if nsplits is None:
-            result = square_clustering_core(G, ids)
-        else:
-            result = _square_clustering_split(G, ids, nsplits=nsplits)
-        return G.vector_to_dict(result)
-
-
-def generalized_degree_core(G, *, mask=None):
+def generalized_degree(G, *, mask=None):
     # Not benchmarked or optimized
     A = G.get_property("offdiag")
     Tri = Matrix(int, A.nrows, A.ncols, name="Tri")
@@ -410,25 +312,9 @@ def generalized_degree_core(G, *, mask=None):
     )
 
 
-def single_generalized_degree_core(G, node):
+def single_generalized_degree(G, node):
     # Not benchmarked or optimized
     index = G._key_to_id[node]
     v = Vector(bool, len(G))
     v[index] = True
-    return generalized_degree_core(G, mask=v.S)[index, :].new(name=f"generalized_degree_{index}")
-
-
-@not_implemented_for("directed")
-def generalized_degree(G, nodes=None):
-    G = to_undirected_graph(G)
-    if len(G) == 0:
-        return {}
-    if nodes in G:
-        result = single_generalized_degree_core(G, nodes)
-        return G.vector_to_dict(result)
-    mask = G.list_to_mask(nodes)
-    result = generalized_degree_core(G, mask=mask)
-    return G.matrix_to_dicts(result)
-
-
-__all__ = get_all(__name__)
+    return generalized_degree(G, mask=v.S)[index, :].new(name=f"generalized_degree_{index}")
