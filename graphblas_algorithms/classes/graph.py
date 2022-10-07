@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-import networkx as nx
 from graphblas import Matrix, Vector, select
 
 import graphblas_algorithms as ga
@@ -153,12 +152,18 @@ def to_undirected_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid undirected graph
     if isinstance(G, Graph):
         return G
-    elif isinstance(G, nx.Graph):
-        return Graph.from_networkx(G, weight=weight, dtype=dtype)
-    elif isinstance(G, Matrix):
+    if isinstance(G, Matrix):
         return Graph.from_graphblas(G)
-    else:
-        raise TypeError()
+
+    try:
+        import networkx as nx
+
+        if isinstance(G, nx.Graph):
+            return Graph.from_networkx(G, weight=weight, dtype=dtype)
+    except ImportError:
+        pass
+
+    raise TypeError()
 
 
 class AutoDict(dict):

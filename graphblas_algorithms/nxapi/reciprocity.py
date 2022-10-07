@@ -29,4 +29,7 @@ def reciprocity(G, nodes=None):
 @not_implemented_for("undirected", "multigraph")
 def overall_reciprocity(G):
     G = to_directed_graph(G, dtype=bool)
-    return algorithms.overall_reciprocity(G)
+    try:
+        return algorithms.overall_reciprocity(G)
+    except algorithms.exceptions.EmptyGraphError as e:
+        raise NetworkXError("Not defined for empty graphs") from e

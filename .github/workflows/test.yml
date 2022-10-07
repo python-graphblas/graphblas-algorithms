@@ -41,8 +41,11 @@ jobs:
           black . --check --diff
       - name: PyTest
         run: |
+          python -c 'import sys, graphblas_algorithms; assert "networkx" not in sys.modules'
           coverage run --branch -m pytest -v
+          coverage report
           NETWORKX_GRAPH_CONVERT=graphblas pytest --pyargs networkx --cov --cov-append
+          coverage report
           coverage xml
       - name: Coverage
         uses: codecov/codecov-action@v2

@@ -4,3 +4,7 @@ class GraphBlasAlgorithmException(Exception):
 
 class ConvergenceFailure(GraphBlasAlgorithmException):
     pass
+
+
+class EmptyGraphError(GraphBlasAlgorithmException):
+    pass

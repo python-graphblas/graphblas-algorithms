@@ -1,5 +1,6 @@
 from graphblas import binary
-from networkx import NetworkXError
+
+from .exceptions import EmptyGraphError
 
 __all__ = ["reciprocity", "overall_reciprocity"]
 
@@ -14,7 +15,7 @@ def reciprocity(G, mask=None):
 def overall_reciprocity(G):
     n_all_edge = G._A.nvals
     if n_all_edge == 0:
-        raise NetworkXError("Not defined for empty graphs")
+        raise EmptyGraphError("Not defined for empty graphs")
     n_overlap_edges, has_self_edges = G.get_properties("total_recip+ has_self_edges")
     if has_self_edges:
         n_overlap_edges -= G.get_property("diag").nvals

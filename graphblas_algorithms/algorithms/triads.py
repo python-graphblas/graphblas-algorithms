@@ -5,7 +5,6 @@ __all__ = ["is_triad"]
 
 
 def is_triad(G):
-    # TODO: have DiGraph inherit from Graph to better match NetworkX
     return (
         isinstance(G, (Graph, DiGraph))
         and G.is_directed()
