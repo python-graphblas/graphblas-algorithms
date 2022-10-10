@@ -10,6 +10,9 @@ class Dispatcher:
     # Boundary
     edge_boundary = nxapi.boundary.edge_boundary
     node_boundary = nxapi.boundary.node_boundary
+    # Community
+    inter_community_edges = nxapi.community.quality.inter_community_edges
+    intra_community_edges = nxapi.community.quality.intra_community_edges
     # Cuts
     boundary_expansion = nxapi.cuts.boundary_expansion
     conductance = nxapi.cuts.conductance
@@ -43,6 +46,8 @@ class Dispatcher:
     # Regular
     is_k_regular = nxapi.regular.is_k_regular
     is_regular = nxapi.regular.is_regular
+    # Shortest Paths
+    has_path = nxapi.shortest_paths.generic.has_path
     # Simple Paths
     is_simple_path = nxapi.simple_paths.is_simple_path
     # S Metric
