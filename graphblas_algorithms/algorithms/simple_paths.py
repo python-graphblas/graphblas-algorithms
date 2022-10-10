@@ -1,10 +1,9 @@
 from graphblas import Matrix, binary
 
-from graphblas_algorithms.classes.digraph import to_graph
-from graphblas_algorithms.utils import get_all
+__all__ = ["is_simple_path"]
 
 
-def is_simple_path_core(G, nodes):
+def is_simple_path(G, nodes):
     if len(nodes) == 0:
         return False
     if len(nodes) == 1:
@@ -28,11 +27,3 @@ def is_simple_path_core(G, nodes):
     #         return False
     #     prev = cur
     # return True
-
-
-def is_simple_path(G, nodes):
-    G = to_graph(G)
-    return is_simple_path_core(G, nodes)
-
-
-__all__ = get_all(__name__)

@@ -1,15 +1,14 @@
-from warnings import warn
-
-import networkx as nx
 from graphblas import Vector, binary, unary
 from graphblas.semiring import plus_first, plus_times
 
-from graphblas_algorithms.classes.digraph import to_graph
-from graphblas_algorithms.utils import get_all
+from graphblas_algorithms import Graph
+from graphblas_algorithms.algorithms.exceptions import ConvergenceFailure
+
+__all__ = ["pagerank"]
 
 
-def pagerank_core(
-    G,
+def pagerank(
+    G: Graph,
     alpha=0.85,
     personalization=None,
     max_iter=100,
@@ -18,7 +17,7 @@ def pagerank_core(
     dangling=None,
     row_degrees=None,
     name="pagerank",
-):
+) -> Vector:
     A = G._A
     N = A.nrows
     if A.nvals == 0:
@@ -102,43 +101,4 @@ def pagerank_core(
         if err < N * tol:
             x.name = name
             return x
-    raise nx.PowerIterationFailedConvergence(max_iter)
-
-
-def pagerank(
-    G,
-    alpha=0.85,
-    personalization=None,
-    max_iter=100,
-    tol=1e-06,
-    nstart=None,
-    weight="weight",
-    dangling=None,
-):
-    warn("", DeprecationWarning, stacklevel=2)
-    G = to_graph(G, weight=weight, dtype=float)
-    N = len(G)
-    if N == 0:
-        return {}
-    # We'll normalize initial, personalization, and dangling vectors later
-    x = G.dict_to_vector(nstart, dtype=float, name="nstart")
-    p = G.dict_to_vector(personalization, dtype=float, name="personalization")
-    row_degrees = G.get_property("plus_rowwise+")  # XXX: What about self-edges?
-    if dangling is not None and row_degrees.nvals < N:
-        dangling_weights = G.dict_to_vector(dangling, dtype=float, name="dangling")
-    else:
-        dangling_weights = None
-    result = pagerank_core(
-        G,
-        alpha=alpha,
-        personalization=p,
-        max_iter=max_iter,
-        tol=tol,
-        nstart=x,
-        dangling=dangling_weights,
-        row_degrees=row_degrees,
-    )
-    return G.vector_to_dict(result, fillvalue=0.0)
-
-
-__all__ = get_all(__name__)
+    raise ConvergenceFailure(max_iter)

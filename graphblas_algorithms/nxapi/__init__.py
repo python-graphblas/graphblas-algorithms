@@ -1,4 +1,3 @@
-from . import exceptions
 from .boundary import *
 from .cluster import *
 from .core import *

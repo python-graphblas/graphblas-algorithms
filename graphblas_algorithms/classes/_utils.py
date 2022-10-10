@@ -1,5 +1,4 @@
 import graphblas as gb
-import networkx as nx
 import numpy as np
 from graphblas import Matrix, Vector, binary
 from graphblas.matrix import TransposedMatrix
@@ -165,6 +164,8 @@ def matrix_to_dicts(self, A):
 
 
 def to_networkx(self, edge_attribute="weight"):
+    import networkx as nx
+
     # Not covered yet, but will probably be useful soon
     if self.is_directed():
         G = nx.DiGraph()

@@ -1,11 +1,9 @@
 from graphblas import monoid
 
-from graphblas_algorithms.classes.digraph import to_graph
-from graphblas_algorithms.classes.graph import to_undirected_graph
-from graphblas_algorithms.utils import get_all, not_implemented_for
+__all__ = ["is_regular", "is_k_regular"]
 
 
-def is_regular_core(G):
+def is_regular(G):
     if not G.is_directed():
         degrees = G.get_property("degrees+")
         if degrees.nvals != degrees.size:
@@ -26,22 +24,8 @@ def is_regular_core(G):
         return (column_degrees == d).reduce(monoid.land).value
 
 
-def is_regular(G):
-    G = to_graph(G)
-    return is_regular_core(G)
-
-
-def is_k_regular_core(G, k):
+def is_k_regular(G, k):
     degrees = G.get_property("degrees+")
     if degrees.nvals != degrees.size:
         return False
     return (degrees == k).reduce(monoid.land).value
-
-
-@not_implemented_for("directed")
-def is_k_regular(G, k):
-    G = to_undirected_graph(G)
-    return is_k_regular_core(G, k)
-
-
-__all__ = get_all(__name__)

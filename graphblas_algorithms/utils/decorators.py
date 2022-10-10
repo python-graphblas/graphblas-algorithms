@@ -1,11 +1,12 @@
 from graphblas import Matrix
-from networkx.utils.decorators import not_implemented_for as _not_implemented_for
 
-from ._misc import get_all
+__all__ = ["not_implemented_for"]
 
 
 def not_implemented_for(*graph_types):
-    rv = _not_implemented_for(*graph_types)
+    import networkx.utils.decorators
+
+    rv = networkx.utils.decorators.not_implemented_for(*graph_types)
     func = rv._func
 
     def inner(g):
@@ -17,6 +18,3 @@ def not_implemented_for(*graph_types):
 
     rv._func = inner
     return rv
-
-
-__all__ = get_all(__name__)

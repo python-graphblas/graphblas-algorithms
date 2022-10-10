@@ -1,13 +1,12 @@
 from collections import defaultdict
 
-import networkx as nx
 from graphblas import Matrix, Vector, binary, select, unary
 
 import graphblas_algorithms as ga
-from graphblas_algorithms.utils import get_all
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
+from .graph import Graph
 
 
 def get_A(G, mask=None):
@@ -415,26 +414,38 @@ def to_directed_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid directed graph
     if isinstance(G, DiGraph):
         return G
-    elif isinstance(G, nx.DiGraph):
-        return DiGraph.from_networkx(G, weight=weight, dtype=dtype)
-    elif isinstance(G, Matrix):
+    if isinstance(G, Matrix):
         return DiGraph.from_graphblas(G)
-    else:
-        raise TypeError()
+
+    try:
+        import networkx as nx
+
+        if isinstance(G, nx.DiGraph):
+            return DiGraph.from_networkx(G, weight=weight, dtype=dtype)
+    except ImportError:
+        pass
+
+    raise TypeError()
 
 
 def to_graph(G, weight=None, dtype=None):
     if isinstance(G, (DiGraph, ga.Graph)):
         return G
-    elif isinstance(G, nx.DiGraph):
-        return DiGraph.from_networkx(G, weight=weight, dtype=dtype)
-    elif isinstance(G, nx.Graph):
-        return ga.Graph.from_networkx(G, weight=weight, dtype=dtype)
-    elif isinstance(G, Matrix):
+    if isinstance(G, Matrix):
         # Should we check if it can be undirected?
         return DiGraph.from_graphblas(G)
-    else:
-        raise TypeError()
+
+    try:
+        import networkx as nx
+
+        if isinstance(G, nx.DiGraph):
+            return DiGraph.from_networkx(G, weight=weight, dtype=dtype)
+        if isinstance(G, nx.Graph):
+            return ga.Graph.from_networkx(G, weight=weight, dtype=dtype)
+    except ImportError:
+        pass
+
+    raise TypeError()
 
 
 class AutoDict(dict):
@@ -462,7 +473,9 @@ class AutoDict(dict):
         raise KeyError(key)
 
 
-class DiGraph:
+class DiGraph(Graph):
+    __networkx_plugin__ = "graphblas"
+
     # "-" properties ignore self-edges, "+" properties include self-edges
     # Ideally, we would have "max_rowwise+" come before "max_element+".
     _property_priority = defaultdict(
@@ -592,4 +605,9 @@ class DiGraph:
         return True
 
 
-__all__ = get_all(__name__)
+class MultiDiGraph(DiGraph):
+    def is_multigraph(self):
+        return True
+
+
+__all__ = ["DiGraph", "MultiDiGraph"]
