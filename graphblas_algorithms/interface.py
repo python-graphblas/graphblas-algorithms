@@ -10,6 +10,8 @@ class Dispatcher:
     # Boundary
     edge_boundary = nxapi.boundary.edge_boundary
     node_boundary = nxapi.boundary.node_boundary
+    # Centrality
+    katz_centrality = nxapi.centrality.katz_centrality
     # Community
     inter_community_edges = nxapi.community.quality.inter_community_edges
     intra_community_edges = nxapi.community.quality.intra_community_edges

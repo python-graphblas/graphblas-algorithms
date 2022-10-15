@@ -1,5 +1,6 @@
 from . import exceptions
 from .boundary import *
+from .centrality import *
 from .cluster import *
 from .community import *
 from .core import *
