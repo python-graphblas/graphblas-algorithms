@@ -1,7 +1,8 @@
-from graphblas import Vector, binary, unary
+from graphblas import Vector
 from graphblas.semiring import plus_first, plus_times
 
 from graphblas_algorithms import Graph
+from graphblas_algorithms.algorithms._helpers import is_converged
 from graphblas_algorithms.algorithms.exceptions import ConvergenceFailure
 
 __all__ = ["pagerank"]
@@ -77,7 +78,6 @@ def pagerank(
     p *= 1 - alpha
 
     # Power iteration: make up to max_iter iterations
-    tol = N * tol
     xprev = Vector(float, N, name="x_prev")
     w = Vector(float, N, name="w")
     for _ in range(max_iter):
@@ -95,11 +95,7 @@ def pagerank(
         w << xprev * S
         x += semiring(w @ A)  # plus_first if A.ss.is_iso else plus_times
 
-        # Check convergence, l1 norm: err = sum(abs(xprev - x))
-        xprev << binary.minus(xprev | x)
-        xprev << unary.abs(xprev)
-        err = xprev.reduce().value
-        if err < tol:
+        if is_converged(xprev, x, tol):  # sum(abs(xprev - x)) < N * tol
             x.name = name
             return x
     raise ConvergenceFailure(max_iter)

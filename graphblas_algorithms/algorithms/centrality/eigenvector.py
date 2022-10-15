@@ -1,5 +1,6 @@
-from graphblas import Vector, binary, unary
+from graphblas import Vector
 
+from graphblas_algorithms.algorithms._helpers import is_converged, normalize
 from graphblas_algorithms.algorithms.exceptions import (
     ConvergenceFailure,
     GraphBlasAlgorithmException,
@@ -24,25 +25,13 @@ def eigenvector_centrality(G, max_iter=100, tol=1.0e-6, nstart=None, name="eigen
         x *= 1.0 / denom
 
     # Power iteration: make up to max_iter iterations
-    tol = tol * N
     A = G._A
     xprev = Vector(float, N, name="x_prev")
     for _ in range(max_iter):
         xprev << x
         x += x @ A
-
-        # Normalize the vector
-        try:
-            x *= 1.0 / (x @ x).get(0) ** 0.5
-        # this should never be zero?
-        except ZeroDivisionError:  # pragma: no cover
-            pass
-
-        # Check convergence, l1 norm: err = sum(abs(xprev - x))
-        xprev << binary.minus(xprev | x)
-        xprev << unary.abs(xprev)
-        err = xprev.reduce().value
-        if err < tol:
+        normalize(x, "L2")
+        if is_converged(xprev, x, tol):  # sum(abs(xprev - x)) < N * tol
             x.name = name
             return x
     raise ConvergenceFailure(max_iter)

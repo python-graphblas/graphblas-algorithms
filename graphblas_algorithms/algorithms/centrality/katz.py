@@ -1,7 +1,8 @@
-from graphblas import Scalar, Vector, binary, unary
+from graphblas import Scalar, Vector
 from graphblas.semiring import plus_first, plus_times
 from graphblas.utils import output_type
 
+from graphblas_algorithms.algorithms._helpers import is_converged, normalize
 from graphblas_algorithms.algorithms.exceptions import (
     ConvergenceFailure,
     GraphBlasAlgorithmException,
@@ -42,7 +43,6 @@ def katz_centrality(
         semiring = plus_times[float]
 
     # Power iteration: make up to max_iter iterations
-    tol = N * tol
     xprev = Vector(float, N, name="x_prev")
     for _ in range(max_iter):
         xprev, x = x, xprev
@@ -50,20 +50,9 @@ def katz_centrality(
         x << semiring(xprev @ A)
         x *= alpha
         x += b
-
-        # Check convergence, l1 norm: err = sum(abs(xprev - x))
-        xprev << binary.minus(xprev | x)
-        xprev << unary.abs(xprev)
-        err = xprev.reduce().value
-        if err < tol:
+        if is_converged(xprev, x, tol):  # sum(abs(xprev - x)) < N * tol
             x.name = name
             if normalized:
-                try:
-                    s = 1.0 / (x @ x).get(0) ** 0.5
-                # this should never be zero?
-                except ZeroDivisionError:  # pragma: no cover
-                    pass
-                else:
-                    x *= s
+                normalize(x, "L2")
             return x
     raise ConvergenceFailure(max_iter)
