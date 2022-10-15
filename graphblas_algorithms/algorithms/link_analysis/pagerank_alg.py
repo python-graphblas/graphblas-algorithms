@@ -77,6 +77,7 @@ def pagerank(
     p *= 1 - alpha
 
     # Power iteration: make up to max_iter iterations
+    tol = N * tol
     xprev = Vector(float, N, name="x_prev")
     w = Vector(float, N, name="w")
     for _ in range(max_iter):
@@ -98,7 +99,7 @@ def pagerank(
         xprev << binary.minus(xprev | x)
         xprev << unary.abs(xprev)
         err = xprev.reduce().value
-        if err < N * tol:
+        if err < tol:
             x.name = name
             return x
     raise ConvergenceFailure(max_iter)

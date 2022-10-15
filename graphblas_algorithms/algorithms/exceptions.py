@@ -8,3 +8,7 @@ class ConvergenceFailure(GraphBlasAlgorithmException):
 
 class EmptyGraphError(GraphBlasAlgorithmException):
     pass
+
+
+class PointlessConcept(GraphBlasAlgorithmException):
+    pass

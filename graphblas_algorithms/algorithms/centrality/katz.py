@@ -42,6 +42,7 @@ def katz_centrality(
         semiring = plus_times[float]
 
     # Power iteration: make up to max_iter iterations
+    tol = N * tol
     xprev = Vector(float, N, name="x_prev")
     for _ in range(max_iter):
         xprev, x = x, xprev
@@ -54,7 +55,7 @@ def katz_centrality(
         xprev << binary.minus(xprev | x)
         xprev << unary.abs(xprev)
         err = xprev.reduce().value
-        if err < N * tol:
+        if err < tol:
             x.name = name
             if normalized:
                 try:
