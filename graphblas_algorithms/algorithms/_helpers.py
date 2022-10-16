@@ -1,12 +1,13 @@
 from graphblas import binary, monoid, unary
 
 
-def normalize(x, how="L1"):
-    if how == "L1":
+def normalize(x, how):
+    how = how.lower()
+    if how == "l1":
         denom = x.reduce().get(0)
-    elif how == "L2":
+    elif how == "l2":
         denom = (x @ x).get(0) ** 0.5
-    elif how == "Linf":
+    elif how == "linf":
         denom = x.reduce(monoid.max).get(0)
     else:
         raise ValueError(f"Unknown normalization method: {how}")
