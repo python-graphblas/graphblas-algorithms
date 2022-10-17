@@ -83,7 +83,7 @@ class Dispatcher:
         raise TypeError(f"Unsupported type of graph: {type(graph)}")
 
     @staticmethod
-    def mark_nx_tests(items):
+    def on_start_tests(items):
         skip = [
             ("test_attributes", {"TestBoruvka", "test_mst.py"}),
             ("test_weight_attribute", {"TestBoruvka", "test_mst.py"}),
