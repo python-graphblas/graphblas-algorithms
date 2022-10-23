@@ -1,6 +1,6 @@
 from graphblas import Scalar, Vector
+from graphblas.core.utils import output_type
 from graphblas.semiring import plus_first, plus_times
-from graphblas.utils import output_type
 
 from graphblas_algorithms.algorithms._helpers import is_converged, normalize
 from graphblas_algorithms.algorithms.exceptions import (

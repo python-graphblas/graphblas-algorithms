@@ -10,15 +10,17 @@ def descendants(G, source):
     G = to_graph(G)
     try:
         result = algorithms.descendants(G, source)
-        return G.vector_to_set(result)
     except KeyError as e:
         raise NetworkXError(*e.args) from e
+    else:
+        return G.vector_to_nodeset(result)
 
 
 def ancestors(G, source):
     G = to_graph(G)
     try:
         result = algorithms.ancestors(G, source)
-        return G.vector_to_set(result)
     except KeyError as e:
         raise NetworkXError(*e.args) from e
+    else:
+        return G.vector_to_nodeset(result)

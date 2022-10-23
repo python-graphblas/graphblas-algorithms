@@ -24,7 +24,7 @@ def triangles(G, nodes=None):
         return algorithms.single_triangle(G, nodes)
     mask = G.list_to_mask(nodes)
     result = algorithms.triangles(G, mask=mask)
-    return G.vector_to_dict(result, mask=mask, fillvalue=0)
+    return G.vector_to_nodemap(result, mask=mask, fillvalue=0)
 
 
 def transitivity(G):
@@ -53,7 +53,7 @@ def clustering(G, nodes=None, weight=None):
         result = algorithms.clustering_directed(G, weighted=weighted, mask=mask)
     else:
         result = algorithms.clustering(G, weighted=weighted, mask=mask)
-    return G.vector_to_dict(result, mask=mask, fillvalue=0.0)
+    return G.vector_to_nodemap(result, mask=mask, fillvalue=0.0)
 
 
 def average_clustering(G, nodes=None, weight=None, count_zeros=True):
@@ -115,7 +115,7 @@ def square_clustering(G, nodes=None, *, nsplits=None):
             result = algorithms.square_clustering(G)
         else:
             result = _square_clustering_split(G, nsplits=nsplits)
-        return G.vector_to_dict(result, fillvalue=0)
+        return G.vector_to_nodemap(result, fillvalue=0)
     elif nodes in G:
         idx = G._key_to_id[nodes]
         return algorithms.single_square_clustering(G, idx)
@@ -125,7 +125,7 @@ def square_clustering(G, nodes=None, *, nsplits=None):
             result = algorithms.square_clustering(G, ids)
         else:
             result = _square_clustering_split(G, ids, nsplits=nsplits)
-        return G.vector_to_dict(result)
+        return G.vector_to_nodemap(result)
 
 
 @not_implemented_for("directed")
@@ -135,7 +135,7 @@ def generalized_degree(G, nodes=None):
         return {}
     if nodes in G:
         result = algorithms.single_generalized_degree(G, nodes)
-        return G.vector_to_dict(result)
+        return G.vector_to_nodemap(result)
     mask = G.list_to_mask(nodes)
     result = algorithms.generalized_degree(G, mask=mask)
     return G.matrix_to_dicts(result)

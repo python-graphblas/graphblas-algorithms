@@ -15,7 +15,7 @@ def reciprocity(G, nodes=None):
     if nodes in G:
         mask = G.list_to_mask([nodes])
         result = algorithms.reciprocity(G, mask=mask)
-        rv = result[G._key_to_id[nodes]].value
+        rv = result.get(G._key_to_id[nodes])
         if rv is None:
             raise NetworkXError("Not defined for isolated nodes.")
         else:
@@ -23,7 +23,7 @@ def reciprocity(G, nodes=None):
     else:
         mask = G.list_to_mask(nodes)
         result = algorithms.reciprocity(G, mask=mask)
-        return G.vector_to_dict(result, mask=mask)
+        return G.vector_to_nodemap(result, mask=mask)
 
 
 @not_implemented_for("undirected", "multigraph")

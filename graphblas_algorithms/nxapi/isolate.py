@@ -12,9 +12,7 @@ def is_isolate(G, n):
 def isolates(G):
     G = to_graph(G)
     result = algorithms.isolates(G)
-    indices, _ = result.to_values(values=False, sort=False)
-    id_to_key = G.id_to_key
-    return (id_to_key[index] for index in indices)
+    return G.vector_to_nodeset(result)  # Return type is iterable
 
 
 def number_of_isolates(G):

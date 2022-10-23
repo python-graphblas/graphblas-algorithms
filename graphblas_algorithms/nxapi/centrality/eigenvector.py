@@ -19,4 +19,4 @@ def eigenvector_centrality(G, max_iter=100, tol=1.0e-6, nstart=None, weight=None
         raise nx.PowerIterationFailedConvergence(*e.args) from e
     except algorithms.exceptions.GraphBlasAlgorithmException as e:
         raise nx.NetworkXError(*e.args) from e
-    return G.vector_to_dict(result)
+    return G.vector_to_nodemap(result)

@@ -37,4 +37,4 @@ def katz_centrality(
         raise nx.PowerIterationFailedConvergence(*e.args) from e
     except algorithms.exceptions.GraphBlasAlgorithmException as e:
         raise nx.NetworkXError(*e.args) from e
-    return G.vector_to_dict(result)
+    return G.vector_to_nodemap(result)
