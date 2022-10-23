@@ -1,5 +1,5 @@
 from graphblas import Vector, replace
-from graphblas.semiring import any_pair
+from graphblas.semiring import lor_pair
 
 __all__ = ["descendants", "ancestors"]
 
@@ -13,7 +13,7 @@ def descendants(G, source):
     q = Vector.from_values(index, True, size=A.nrows, name="q")
     rv = q.dup(name="descendants")
     for _ in range(A.nrows):
-        q(~rv.S, replace) << any_pair(A.T @ q)
+        q(~rv.S, replace) << lor_pair(q @ A)
         if q.nvals == 0:
             break
         rv(q.S) << True
@@ -29,7 +29,7 @@ def ancestors(G, source):
     q = Vector.from_values(index, True, size=A.nrows, name="q")
     rv = q.dup(name="descendants")
     for _ in range(A.nrows):
-        q(~rv.S, replace) << any_pair(A @ q)
+        q(~rv.S, replace) << lor_pair(A @ q)
         if q.nvals == 0:
             break
         rv(q.S) << True

@@ -1,6 +1,6 @@
 from collections.abc import MutableSet
 
-from graphblas.semiring import any_pair, plus_pair
+from graphblas.semiring import lor_pair, plus_pair
 
 from . import _utils
 
@@ -83,7 +83,7 @@ class NodeSet(MutableSet):
 
     def isdisjoin(self, other):
         if isinstance(other, NodeSet):
-            return any_pair(self.vector @ other.vector).get(0) == 0
+            return not lor_pair(self.vector @ other.vector)
         return super().isdisjoint(other)
 
     def pop(self):

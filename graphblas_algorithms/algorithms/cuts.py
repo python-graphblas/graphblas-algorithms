@@ -67,7 +67,7 @@ def mixing_expansion(G, S, T=None):
 
 
 def node_expansion(G, S):
-    neighborhood = any_pair(G._A.T @ S)
+    neighborhood = any_pair(S @ G._A)
     return neighborhood.nvals / S.nvals
 
 

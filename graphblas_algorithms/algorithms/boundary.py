@@ -25,5 +25,5 @@ def node_boundary(G, nbunch1, *, mask=None):
         mask = ~nbunch1.S
     else:
         mask = mask & (~nbunch1.S)
-    bdy = any_pair(G._A.T @ nbunch1).new(mask=mask, name="boundary")
+    bdy = any_pair(nbunch1 @ G._A).new(mask=mask, name="boundary")
     return bdy
