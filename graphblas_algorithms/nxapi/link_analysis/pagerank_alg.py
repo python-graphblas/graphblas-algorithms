@@ -39,6 +39,6 @@ def pagerank(
             dangling=dangling_weights,
             row_degrees=row_degrees,
         )
-        return G.vector_to_dict(result, fillvalue=0.0)
+        return G.vector_to_nodemap(result, fillvalue=0.0)
     except algorithms.exceptions.ConvergenceFailure as e:
         raise nx.PowerIterationFailedConvergence(*e.args) from e

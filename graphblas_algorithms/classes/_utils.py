@@ -1,7 +1,7 @@
 import graphblas as gb
 import numpy as np
 from graphblas import Matrix, Vector, binary
-from graphblas.matrix import TransposedMatrix
+from graphblas.core.matrix import TransposedMatrix
 
 ################
 # Classmethods #
@@ -131,6 +131,34 @@ def vector_to_dict(self, v, *, mask=None, fillvalue=None):
         v(mask=~v.S) << fillvalue
     id_to_key = self.id_to_key
     return {id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+
+
+def vector_to_nodemap(self, v, *, mask=None, fillvalue=None):
+    from .nodemap import NodeMap
+
+    if mask is not None:
+        if fillvalue is not None and v.nvals < mask.parent.nvals:
+            v(mask, binary.first) << fillvalue
+    elif fillvalue is not None and v.nvals < v.size:
+        v(mask=~v.S) << fillvalue
+
+    rv = object.__new__(NodeMap)
+    rv.vector = v
+    rv._key_to_id = self._key_to_id
+    rv._id_to_key = self._id_to_key
+    return rv
+    # return NodeMap.from_graphblas(v, key_to_id=self._key_to_id)
+
+
+def vector_to_nodeset(self, v):
+    from .nodeset import NodeSet
+
+    rv = object.__new__(NodeSet)
+    rv.vector = v
+    rv._key_to_id = self._key_to_id
+    rv._id_to_key = self._id_to_key
+    return rv
+    # return NodeSet.from_graphblas(v, key_to_id=self._key_to_id)
 
 
 def vector_to_set(self, v):

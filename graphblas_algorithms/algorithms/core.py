@@ -1,4 +1,4 @@
-from graphblas import Matrix, monoid, select, semiring
+from graphblas import Matrix, monoid, replace, select, semiring
 
 from graphblas_algorithms.classes.graph import Graph
 
@@ -20,7 +20,7 @@ def k_truss(G: Graph, k) -> Graph:
         plus_pair = semiring.plus_pair["int32"]
         C = Matrix("int32", S.nrows, S.ncols)
         while True:
-            C(S.S, replace=True) << plus_pair(S @ S.T)
+            C(S.S, replace) << plus_pair(S @ S.T)
             C << select.value(C >= k - 2)
             if C.nvals == nvals_last:
                 break

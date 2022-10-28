@@ -49,4 +49,4 @@ def node_boundary(G, nbunch1, nbunch2=None):
     else:
         mask = None
     result = algorithms.node_boundary(G, v1, mask=mask)
-    return G.vector_to_set(result)
+    return G.vector_to_nodeset(result)

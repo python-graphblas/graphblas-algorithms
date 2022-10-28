@@ -1,4 +1,5 @@
-from graphblas import op, operator
+from graphblas import op
+from graphblas.core import operator
 
 
 def get_reduce_to_vector(key, opname, methodname):

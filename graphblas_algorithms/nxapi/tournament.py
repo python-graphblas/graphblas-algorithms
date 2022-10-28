@@ -18,6 +18,7 @@ def is_tournament(G):
 @not_implemented_for("multigraph")
 def score_sequence(G):
     G = to_directed_graph(G)
+    # TODO: can we return a different, more native object?
     return algorithms.score_sequence(G).tolist()
 
 
@@ -26,4 +27,5 @@ def score_sequence(G):
 def tournament_matrix(G):
     G = to_directed_graph(G)
     T = algorithms.tournament_matrix(G)
+    # TODO: can we return a different, more native object?
     return io.to_scipy_sparse(T)

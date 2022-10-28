@@ -202,7 +202,7 @@ def single_square_clustering(G, idx):
         return 0
     # P2 from https://arxiv.org/pdf/2007.11111.pdf; we'll also use it as scratch
     v = A[idx, :].new(name="v")
-    p2 = plus_pair(A.T @ v).new(name="p2")
+    p2 = plus_pair(v @ A).new(name="p2")
     del p2[idx]
     # Denominator is thought of as the total number of squares that could exist.
     # We use the definition from https://arxiv.org/pdf/0710.0117v1.pdf (equation 2).

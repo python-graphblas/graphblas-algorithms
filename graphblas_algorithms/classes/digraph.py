@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from graphblas import Matrix, Vector, binary, select, unary
+from graphblas import Matrix, Vector, binary, replace, select, unary
 
 import graphblas_algorithms as ga
 
@@ -211,7 +211,7 @@ def get_recip_degreesm(G, mask=None):
             rv = binary.minus(cache["recip_degrees+"] | unary.one(cache["diag"])).new(
                 mask=mask, name="recip_degrees-"
             )
-            rv(rv.V, replace=True) << rv  # drop 0s
+            rv(rv.V, replace) << rv  # drop 0s
             return rv
         elif not G.get_property("has_self_edges"):
             return G.get_property("recip_degrees+", mask=mask)
@@ -230,7 +230,7 @@ def get_recip_degreesm(G, mask=None):
             diag = G.get_property("diag", mask=mask)
             overlap = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
             rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
-            rv(rv.V, replace=True) << rv  # drop 0s
+            rv(rv.V, replace) << rv  # drop 0s
             return rv
     if "recip_degrees-" not in cache:
         if cache.get("has_self_edges") is False and "recip_degrees+" in cache:
@@ -239,7 +239,7 @@ def get_recip_degreesm(G, mask=None):
             rv = binary.minus(cache["recip_degrees+"] | unary.one(cache["diag"])).new(
                 name="recip_degrees-"
             )
-            rv(rv.V, replace=True) << rv  # drop 0s
+            rv(rv.V, replace) << rv  # drop 0s
             cache["recip_degrees-"] = rv
         elif not G.get_property("has_self_edges"):
             cache["recip_degrees-"] = G.get_property("recip_degrees+")
@@ -256,7 +256,7 @@ def get_recip_degreesm(G, mask=None):
             diag = G.get_property("diag")
             overlap = binary.pair(A & AT).reduce_rowwise().new()
             rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
-            rv(rv.V, replace=True) << rv  # drop 0s
+            rv(rv.V, replace) << rv  # drop 0s
             cache["recip_degrees-"] = rv
     if (
         "has_self_edges" not in cache
@@ -561,6 +561,8 @@ class DiGraph(Graph):
     set_to_vector = _utils.set_to_vector
     to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
+    vector_to_nodemap = _utils.vector_to_nodemap
+    vector_to_nodeset = _utils.vector_to_nodeset
     vector_to_set = _utils.vector_to_set
     _cacheit = _utils._cacheit
 
