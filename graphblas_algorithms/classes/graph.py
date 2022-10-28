@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 from graphblas import Matrix, Vector, select
+from graphblas.core import utils as gbutils
+from graphblas.core.matrix import TransposedMatrix
 
 import graphblas_algorithms as ga
 
@@ -152,7 +154,8 @@ def to_undirected_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid undirected graph
     if isinstance(G, Graph):
         return G
-    if isinstance(G, Matrix):
+    typ = gbutils.output_type(G)
+    if typ in {Matrix, TransposedMatrix}:
         return Graph.from_graphblas(G)
 
     try:

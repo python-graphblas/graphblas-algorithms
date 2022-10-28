@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 from graphblas import Matrix, Vector, binary, replace, select, unary
+from graphblas.core import utils as gbutils
+from graphblas.core.matrix import TransposedMatrix
 
 import graphblas_algorithms as ga
 
@@ -414,7 +416,8 @@ def to_directed_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid directed graph
     if isinstance(G, DiGraph):
         return G
-    if isinstance(G, Matrix):
+    typ = gbutils.output_type(G)
+    if typ in {Matrix, TransposedMatrix}:
         return DiGraph.from_graphblas(G)
 
     try:
@@ -431,7 +434,8 @@ def to_directed_graph(G, weight=None, dtype=None):
 def to_graph(G, weight=None, dtype=None):
     if isinstance(G, (DiGraph, ga.Graph)):
         return G
-    if isinstance(G, Matrix):
+    typ = gbutils.output_type(G)
+    if typ in {Matrix, TransposedMatrix}:
         # Should we check if it can be undirected?
         return DiGraph.from_graphblas(G)
 
