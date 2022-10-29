@@ -138,4 +138,4 @@ def generalized_degree(G, nodes=None):
         return G.vector_to_nodemap(result)
     mask = G.list_to_mask(nodes)
     result = algorithms.generalized_degree(G, mask=mask)
-    return G.matrix_to_dicts(result)
+    return G.matrix_to_dicts(result, use_column_index=True)

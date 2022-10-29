@@ -167,13 +167,19 @@ def vector_to_set(self, v):
     return {id_to_key[index] for index in indices}
 
 
-def matrix_to_dicts(self, A):
-    """{row: {col: val}}"""
+def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False):
+    """Convert a Matrix to a dict of dicts of the form ``{row: {col: val}}``
+
+    Use ``use_row_index=True`` to return the row index as keys in the dict,
+    and likewise for `use_column_index=True``.
+
+    """
     if isinstance(A, TransposedMatrix):
         # Not covered
         d = A.T.ss.export("hypercsc")
         rows = d["cols"].tolist()
         col_indices = d["row_indices"].tolist()
+        use_row_index, use_column_index = use_column_index, use_row_index
     else:
         d = A.ss.export("hypercsr")
         rows = d["rows"].tolist()
@@ -181,14 +187,30 @@ def matrix_to_dicts(self, A):
     indptr = d["indptr"]
     values = d["values"].tolist()
     id_to_key = self.id_to_key
-    return {
-        id_to_key[row]: {
-            id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+    it = zip(rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist())
+    if use_row_index and use_column_index:
+        return {
+            row: dict(zip(col_indices[start:stop], values[start:stop])) for row, (start, stop) in it
         }
-        for row, (start, stop) in zip(
-            rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist()
-        )
-    }
+    elif use_row_index:
+        return {
+            row: {
+                id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+            }
+            for row, (start, stop) in it
+        }
+    elif use_column_index:
+        return {
+            id_to_key[row]: dict(zip(col_indices[start:stop], values[start:stop]))
+            for row, (start, stop) in it
+        }
+    else:
+        return {
+            id_to_key[row]: {
+                id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+            }
+            for row, (start, stop) in it
+        }
 
 
 def to_networkx(self, edge_attribute="weight"):
