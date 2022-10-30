@@ -114,23 +114,6 @@ class VectorMap(MutableMapping):
         rv.vector = v
         return rv
 
-    id_to_key = property(_utils.id_to_key)
-    # get_property = _utils.get_property
-    # get_properties = _utils.get_properties
-    dict_to_vector = _utils.dict_to_vector
-    list_to_vector = _utils.list_to_vector
-    list_to_mask = _utils.list_to_mask
-    list_to_ids = _utils.list_to_ids
-    list_to_keys = _utils.list_to_keys
-    matrix_to_dicts = _utils.matrix_to_dicts
-    set_to_vector = _utils.set_to_vector
-    # to_networkx = _utils.to_networkx
-    vector_to_dict = _utils.vector_to_dict
-    vector_to_nodemap = _utils.vector_to_nodemap
-    vector_to_nodeset = _utils.vector_to_nodeset
-    vector_to_set = _utils.vector_to_set
-    # _cacheit = _utils._cacheit
-
     # Requirements for MutableMapping
     def __delitem__(self, key):
         del self.vector[key]
