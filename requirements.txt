@@ -1,1 +1,1 @@
-python-graphblas >=2022.5.0
+python-graphblas >=2022.10.1
