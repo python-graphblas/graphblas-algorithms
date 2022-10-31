@@ -1,7 +1,7 @@
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
-__all__ = ["mutual_weight"]
+__all__ = []
 
 
 def mutual_weight(G, u, v, weight=None):

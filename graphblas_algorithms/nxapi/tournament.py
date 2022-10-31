@@ -4,6 +4,8 @@ from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_directed_graph
 from graphblas_algorithms.utils import not_implemented_for
 
+from .simple_paths import is_simple_path as is_path  # noqa
+
 __all__ = ["is_tournament", "score_sequence", "tournament_matrix"]
 
 
