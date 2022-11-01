@@ -1,8 +1,8 @@
-import networkx as nx
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.utils import not_implemented_for
+
+from ..exception import NetworkXError, PowerIterationFailedConvergence
 
 __all__ = ["katz_centrality"]
 
@@ -28,13 +28,13 @@ def katz_centrality(
         try:
             b = G.dict_to_vector(beta, dtype=float, name="beta")
         except (TypeError, ValueError, AttributeError) as e:
-            raise nx.NetworkXError(*e.args) from e
+            raise NetworkXError(*e.args) from e
     try:
         result = algorithms.katz_centrality(
             G, alpha=alpha, beta=b, max_iter=max_iter, tol=tol, nstart=x, normalized=normalized
         )
     except algorithms.exceptions.ConvergenceFailure as e:
-        raise nx.PowerIterationFailedConvergence(*e.args) from e
+        raise PowerIterationFailedConvergence(*e.args) from e
     except algorithms.exceptions.GraphBlasAlgorithmException as e:
-        raise nx.NetworkXError(*e.args) from e
+        raise NetworkXError(*e.args) from e
     return G.vector_to_nodemap(result)

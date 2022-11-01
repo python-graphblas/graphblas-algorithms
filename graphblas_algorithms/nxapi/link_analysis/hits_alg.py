@@ -1,7 +1,7 @@
-from scipy.sparse.linalg import ArpackNoConvergence
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
+
+from ..exception import ArpackNoConvergence
 
 __all__ = ["hits"]
 
