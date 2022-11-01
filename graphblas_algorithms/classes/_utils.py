@@ -2,6 +2,7 @@ import graphblas as gb
 import numpy as np
 from graphblas import Matrix, Vector, binary
 from graphblas.core.matrix import TransposedMatrix
+from graphblas.core.utils import ensure_type
 
 ################
 # Classmethods #
@@ -19,7 +20,8 @@ def from_networkx(cls, G, weight=None, dtype=None):
 
 
 def from_graphblas(cls, A, *, key_to_id=None):
-    # Does not copy!
+    # Does not copy if A is a Matrix!
+    A = ensure_type(A, Matrix)
     if A.nrows != A.ncols:
         raise ValueError(f"Adjacency matrix must be square; got {A.nrows} x {A.ncols}")
     rv = cls()

@@ -33,7 +33,7 @@ jobs:
           conda install -c conda-forge python-graphblas scipy pandas \
             pytest-cov pytest-randomly black flake8-comprehensions flake8-bugbear
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
-          pip install git+https://github.com/mriduls/networkx.git@nx-sparse --no-deps
+          pip install git+https://github.com/jim22k/networkx.git@nx-sparse --no-deps
           pip install -e . --no-deps
       - name: Style checks
         run: |

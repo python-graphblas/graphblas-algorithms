@@ -414,8 +414,10 @@ def to_directed_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid directed graph
     if isinstance(G, DiGraph):
         return G
-    if isinstance(G, Matrix):
+    try:
         return DiGraph.from_graphblas(G)
+    except TypeError:
+        pass
 
     try:
         import networkx as nx
@@ -431,9 +433,11 @@ def to_directed_graph(G, weight=None, dtype=None):
 def to_graph(G, weight=None, dtype=None):
     if isinstance(G, (DiGraph, ga.Graph)):
         return G
-    if isinstance(G, Matrix):
+    try:
         # Should we check if it can be undirected?
         return DiGraph.from_graphblas(G)
+    except TypeError:
+        pass
 
     try:
         import networkx as nx
