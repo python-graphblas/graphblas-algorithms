@@ -69,7 +69,7 @@ class Dispatcher:
     is_triad = nxapi.triads.is_triad
 
     @staticmethod
-    def convert_from_nx(graph, weight=None, *, name):
+    def convert_from_nx(graph, weight=None, *, name=None):
         from .classes import DiGraph, Graph, MultiDiGraph, MultiGraph
 
         if isinstance(graph, nx.MultiDiGraph):
@@ -83,7 +83,7 @@ class Dispatcher:
         raise TypeError(f"Unsupported type of graph: {type(graph)}")
 
     @staticmethod
-    def convert_to_nx(obj, *, name):
+    def convert_to_nx(obj, *, name=None):
         from .classes import Graph
 
         if isinstance(obj, Graph):
