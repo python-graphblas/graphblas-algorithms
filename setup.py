@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 import versioneer
 
 extras_require = {
-    "test": ["pytest", "scipy"],
+    "test": ["networkx", "pytest", "scipy"],
 }
 extras_require["complete"] = sorted({v for req in extras_require.values() for v in req})
 
