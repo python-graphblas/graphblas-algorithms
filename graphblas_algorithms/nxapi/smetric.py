@@ -1,7 +1,7 @@
-from networkx import NetworkXError
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
+
+from .exception import NetworkXError
 
 __all__ = ["s_metric"]
 

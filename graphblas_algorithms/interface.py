@@ -1,4 +1,3 @@
-import networkx as nx
 import pytest
 
 from . import nxapi
@@ -70,6 +69,8 @@ class Dispatcher:
 
     @staticmethod
     def convert(graph, weight=None):
+        import networkx as nx
+
         from .classes import DiGraph, Graph, MultiDiGraph, MultiGraph
 
         if isinstance(graph, nx.MultiDiGraph):

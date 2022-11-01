@@ -1,7 +1,7 @@
-from networkx import NodeNotFound
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
+
+from ..exception import NodeNotFound
 
 __all__ = ["has_path"]
 
