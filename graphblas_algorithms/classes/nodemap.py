@@ -175,7 +175,7 @@ class VectorMap(MutableMapping):
     # values
 
 
-class NodeMapMap(MutableMapping):
+class VectorNodeMap(MutableMapping):
     def __init__(self):
         raise NotImplementedError()
         # .matrix, ._key_to_id, ._id_to_key, ._rows
@@ -261,7 +261,7 @@ class NodeMapMap(MutableMapping):
         return idx in self._get_rows()
 
     def __eq__(self, other):
-        if isinstance(other, NodeMapMap):
+        if isinstance(other, VectorNodeMap):
             return self.matrix.isequal(other.matrix) and self._key_to_id == other._key_to_id
         return super().__eq__(other)
 
