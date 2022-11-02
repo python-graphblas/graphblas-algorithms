@@ -152,8 +152,10 @@ def to_undirected_graph(G, weight=None, dtype=None):
     # We should do some sanity checks here to ensure we're returning a valid undirected graph
     if isinstance(G, Graph):
         return G
-    if isinstance(G, Matrix):
+    try:
         return Graph.from_graphblas(G)
+    except TypeError:
+        pass
 
     try:
         import networkx as nx

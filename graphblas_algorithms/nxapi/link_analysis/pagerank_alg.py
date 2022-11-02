@@ -1,7 +1,7 @@
-import networkx as nx
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
+
+from ..exception import PowerIterationFailedConvergence
 
 _all = ["pagerank"]
 
@@ -41,4 +41,4 @@ def pagerank(
         )
         return G.vector_to_nodemap(result, fillvalue=0.0)
     except algorithms.exceptions.ConvergenceFailure as e:
-        raise nx.PowerIterationFailedConvergence(*e.args) from e
+        raise PowerIterationFailedConvergence(*e.args) from e
