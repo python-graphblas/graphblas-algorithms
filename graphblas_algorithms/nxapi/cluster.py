@@ -3,6 +3,7 @@ from graphblas import monoid
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
+from graphblas_algorithms.classes.nodemap import VectorNodeMap
 from graphblas_algorithms.utils import not_implemented_for
 
 __all__ = [
@@ -138,4 +139,6 @@ def generalized_degree(G, nodes=None):
         return G.vector_to_nodemap(result)
     mask = G.list_to_mask(nodes)
     result = algorithms.generalized_degree(G, mask=mask)
-    return G.matrix_to_dicts(result, use_column_index=True)
+    rv = VectorNodeMap.from_graphblas(result, key_to_id=G._key_to_id)
+    rv._id_to_key = G._id_to_key
+    return rv
