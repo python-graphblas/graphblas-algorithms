@@ -14,5 +14,11 @@ from .shortest_paths import *
 from .simple_paths import *
 from .smetric import *
 from .structuralholes import *
-from .tournament import *
 from .triads import *
+
+from . import centrality
+from . import cluster
+from . import community
+from . import link_analysis
+from . import shortest_paths
+from . import tournament

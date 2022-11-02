@@ -1,7 +1,7 @@
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
-__all__ = ["intra_community_edges", "inter_community_edges"]
+__all__ = []
 
 
 def intra_community_edges(G, partition):
