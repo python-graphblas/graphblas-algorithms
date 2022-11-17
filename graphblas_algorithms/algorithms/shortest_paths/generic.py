@@ -11,9 +11,9 @@ def has_path(G, source, target):
     if src == dst:
         return True
     A = G._A
-    q_src = Vector.from_values(src, True, size=A.nrows, name="q_src")
+    q_src = Vector.from_coo(src, True, size=A.nrows, name="q_src")
     seen_src = q_src.dup(name="seen_src")
-    q_dst = Vector.from_values(dst, True, size=A.nrows, name="q_dst")
+    q_dst = Vector.from_coo(dst, True, size=A.nrows, name="q_dst")
     seen_dst = q_dst.dup(name="seen_dst")
     for _ in range(A.nrows // 2):
         q_src(~seen_src.S, replace) << lor_pair(q_src @ A)

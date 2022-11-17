@@ -241,7 +241,7 @@ def square_clustering(G, node_ids=None):
     A, degrees = G.get_properties("A degrees+")  # TODO" how to handle self-edges?
     # P2 from https://arxiv.org/pdf/2007.11111.pdf; we'll also use it as scratch
     if node_ids is not None:
-        v = Vector.from_values(node_ids, True, size=degrees.size)
+        v = Vector.from_coo(node_ids, True, size=degrees.size)
         Asubset = binary.second(v & A).new(name="A_subset")
     else:
         Asubset = A
@@ -298,10 +298,10 @@ def generalized_degree(G, *, mask=None):
     else:
         Tri(A.S) << 0
     Tri(Tri.S, binary.second) << plus_pair(Tri @ A.T)
-    rows, cols, vals = Tri.to_values()
+    rows, cols, vals = Tri.to_coo()
     # The column index indicates the number of triangles an edge participates in.
     # The largest this can be is `A.ncols - 1`.  Values is count of edges.
-    return Matrix.from_values(
+    return Matrix.from_coo(
         rows,
         vals,
         np.ones(vals.size, dtype=int),

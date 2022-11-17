@@ -1,5 +1,3 @@
-import pytest
-
 from . import nxapi
 
 
@@ -93,6 +91,10 @@ class Dispatcher:
 
     @staticmethod
     def on_start_tests(items):
+        try:
+            import pytest
+        except ImportError:  # pragma: no cover (import)
+            return
         skip = [
             ("test_attributes", {"TestBoruvka", "test_mst.py"}),
             ("test_weight_attribute", {"TestBoruvka", "test_mst.py"}),

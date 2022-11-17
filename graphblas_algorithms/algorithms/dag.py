@@ -10,7 +10,7 @@ def descendants(G, source):
         raise KeyError(f"The node {source} is not in the graph")
     index = G._key_to_id[source]
     A = G._A
-    q = Vector.from_values(index, True, size=A.nrows, name="q")
+    q = Vector.from_coo(index, True, size=A.nrows, name="q")
     rv = q.dup(name="descendants")
     for _ in range(A.nrows):
         q(~rv.S, replace) << lor_pair(q @ A)
@@ -26,7 +26,7 @@ def ancestors(G, source):
         raise KeyError(f"The node {source} is not in the graph")
     index = G._key_to_id[source]
     A = G._A
-    q = Vector.from_values(index, True, size=A.nrows, name="q")
+    q = Vector.from_coo(index, True, size=A.nrows, name="q")
     rv = q.dup(name="descendants")
     for _ in range(A.nrows):
         q(~rv.S, replace) << lor_pair(A @ q)
