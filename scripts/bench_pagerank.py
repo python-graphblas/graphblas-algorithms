@@ -178,14 +178,14 @@ def main(filename, backend, time, n, verify, alpha, tol, _get_result=False):
 
         start = timeit.default_timer()
         df = pd.read_csv(filename, delimiter="\t", names=["row", "col"])
-        G = Matrix.from_values(df["row"].values, df["col"].values, 1)
+        G = Matrix.from_coo(df["row"].values, df["col"].values, 1)
         stop = timeit.default_timer()
         num_nodes = G.nrows
         num_edges = G.nvals
         if _get_result:
             result = pagerank(G, alpha=alpha, tol=tol)
             result(~result.S) << 0  # Densify just in case
-            return result.to_values()[1]
+            return result.to_coo()[1]
 
     elif backend == "scipy":
         import pandas as pd

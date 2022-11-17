@@ -15,7 +15,7 @@ def is_tournament(G):
 
 def score_sequence(G):
     degrees = G.get_property("row_degrees+")
-    _, values = degrees.to_values(indices=False, sort=False)
+    _, values = degrees.to_coo(indices=False, sort=False)
     values.sort()
     if degrees.nvals != degrees.size:
         values = np.pad(values, (degrees.size - degrees.nvals, 0))

@@ -21,7 +21,7 @@ def edge_boundary(G, nbunch1, nbunch2=None, data=False, keys=False, default=None
     v1 = G.set_to_vector(nbunch1, ignore_extra=True)
     v2 = G.set_to_vector(nbunch2, ignore_extra=True)
     result = algorithms.edge_boundary(G, v1, v2, is_weighted=is_multigraph or data)
-    rows, cols, vals = result.to_values(values=is_multigraph or data)
+    rows, cols, vals = result.to_coo(values=is_multigraph or data)
     id_to_key = G.id_to_key
     if data:
         it = zip(

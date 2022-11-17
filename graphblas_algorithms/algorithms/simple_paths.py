@@ -16,7 +16,7 @@ def is_simple_path(G, nodes):
     if len(indices) != len(nodes) or len(indices) > len(set(indices)):
         return False
     # Check all steps in path at once
-    P = Matrix.from_values(indices[:-1], indices[1:], True, nrows=A.nrows, ncols=A.ncols)
+    P = Matrix.from_coo(indices[:-1], indices[1:], True, nrows=A.nrows, ncols=A.ncols)
     P << binary.second(A & P)
     return P.nvals == len(indices) - 1
     # Alternative

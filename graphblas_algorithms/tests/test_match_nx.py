@@ -28,17 +28,9 @@ else:
 
 def isdispatched(func):
     """Can this NetworkX function dispatch to other backends?"""
-    # Haha, there should be a better way to know this
-    registered_algorithms = backends._registered_algorithms
-    try:
-        return (
-            func.__globals__.get("_registered_algorithms") is registered_algorithms
-            and func.__module__.startswith("networkx")
-            and func.__module__ != "networkx.classes.backends"
-            and set(func.__code__.co_freevars) == {"func", "name"}
-        )
-    except Exception:
-        return False
+    return (
+        callable(func) and hasattr(func, "dispatchname") and func.__module__.startswith("networkx")
+    )
 
 
 def dispatchname(func):
@@ -46,8 +38,7 @@ def dispatchname(func):
     # Haha, there should be a better way to get this
     if not isdispatched(func):
         raise ValueError(f"Function is not dispatched in NetworkX: {func.__name__}")
-    index = func.__code__.co_freevars.index("name")
-    return func.__closure__[index].cell_contents
+    return func.dispatchname
 
 
 def fullname(func):

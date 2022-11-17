@@ -52,7 +52,7 @@ class NodeMap(MutableMapping):
     def __iter__(self):
         # Slow if we iterate over one; fast if we iterate over all
         return map(
-            self.id_to_key.__getitem__, self.vector.to_values(values=False, sort=False)[0].tolist()
+            self.id_to_key.__getitem__, self.vector.to_coo(values=False, sort=False)[0].tolist()
         )
 
     def __len__(self):
@@ -123,7 +123,7 @@ class VectorMap(MutableMapping):
 
     def __iter__(self):
         # Slow if we iterate over one; fast if we iterate over all
-        return iter(self.vector.to_values(values=False, sort=False)[0].tolist())
+        return iter(self.vector.to_coo(values=False, sort=False)[0].tolist())
 
     def __len__(self):
         return self.vector.nvals
@@ -232,7 +232,7 @@ class VectorNodeMap(MutableMapping):
         # Slow if we iterate over one; fast if we iterate over all
         return map(
             self.id_to_key.__getitem__,
-            self._get_rows().to_values(values=False, sort=False)[0].tolist(),
+            self._get_rows().to_coo(values=False, sort=False)[0].tolist(),
         )
 
     def __len__(self):

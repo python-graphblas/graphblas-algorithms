@@ -78,7 +78,7 @@ def dict_to_vector(self, d, *, size=None, dtype=None, name=None):
         size = len(self)
     key_to_id = self._key_to_id
     indices, values = zip(*((key_to_id[key], val) for key, val in d.items()))
-    return Vector.from_values(indices, values, size=size, dtype=dtype, name=name)
+    return Vector.from_coo(indices, values, size=size, dtype=dtype, name=name)
 
 
 def list_to_vector(self, nodes, dtype=bool, *, size=None, name=None):
@@ -88,7 +88,7 @@ def list_to_vector(self, nodes, dtype=bool, *, size=None, name=None):
         size = len(self)
     key_to_id = self._key_to_id
     index = [key_to_id[key] for key in nodes]
-    return Vector.from_values(index, True, size=size, dtype=dtype, name=name)
+    return Vector.from_coo(index, True, size=size, dtype=dtype, name=name)
 
 
 def list_to_mask(self, nodes, *, size=None, name="mask"):
@@ -122,7 +122,7 @@ def set_to_vector(self, nodes, dtype=bool, *, ignore_extra=False, size=None, nam
             nodes = set(nodes)
         nodes = nodes & key_to_id.keys()
     index = [key_to_id[key] for key in nodes]
-    return Vector.from_values(index, True, size=size, dtype=dtype, name=name)
+    return Vector.from_coo(index, True, size=size, dtype=dtype, name=name)
 
 
 def vector_to_dict(self, v, *, mask=None, fillvalue=None):
@@ -132,7 +132,7 @@ def vector_to_dict(self, v, *, mask=None, fillvalue=None):
     elif fillvalue is not None and v.nvals < v.size:
         v(mask=~v.S) << fillvalue
     id_to_key = self.id_to_key
-    return {id_to_key[index]: value for index, value in zip(*v.to_values(sort=False))}
+    return {id_to_key[index]: value for index, value in zip(*v.to_coo(sort=False))}
 
 
 def vector_to_nodemap(self, v, *, mask=None, fillvalue=None):
@@ -165,7 +165,7 @@ def vector_to_nodeset(self, v):
 
 def vector_to_set(self, v):
     id_to_key = self.id_to_key
-    indices, _ = v.to_values(values=False, sort=False)
+    indices, _ = v.to_coo(values=False, sort=False)
     return {id_to_key[index] for index in indices}
 
 
@@ -227,7 +227,7 @@ def to_networkx(self, edge_attribute="weight"):
         A = self.get_property("L+")
     G.add_nodes_from(self._key_to_id)
     id_to_key = self.id_to_key
-    rows, cols, vals = A.to_values()
+    rows, cols, vals = A.to_coo()
     rows = (id_to_key[row] for row in rows.tolist())
     cols = (id_to_key[col] for col in cols.tolist())
     if edge_attribute is None:

@@ -46,7 +46,7 @@ class NodeSet(MutableSet):
     def __iter__(self):
         # Slow if we iterate over one; fast if we iterate over all
         return map(
-            self.id_to_key.__getitem__, self.vector.to_values(values=False, sort=False)[0].tolist()
+            self.id_to_key.__getitem__, self.vector.to_coo(values=False, sort=False)[0].tolist()
         )
 
     def __len__(self):

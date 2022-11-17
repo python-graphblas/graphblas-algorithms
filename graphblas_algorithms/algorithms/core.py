@@ -28,7 +28,7 @@ def k_truss(G: Graph, k) -> Graph:
             S = C
 
     # Remove isolate nodes
-    indices, _ = C.reduce_rowwise(monoid.any).to_values()
+    indices, _ = C.reduce_rowwise(monoid.any).to_coo()
     Ktruss = C[indices, indices].new()
 
     # Convert back to networkx graph with correct node ids
