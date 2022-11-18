@@ -1,5 +1,9 @@
 from . import nxapi
 
+#######
+# NOTE: Remember to update README.md when adding or removing algorithms from Dispatcher
+#######
+
 
 class Dispatcher:
     # Boundary
