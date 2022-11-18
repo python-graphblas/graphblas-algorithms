@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import graphblas as gb
 from graphblas import Matrix, Vector, select
 
 import graphblas_algorithms as ga
@@ -153,7 +154,7 @@ def to_undirected_graph(G, weight=None, dtype=None):
     if isinstance(G, Graph):
         return G
     try:
-        return Graph.from_graphblas(G)
+        return Graph(G)
     except TypeError:
         pass
 
@@ -243,22 +244,28 @@ class Graph:
     }
     graph_attr_dict_factory = dict
 
-    def __init__(self, incoming_graph_data=None, **attr):
+    def __init__(self, incoming_graph_data=None, *, key_to_id=None, **attr):
         if incoming_graph_data is not None:
-            raise NotImplementedError("incoming_graph_data is not None")
+            # Does not copy if A is a Matrix!
+            A = gb.core.utils.ensure_type(incoming_graph_data, Matrix)
+            if A.nrows != A.ncols:
+                raise ValueError(f"Adjacency matrix must be square; got {A.nrows} x {A.ncols}")
+        else:
+            A = Matrix()
         self.graph_attr_dict_factory = self.graph_attr_dict_factory
         self.graph = self.graph_attr_dict_factory()  # dictionary for graph attributes
         self.graph.update(attr)
 
         # Graphblas-specific properties
-        self._A = Matrix()
-        self._key_to_id = {}
+        self._A = A
+        if key_to_id is None:
+            key_to_id = {i: i for i in range(A.nrows)}
+        self._key_to_id = key_to_id
         self._id_to_key = None
         self._cache = {}
 
     # Graphblas-specific methods
     from_networkx = classmethod(_utils.from_networkx)
-    from_graphblas = classmethod(_utils.from_graphblas)
     id_to_key = property(_utils.id_to_key)
     get_property = _utils.get_property
     get_properties = _utils.get_properties
@@ -291,6 +298,10 @@ class Graph:
     def name(self, s):
         self._A.name = s
         self.graph["name"] = s
+
+    @property
+    def matrix(self):
+        return self._A
 
     def __iter__(self):
         return iter(self._key_to_id)

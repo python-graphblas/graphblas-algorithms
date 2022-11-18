@@ -6,20 +6,13 @@ from . import _utils
 
 
 class NodeMap(MutableMapping):
-    def __init__(self):
-        raise NotImplementedError()
-        # .vector, ._key_to_id, ._id_to_key
-
-    @classmethod
-    def from_graphblas(cls, v, *, key_to_id=None):
-        rv = object.__new__(cls)
-        rv.vector = v
+    def __init__(self, v, *, key_to_id=None):
+        self.vector = v
         if key_to_id is None:
-            rv._key_to_id = {i: i for i in range(v.size)}
+            self._key_to_id = {i: i for i in range(v.size)}
         else:
-            rv._key_to_id = key_to_id
-        rv._id_to_key = None
-        return rv
+            self._key_to_id = key_to_id
+        self._id_to_key = None
 
     id_to_key = property(_utils.id_to_key)
     # get_property = _utils.get_property
@@ -104,15 +97,8 @@ class NodeMap(MutableMapping):
 
 
 class VectorMap(MutableMapping):
-    def __init__(self):
-        raise NotImplementedError()
-        # .vector
-
-    @classmethod
-    def from_graphblas(cls, v):
-        rv = object.__new__(cls)
-        rv.vector = v
-        return rv
+    def __init__(self, v):
+        self.vector = v
 
     # Requirements for MutableMapping
     def __delitem__(self, key):
@@ -176,21 +162,14 @@ class VectorMap(MutableMapping):
 
 
 class VectorNodeMap(MutableMapping):
-    def __init__(self):
-        raise NotImplementedError()
-        # .matrix, ._key_to_id, ._id_to_key, ._rows
-
-    @classmethod
-    def from_graphblas(cls, A, *, key_to_id=None):
-        rv = object.__new__(cls)
-        rv.matrix = A
+    def __init__(self, A, *, key_to_id=None):
+        self.matrix = A
         if key_to_id is None:
-            rv._key_to_id = {i: i for i in range(A.size)}
+            self._key_to_id = {i: i for i in range(A.size)}
         else:
-            rv._key_to_id = key_to_id
-        rv._id_to_key = None
-        rv._rows = None
-        return rv
+            self._key_to_id = key_to_id
+        self._id_to_key = None
+        self._rows = None
 
     def _get_rows(self):
         if self._rows is None:
@@ -226,7 +205,7 @@ class VectorNodeMap(MutableMapping):
         idx = self._key_to_id[key]
         if self._get_rows().get(idx) is None:
             raise KeyError(key)
-        return VectorMap.from_graphblas(self.matrix[idx, :].new())
+        return VectorMap(self.matrix[idx, :].new())
 
     def __iter__(self):
         # Slow if we iterate over one; fast if we iterate over all
@@ -273,7 +252,7 @@ class VectorNodeMap(MutableMapping):
         idx = self._key_to_id[key]
         if self._get_rows().get(idx) is None:
             return default
-        return VectorMap.from_graphblas(self.matrix[idx, :].new())
+        return VectorMap(self.matrix[idx, :].new())
 
     # items
     # keys
@@ -285,7 +264,7 @@ class VectorNodeMap(MutableMapping):
             idx = next(rows.ss.iterkeys())
         except StopIteration:
             raise KeyError from None
-        value = VectorMap.from_graphblas(self.matrix[idx, :].new())
+        value = VectorMap(self.matrix[idx, :].new())
         del self.matrix[idx, :]
         del rows[idx]
         return self.id_to_key[idx], value

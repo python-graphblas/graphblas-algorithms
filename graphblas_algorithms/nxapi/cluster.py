@@ -139,6 +139,6 @@ def generalized_degree(G, nodes=None):
         return G.vector_to_nodemap(result)
     mask = G.list_to_mask(nodes)
     result = algorithms.generalized_degree(G, mask=mask)
-    rv = VectorNodeMap.from_graphblas(result, key_to_id=G._key_to_id)
+    rv = VectorNodeMap(result, key_to_id=G._key_to_id)
     rv._id_to_key = G._id_to_key
     return rv
