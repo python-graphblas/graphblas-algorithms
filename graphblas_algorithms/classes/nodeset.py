@@ -6,20 +6,13 @@ from . import _utils
 
 
 class NodeSet(MutableSet):
-    def __init__(self):
-        raise NotImplementedError()
-        # .vector, ._key_to_id, ._id_to_key
-
-    @classmethod
-    def from_graphblas(cls, v, *, key_to_id=None):
-        rv = object.__new__(cls)
-        rv.vector = v
+    def __init__(self, v, *, key_to_id=None):
+        self.vector = v
         if key_to_id is None:
-            rv._key_to_id = {i: i for i in range(v.size)}
+            self._key_to_id = {i: i for i in range(v.size)}
         else:
-            rv._key_to_id = key_to_id
-        rv._id_to_key = None
-        return rv
+            self._key_to_id = key_to_id
+        self._id_to_key = None
 
     id_to_key = property(_utils.id_to_key)
     # get_property = _utils.get_property

@@ -34,4 +34,4 @@ def k_truss(G: Graph, k) -> Graph:
     # Convert back to networkx graph with correct node ids
     keys = G.list_to_keys(indices)
     key_to_id = dict(zip(keys, range(len(indices))))
-    return Graph.from_graphblas(Ktruss, key_to_id=key_to_id)
+    return Graph(Ktruss, key_to_id=key_to_id)

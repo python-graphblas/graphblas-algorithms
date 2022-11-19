@@ -9,8 +9,8 @@ def test_triangles_full():
     G = gb.Matrix(bool, 5, 5)
     G[:, :] = True
     G2 = gb.select.offdiag(G).new()
-    G = Graph.from_graphblas(G)
-    G2 = Graph.from_graphblas(G2)
+    G = Graph(G)
+    G2 = Graph(G2)
     result = cluster.triangles(G)
     expected = gb.Vector(int, 5)
     expected[:] = 6

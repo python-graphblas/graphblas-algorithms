@@ -2,7 +2,6 @@ import graphblas as gb
 import numpy as np
 from graphblas import Matrix, Vector, binary
 from graphblas.core.matrix import TransposedMatrix
-from graphblas.core.utils import ensure_type
 
 ################
 # Classmethods #
@@ -16,21 +15,6 @@ def from_networkx(cls, G, weight=None, dtype=None):
         rv._A = gb.io.from_networkx(G, nodelist=rv._key_to_id, weight=weight, dtype=dtype)
     else:
         rv._A = Matrix(dtype if dtype is not None else float)
-    return rv
-
-
-def from_graphblas(cls, A, *, key_to_id=None):
-    # Does not copy if A is a Matrix!
-    A = ensure_type(A, Matrix)
-    if A.nrows != A.ncols:
-        raise ValueError(f"Adjacency matrix must be square; got {A.nrows} x {A.ncols}")
-    rv = cls()
-    # If there is no mapping, it may be nice to keep this as None
-    if key_to_id is None:
-        rv._key_to_id = {i: i for i in range(A.nrows)}
-    else:
-        rv._key_to_id = key_to_id
-    rv._A = A
     return rv
 
 
@@ -144,23 +128,17 @@ def vector_to_nodemap(self, v, *, mask=None, fillvalue=None):
     elif fillvalue is not None and v.nvals < v.size:
         v(mask=~v.S) << fillvalue
 
-    rv = object.__new__(NodeMap)
-    rv.vector = v
-    rv._key_to_id = self._key_to_id
+    rv = NodeMap(v, key_to_id=self._key_to_id)
     rv._id_to_key = self._id_to_key
     return rv
-    # return NodeMap.from_graphblas(v, key_to_id=self._key_to_id)
 
 
 def vector_to_nodeset(self, v):
     from .nodeset import NodeSet
 
-    rv = object.__new__(NodeSet)
-    rv.vector = v
-    rv._key_to_id = self._key_to_id
+    rv = NodeSet(v, key_to_id=self._key_to_id)
     rv._id_to_key = self._id_to_key
     return rv
-    # return NodeSet.from_graphblas(v, key_to_id=self._key_to_id)
 
 
 def vector_to_set(self, v):
