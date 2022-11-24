@@ -1,0 +1,40 @@
+# To use:
+#   $ conda env create -f environment.yml
+#   $ conda activate graphblas-algorithms-dev
+#
+# Or use mamba instead of conda.
+#
+# pre-commit should be set up once after the repo is cloned (see .pre-commit-config.yaml).
+# In the `graphblas-algorithms-dev` environment, run:
+#   $ pre-commit install
+#
+# At times, one may need to use a development version of networkx or python-graphblas.
+name: graphblas-algorithms-dev
+channels:
+    - conda-forge
+    - nodefaults  # Only install packages from conda-forge for faster solving
+dependencies:
+    - python
+    - python-graphblas
+    - networkx
+    # python-graphblas default dependencies
+    - donfig
+    - numba
+    - python-suitesparse-graphblas
+    - pyyaml
+    # networkx default dependencies
+    - matplotlib
+    - pandas
+    - scipy
+    # networkx extra dependencies
+    - lxml
+    - pydot
+    - pygraphviz
+    - sympy
+    # For linting
+    - pre-commit
+    # For testing
+    - pytest-cov
+    # For debugging
+    - icecream
+    - ipython
