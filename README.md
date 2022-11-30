@@ -39,7 +39,7 @@ Next wrap the Matrix as `ga.Graph`.
 ```python
 import graphblas_algorithms as ga
 
-G = ga.Graph.from_graphblas(M)
+G = ga.Graph(M)
 ```
 
 Finally call an algorithm.
