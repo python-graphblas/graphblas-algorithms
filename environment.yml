@@ -9,6 +9,17 @@
 #   $ pre-commit install
 #
 # At times, one may need to use a development version of networkx or python-graphblas.
+# To do this, you will need to uninstall, git clone, and run setup.py develop.  For example:
+#
+#   $ conda remove --force python-graphblas
+#   $ git clone git@github.com:python-graphblas/python-graphblas.git
+#   $ cd python-graphblas
+#   $ python setup.py develop --no-deps
+#
+#   $ conda remove --force networkx
+#   $ git clone git@github.com:networkx/networkx.git
+#   $ cd networkx
+#   $ python setup.py develop --no-deps
 name: graphblas-algorithms-dev
 channels:
     - conda-forge
