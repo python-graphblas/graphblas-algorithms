@@ -242,7 +242,8 @@ class Graph:
         "column_degrees+": "count_rowwise+",
         "column_degrees-": "count_rowwise-",
     }
-    _cache_matrix_keys = {"A", "AT", "offdiag", "U+", "L+", "U-", "L-"}
+    # These are properties we don't want to actually save in the cache (for ow)
+    _cache_skip_keys = {"AT", "offdiag", "U+", "L+", "U-", "L-"}
     graph_attr_dict_factory = dict
 
     def __init__(self, incoming_graph_data=None, *, key_to_id=None, **attr):

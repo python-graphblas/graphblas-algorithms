@@ -36,7 +36,7 @@ def id_to_key(self):
 
 def get_property(self, name, *, mask=None):
     rv = self._get_property[self._cache_aliases.get(name, name)](self, mask)
-    if name in self._cache_matrix_keys:
+    if name in self._cache_skip_keys:
         # Don't cache large matrix objects
         self._cache.pop(name, None)
     return rv
@@ -56,7 +56,7 @@ def get_properties(self, names, *, mask=None):
         name: self._get_property[name](self, mask)
         for name in sorted(names, key=self._property_priority.__getitem__)
     }
-    for name in self._cache_matrix_keys.intersection(names):
+    for name in self._cache_skip_keys.intersection(names):
         # Don't cache large matrix objects
         self._cache.pop(name, None)
     return [results[name] for name in names]
