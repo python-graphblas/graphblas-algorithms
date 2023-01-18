@@ -39,7 +39,7 @@ jobs:
           python -c 'import sys, graphblas_algorithms; assert "networkx" not in sys.modules'
           coverage run --branch -m pytest --color=yes -v --check-structure
           coverage report
-          NETWORKX_GRAPH_CONVERT=graphblas pytest--color=yes --pyargs networkx --cov --cov-append
+          NETWORKX_GRAPH_CONVERT=graphblas pytest --color=yes --pyargs networkx --cov --cov-append
           coverage report
           coverage xml
       - name: Coverage
