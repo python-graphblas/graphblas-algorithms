@@ -132,17 +132,21 @@ def getfunction(functionname, backend):
     return getattr(nx, functionname)
 
 
-def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=True):
+def getgraph(dataname, backend="graphblas", functionname=None):
     filename = find_data(dataname)
     is_symmetric = get_symmetry(filename) == "symmetric"
-    if not is_symmetric and functionname in undirected_only:
+    if not is_symmetric and functionname is not None and functionname in undirected_only:
         # Should we automatically symmetrize?
         raise ValueError(
             f"Data {dataname!r} is not symmetric, but {functionname} only works on undirected"
         )
     if is_symmetric and functionname in directed_only:
         is_symmetric = False  # Make into directed graph
-    G = readfile(filename, is_symmetric, backend)
+    return readfile(filename, is_symmetric, backend)
+
+
+def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=True):
+    G = getgraph(dataname, backend, functionname)
     func = getfunction(functionname, backend)
     benchstring = functioncall.get(functionname, "func(G)")
     if extra is not None:

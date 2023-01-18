@@ -12,7 +12,7 @@ jobs:
       run:
         shell: bash -l {0}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.9", "3.10"]
@@ -30,21 +30,16 @@ jobs:
           activate-environment: testing
       - name: Install dependencies
         run: |
-          conda install -c conda-forge python-graphblas scipy pandas \
-            pytest-cov pytest-randomly black flake8-comprehensions flake8-bugbear
+          conda install -c conda-forge python-graphblas scipy pandas pytest-cov pytest-randomly
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
-      - name: Style checks
-        run: |
-          flake8
-          black . --check --diff
       - name: PyTest
         run: |
           python -c 'import sys, graphblas_algorithms; assert "networkx" not in sys.modules'
-          coverage run --branch -m pytest -v --check-structure
+          coverage run --branch -m pytest --color=yes -v --check-structure
           coverage report
-          NETWORKX_GRAPH_CONVERT=graphblas pytest --pyargs networkx --cov --cov-append
+          NETWORKX_GRAPH_CONVERT=graphblas pytest--color=yes --pyargs networkx --cov --cov-append
           coverage report
           coverage xml
       - name: Coverage
