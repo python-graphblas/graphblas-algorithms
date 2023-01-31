@@ -95,7 +95,7 @@ def _split(L, k):
 # TODO: should this move into algorithms?
 def _square_clustering_split(G, node_ids=None, *, nsplits):
     if node_ids is None:
-        node_ids = G._A.reduce_rowwise(monoid.any).to_coo()[0]
+        node_ids = G._A.reduce_rowwise(monoid.any).to_coo(values=False)[0]
     result = None
     for chunk_ids in _split(node_ids, nsplits):
         res = algorithms.square_clustering(G, chunk_ids)
