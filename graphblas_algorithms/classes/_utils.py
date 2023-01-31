@@ -154,6 +154,7 @@ def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False):
     and likewise for `use_column_index=True``.
 
     """
+    # TODO: use `A.to_dicts()`?
     if isinstance(A, TransposedMatrix):
         # Not covered
         d = A.T.ss.export("hypercsc")
