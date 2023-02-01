@@ -31,11 +31,11 @@ def floyd_warshall(G, is_weighted=False):
 
     Row = Matrix(dtype, nrows=1, ncols=n, name="Row")
     Col = Matrix(dtype, nrows=n, ncols=1, name="Col")
-    Outer = Matrix(dtype, nrows=n, ncols=n, name="temp")
+    Outer = Matrix(dtype, nrows=n, ncols=n, name="Outer")
     for i in nonempty_nodes:
         Col << D[:, [i]]
         Row << D[[i], :]
-        Outer << any_plus(Col @ Row)
+        Outer << any_plus(Col @ Row)  # Like `col.outer(row, binary.plus)`
         D(binary.min) << offdiag(Outer)
 
     # Set diagonal values to 0 (this way seems fast).
