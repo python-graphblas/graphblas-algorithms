@@ -147,6 +147,7 @@ dispatch pattern shown above.
   - is_k_regular
   - is_regular
 - Shortest Paths
+  - floyd_warshall
   - has_path
 - Simple Paths
   - is_simple_path

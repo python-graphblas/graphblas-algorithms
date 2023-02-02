@@ -55,6 +55,7 @@ class Dispatcher:
     is_k_regular = nxapi.regular.is_k_regular
     is_regular = nxapi.regular.is_regular
     # Shortest Paths
+    floyd_warshall = nxapi.shortest_paths.dense.floyd_warshall
     has_path = nxapi.shortest_paths.generic.has_path
     # Simple Paths
     is_simple_path = nxapi.simple_paths.is_simple_path
@@ -99,14 +100,16 @@ class Dispatcher:
             import pytest
         except ImportError:  # pragma: no cover (import)
             return
-        skip = [
-            ("test_attributes", {"TestBoruvka", "test_mst.py"}),
-            ("test_weight_attribute", {"TestBoruvka", "test_mst.py"}),
-        ]
+        multi_attributed = "unable to handle multi-attributed graphs"
+        multidigraph = "unable to handle MultiDiGraph"
+        freeze = frozenset
+        skip = {
+            ("test_attributes", freeze({"TestBoruvka", "test_mst.py"})): multi_attributed,
+            ("test_weight_attribute", freeze({"TestBoruvka", "test_mst.py"})): multi_attributed,
+            ("test_zero_weight", freeze({"TestFloyd", "test_dense.py"})): multidigraph,
+        }
         for item in items:
             kset = set(item.keywords)
-            for test_name, keywords in skip:
+            for (test_name, keywords), reason in skip.items():
                 if item.name == test_name and keywords.issubset(kset):
-                    item.add_marker(
-                        pytest.mark.xfail(reason="unable to handle multi-attributed graphs")
-                    )
+                    item.add_marker(pytest.mark.xfail(reason=reason))
