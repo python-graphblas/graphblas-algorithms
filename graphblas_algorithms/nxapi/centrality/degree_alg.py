@@ -8,18 +8,18 @@ __all__ = ["degree_centrality", "in_degree_centrality", "out_degree_centrality"]
 def degree_centrality(G):
     G = to_graph(G)
     result = algorithms.degree_centrality(G)
-    return G.vector_to_nodemap(result, fillvalue=0.0)
+    return G.vector_to_nodemap(result, fill_value=0.0)
 
 
 @not_implemented_for("undirected")
 def in_degree_centrality(G):
     G = to_directed_graph(G)
     result = algorithms.in_degree_centrality(G)
-    return G.vector_to_nodemap(result, fillvalue=0.0)
+    return G.vector_to_nodemap(result, fill_value=0.0)
 
 
 @not_implemented_for("undirected")
 def out_degree_centrality(G):
     G = to_directed_graph(G)
     result = algorithms.out_degree_centrality(G)
-    return G.vector_to_nodemap(result, fillvalue=0.0)
+    return G.vector_to_nodemap(result, fill_value=0.0)
