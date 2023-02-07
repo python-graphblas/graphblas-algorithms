@@ -30,7 +30,7 @@ repos:
       - id: autoflake
         args: [--in-place]
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.4
+    rev: 5.12.0
     hooks:
       - id: isort
   - repo: https://github.com/asottile/pyupgrade
@@ -56,7 +56,7 @@ repos:
         # These versions need updated manually
         - flake8==6.0.0
         - flake8-comprehensions==3.10.1
-        - flake8-bugbear==23.1.14
+        - flake8-bugbear==23.1.20
         - flake8-simplify==0.19.3
   - repo: https://github.com/asottile/yesqa
     rev: v1.4.0
@@ -69,7 +69,6 @@ repos:
       - id: codespell
         types_or: [python, rst, markdown]
         files: ^(graphblas_algorithms|docs)/
-        # args: ["--ignore-words-list=coo,ba"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
