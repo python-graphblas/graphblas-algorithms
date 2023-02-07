@@ -14,43 +14,56 @@ def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_pre
     # Typically, Floyd-Warshall algorithms sets the diagonal of D to 0 at the beginning.
     # This is unnecessary with sparse matrices, and we set the diagonal to 0 at the end.
     # We also don't iterate over index `i` if either row i or column i are empty.
-    if G.is_directed():
+    if is_directed := G.is_directed():
         A, row_degrees, column_degrees = G.get_properties("offdiag row_degrees- column_degrees-")
         nonempty_nodes = binary.pair(row_degrees & column_degrees).new(name="nonempty_nodes")
     else:
-        A, nonempty_nodes = G.get_properties("offdiag degrees-")
+        A, nonempty_nodes = G.get_properties("U- degrees-")
 
     if A.dtype == bool or not is_weighted:
         dtype = int
     else:
         dtype = A.dtype
     n = A.nrows
-    if compute_predecessors:
-        P = indexunary.rowindex(A).new(name="floyd_warshall_pred")
-        P_row = Matrix(P.dtype, nrows=1, ncols=n, name="P_row")
-    else:
-        P = P_row = None
     D = Matrix(dtype, nrows=n, ncols=n, name="floyd_warshall_dist")
     if is_weighted:
         D << A
     else:
         D(A.S) << 1  # Like `D << unary.one[int](A)`
     del A
-
     Row = Matrix(dtype, nrows=1, ncols=n, name="Row")
-    Col = Matrix(dtype, nrows=n, ncols=1, name="Col")
+    if is_directed:
+        Col = Matrix(dtype, nrows=n, ncols=1, name="Col")
+    else:
+        Col = None
     Outer = Matrix(dtype, nrows=n, ncols=n, name="Outer")
     Mask = Matrix(bool, nrows=n, ncols=n, name="Mask")
+    if compute_predecessors:
+        P = indexunary.rowindex(D).new(name="floyd_warshall_pred")
+        if P.dtype == dtype:
+            P_row = Row
+        else:
+            P_row = Matrix(P.dtype, nrows=1, ncols=n, name="P_row")
+    else:
+        P = P_row = None
+
     for i in nonempty_nodes:
-        Col << D[:, [i]]
         Row << D[[i], :]
+        if is_directed:
+            Col << D[:, [i]]
+        else:
+            Row(binary.any) << D.T[[i], :]
+            Col = Row.T
         Outer << any_plus(Col @ Row)  # Like `col.outer(row, binary.plus)`
 
         # Update Outer to only include off-diagonal values that will update D.
         #
         # If we don't need to compute predecessors, we could save memory by
         # skipping all this and instead do `D(binary.min) << offdiag(Outer)`.
-        Mask << indexunary.offdiag(Outer)
+        if is_directed:
+            Mask << indexunary.offdiag(Outer)
+        else:
+            Mask << indexunary.triu(Outer, 1)
         Mask(binary.second) << binary.lt(Outer & D)
         Outer(Mask.V, replace) << Outer
 
@@ -60,7 +73,18 @@ def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_pre
         # Broadcast predecessors in P_row to updated values
         if compute_predecessors:
             P_row << P[[i], :]
+            if not is_directed:
+                P_row(binary.any) << P.T[[i], :]
+                Col = P_row.T
             P(Outer.S) << any_second(Col @ P_row)
+    del Outer, Mask, Col, Row, P_row
+
+    if not is_directed:
+        # Symmetrize the results.
+        # It may be nice to be able to return these as upper-triangular.
+        D(binary.any) << D.T
+        if compute_predecessors:
+            P(binary.any) << P.T
 
     # Set diagonal values to 0 (this way seems fast).
     # The missing values are implied to be infinity, so we set diagonals explicitly to 0.
