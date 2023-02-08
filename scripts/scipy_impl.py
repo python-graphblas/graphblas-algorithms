@@ -14,7 +14,6 @@ def pagerank(
     weight="weight",
     dangling=None,
 ):
-
     N = A.shape[0]
     if A.nnz == 0:
         return {}

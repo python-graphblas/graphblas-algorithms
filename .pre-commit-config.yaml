@@ -20,12 +20,12 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.11
+    rev: v0.12.1
     hooks:
       - id: validate-pyproject
         name: Validate pyproject.toml
   - repo: https://github.com/myint/autoflake
-    rev: v2.0.0
+    rev: v2.0.1
     hooks:
       - id: autoflake
         args: [--in-place]
@@ -44,7 +44,7 @@ repos:
       - id: auto-walrus
         args: [--line-length, "100"]
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
       - id: black
         args: [--target-version=py38]

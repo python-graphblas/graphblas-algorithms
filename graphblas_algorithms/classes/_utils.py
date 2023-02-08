@@ -109,26 +109,27 @@ def set_to_vector(self, nodes, dtype=bool, *, ignore_extra=False, size=None, nam
     return Vector.from_coo(index, True, size=size, dtype=dtype, name=name)
 
 
-def vector_to_dict(self, v, *, mask=None, fillvalue=None):
+def vector_to_dict(self, v, *, mask=None, fill_value=None):
     if mask is not None:
-        if fillvalue is not None and v.nvals < mask.parent.nvals:
-            v(mask, binary.first) << fillvalue
-    elif fillvalue is not None and v.nvals < v.size:
-        v(mask=~v.S) << fillvalue
+        if fill_value is not None and v.nvals < mask.parent.nvals:
+            v(mask, binary.first) << fill_value
+    elif fill_value is not None and v.nvals < v.size:
+        v(mask=~v.S) << fill_value
     id_to_key = self.id_to_key
     return {id_to_key[index]: value for index, value in zip(*v.to_coo(sort=False))}
 
 
-def vector_to_nodemap(self, v, *, mask=None, fillvalue=None):
+def vector_to_nodemap(self, v, *, mask=None, fill_value=None, values_are_keys=False):
     from .nodemap import NodeMap
 
     if mask is not None:
-        if fillvalue is not None and v.nvals < mask.parent.nvals:
-            v(mask, binary.first) << fillvalue
-    elif fillvalue is not None and v.nvals < v.size:
-        v(mask=~v.S) << fillvalue
+        if fill_value is not None and v.nvals < mask.parent.nvals:
+            v(mask, binary.first) << fill_value
+        fill_value = None
 
-    rv = NodeMap(v, key_to_id=self._key_to_id)
+    rv = NodeMap(
+        v, fill_value=fill_value, values_are_keys=values_are_keys, key_to_id=self._key_to_id
+    )
     rv._id_to_key = self._id_to_key
     return rv
 
@@ -147,7 +148,25 @@ def vector_to_set(self, v):
     return {id_to_key[index] for index in indices}
 
 
-def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False):
+def matrix_to_nodenodemap(self, A, *, fill_value=None, values_are_keys=False):
+    from .nodemap import NodeNodeMap
+
+    rv = NodeNodeMap(
+        A, fill_value=fill_value, values_are_keys=values_are_keys, key_to_id=self._key_to_id
+    )
+    rv._id_to_key = self._id_to_key
+    return rv
+
+
+def matrix_to_vectornodemap(self, A):
+    from .nodemap import VectorNodeMap
+
+    rv = VectorNodeMap(A, key_to_id=self._key_to_id)
+    rv._id_to_key = self._id_to_key
+    return rv
+
+
+def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False, values_are_keys=False):
     """Convert a Matrix to a dict of dicts of the form ``{row: {col: val}}``
 
     Use ``use_row_index=True`` to return the row index as keys in the dict,
@@ -167,6 +186,8 @@ def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False):
     indptr = d["indptr"]
     values = d["values"].tolist()
     id_to_key = self.id_to_key
+    if values_are_keys:
+        values = [id_to_key[val] for val in values]
     it = zip(rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist())
     if use_row_index and use_column_index:
         return {

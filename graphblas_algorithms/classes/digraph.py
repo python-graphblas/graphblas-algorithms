@@ -569,6 +569,8 @@ class DiGraph(Graph):
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
     matrix_to_dicts = _utils.matrix_to_dicts
+    matrix_to_nodenodemap = _utils.matrix_to_nodenodemap
+    matrix_to_vectornodemap = _utils.matrix_to_vectornodemap
     set_to_vector = _utils.set_to_vector
     to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict

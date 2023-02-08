@@ -3,7 +3,6 @@ from graphblas import monoid
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
-from graphblas_algorithms.classes.nodemap import VectorNodeMap
 from graphblas_algorithms.utils import not_implemented_for
 
 __all__ = [
@@ -25,7 +24,7 @@ def triangles(G, nodes=None):
         return algorithms.single_triangle(G, nodes)
     mask = G.list_to_mask(nodes)
     result = algorithms.triangles(G, mask=mask)
-    return G.vector_to_nodemap(result, mask=mask, fillvalue=0)
+    return G.vector_to_nodemap(result, mask=mask, fill_value=0)
 
 
 def transitivity(G):
@@ -54,7 +53,7 @@ def clustering(G, nodes=None, weight=None):
         result = algorithms.clustering_directed(G, weighted=weighted, mask=mask)
     else:
         result = algorithms.clustering(G, weighted=weighted, mask=mask)
-    return G.vector_to_nodemap(result, mask=mask, fillvalue=0.0)
+    return G.vector_to_nodemap(result, mask=mask, fill_value=0.0)
 
 
 def average_clustering(G, nodes=None, weight=None, count_zeros=True):
@@ -116,7 +115,7 @@ def square_clustering(G, nodes=None, *, nsplits=None):
             result = algorithms.square_clustering(G)
         else:
             result = _square_clustering_split(G, nsplits=nsplits)
-        return G.vector_to_nodemap(result, fillvalue=0)
+        return G.vector_to_nodemap(result, fill_value=0)
     elif nodes in G:
         idx = G._key_to_id[nodes]
         return algorithms.single_square_clustering(G, idx)
@@ -139,6 +138,4 @@ def generalized_degree(G, nodes=None):
         return G.vector_to_nodemap(result)
     mask = G.list_to_mask(nodes)
     result = algorithms.generalized_degree(G, mask=mask)
-    rv = VectorNodeMap(result, key_to_id=G._key_to_id)
-    rv._id_to_key = G._id_to_key
-    return rv
+    return G.matrix_to_vectornodemap(result)

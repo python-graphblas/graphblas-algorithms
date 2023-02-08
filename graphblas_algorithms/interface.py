@@ -56,6 +56,9 @@ class Dispatcher:
     is_regular = nxapi.regular.is_regular
     # Shortest Paths
     floyd_warshall = nxapi.shortest_paths.dense.floyd_warshall
+    floyd_warshall_predecessor_and_distance = (
+        nxapi.shortest_paths.dense.floyd_warshall_predecessor_and_distance
+    )
     has_path = nxapi.shortest_paths.generic.has_path
     # Simple Paths
     is_simple_path = nxapi.simple_paths.is_simple_path
