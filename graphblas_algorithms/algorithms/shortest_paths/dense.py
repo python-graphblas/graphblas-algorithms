@@ -1,4 +1,4 @@
-from graphblas import Matrix, Vector, binary, indexunary, replace
+from graphblas import Matrix, Vector, binary, indexunary, replace, select
 from graphblas.semiring import any_plus, any_second
 
 __all__ = ["floyd_warshall", "floyd_warshall_predecessor_and_distance"]
@@ -37,15 +37,15 @@ def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_pre
     else:
         Col = None
     Outer = Matrix(dtype, nrows=n, ncols=n, name="Outer")
-    Mask = Matrix(bool, nrows=n, ncols=n, name="Mask")
     if compute_predecessors:
+        Mask = Matrix(bool, nrows=n, ncols=n, name="Mask")
         P = indexunary.rowindex(D).new(name="floyd_warshall_pred")
         if P.dtype == dtype:
             P_row = Row
         else:
             P_row = Matrix(P.dtype, nrows=1, ncols=n, name="P_row")
     else:
-        P = P_row = None
+        Mask = P = P_row = None
 
     for i in nonempty_nodes:
         Row << D[[i], :]
@@ -56,22 +56,26 @@ def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_pre
             Col = Row.T
         Outer << any_plus(Col @ Row)  # Like `col.outer(row, binary.plus)`
 
-        # Update Outer to only include off-diagonal values that will update D.
-        #
-        # If we don't need to compute predecessors, we could save memory by
-        # skipping all this and instead do `D(binary.min) << offdiag(Outer)`.
-        if is_directed:
-            Mask << indexunary.offdiag(Outer)
+        if not compute_predecessors:
+            # It is faster (approx 10%-30%) to use a mask as is done below when computing
+            # predecessors, but we choose to use less memory here by not using a mask.
+            if is_directed:
+                D(binary.min) << select.offdiag(Outer)
+            else:
+                D(binary.min) << select.triu(Outer, 1)
         else:
-            Mask << indexunary.triu(Outer, 1)
-        Mask(binary.second) << binary.lt(Outer & D)
-        Outer(Mask.V, replace) << Outer
+            # Update Outer to only include off-diagonal values that will update D and P.
+            if is_directed:
+                Mask << indexunary.offdiag(Outer)
+            else:
+                Mask << indexunary.triu(Outer, 1)
+            Mask(binary.second) << binary.lt(Outer & D)
+            Outer(Mask.V, replace) << Outer
 
-        # Update distances; like `D(binary.min) << offdiag(any_plus(Col @ Row))`
-        D(Outer.S) << Outer
+            # Update distances; like `D(binary.min) << offdiag(any_plus(Col @ Row))`
+            D(Outer.S) << Outer
 
-        # Broadcast predecessors in P_row to updated values
-        if compute_predecessors:
+            # Broadcast predecessors in P_row to updated values
             P_row << P[[i], :]
             if not is_directed:
                 P_row(binary.any) << P.T[[i], :]
