@@ -117,6 +117,9 @@ directed_only = {
 }
 # Is square_clustering undirected only? graphblas-algorthms doesn't implement it for directed
 undirected_only = {"generalized_degree", "k_truss", "triangles", "square_clustering"}
+returns_iterators = {
+    "all_pairs_bellman_ford_path_length",
+}
 
 
 def getfunction(functionname, backend):
@@ -151,6 +154,8 @@ def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=
     benchstring = functioncall.get(functionname, "func(G)")
     if extra is not None:
         benchstring = f"{benchstring[:-1]}, {extra})"
+    if functionname in returns_iterators:
+        benchstring = f"for _ in {benchstring}: pass"
     globals = {"func": func, "G": G}
     if functionname in poweriteration:
         benchstring = f"try:\n    {benchstring}\nexcept exc:\n    pass"

@@ -1,4 +1,4 @@
-from graphblas import Vector, binary, monoid, replace
+from graphblas import Vector, binary, monoid, replace, unary
 from graphblas.semiring import min_plus
 
 from ..exceptions import Unbounded
@@ -20,6 +20,7 @@ def single_source_bellman_ford_path_length(G, source):
     d[index] = 0
     cur = d.dup(name="cur")
     mask = Vector(bool, n, name="mask")
+    one = unary.one[bool]
     for _i in range(n - 1):
         # This is a slightly modified Bellman-Ford algorithm.
         # `cur` is the current frontier of values that improved in the previous iteration.
@@ -27,7 +28,7 @@ def single_source_bellman_ford_path_length(G, source):
         cur << min_plus(cur @ A)
 
         # Mask is True where cur not in d or cur < d
-        mask(cur.S, replace) << True  # or: `mask << unary.one[bool](cur)`
+        mask << one(cur)
         mask(binary.second) << binary.lt(cur & d)
 
         # Drop values from `cur` that didn't improve
