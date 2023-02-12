@@ -12,7 +12,14 @@ __all__ = [
 def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize=128):
     # Larger chunksize offers more parallelism, but uses more memory.
     G = to_graph(G, weight=weight)
-    if chunksize < 2:
+    if chunksize is None or chunksize <= 0:
+        # All at once
+        try:
+            D = algorithms.bellman_ford_path_lengths(G)
+        except algorithms.exceptions.Unbounded as e:
+            raise NetworkXUnbounded(*e.args) from e
+        yield from G.matrix_to_nodenodemap(D).items()
+    elif chunksize < 2:
         for source in G:
             try:
                 d = algorithms.single_source_bellman_ford_path_length(G, source)
