@@ -1,9 +1,13 @@
-from graphblas import Vector, binary, monoid, replace, unary
+import numpy as np
+from graphblas import Matrix, Vector, binary, monoid, replace, unary
 from graphblas.semiring import min_plus
 
 from ..exceptions import Unbounded
 
-__all__ = ["single_source_bellman_ford_path_length"]
+__all__ = [
+    "single_source_bellman_ford_path_length",
+    "bellman_ford_path_lengths",
+]
 
 
 def single_source_bellman_ford_path_length(G, source):
@@ -44,3 +48,53 @@ def single_source_bellman_ford_path_length(G, source):
         if mask.reduce(monoid.lor):
             raise Unbounded("Negative cycle detected.")
     return d
+
+
+def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
+    """
+
+    Parameters
+    ----------
+    expand_output : bool, default False
+        When False, the returned Matrix has one row per node in nodes.
+        When True, the returned Matrix has the same shape as the input Matrix.
+    """
+    # Same algorithms as in `single_source_bellman_ford_path_length`, but with
+    # `Cur` as a Matrix with each row corresponding to a source node.
+    A = G._A
+    if A.dtype == bool:
+        dtype = int
+    else:
+        dtype = A.dtype
+    n = A.nrows
+    if nodes is None:
+        # TODO: `D = Vector.from_iso_value(0, n, dtype).diag()`
+        D = Vector(dtype, n, name="bellman_ford_path_lengths_vector")
+        D << 0
+        D = D.diag(name="bellman_ford_path_lengths")
+    else:
+        ids = G.list_to_ids(nodes)
+        D = Matrix.from_coo(
+            np.arange(len(ids), dtype=np.uint64), ids, 0, dtype, nrows=len(ids), ncols=n
+        )
+    Cur = D.dup(name="Cur")
+    Mask = Matrix(bool, D.nrows, D.ncols, name="Mask")
+    one = unary.one[bool]
+    for _i in range(n - 1):
+        Cur << min_plus(Cur @ A)
+        Mask << one(Cur)
+        Mask(binary.second) << binary.lt(Cur & D)
+        Cur(Mask.V, replace) << Cur
+        if Cur.nvals == 0:
+            break
+        D(Cur.S) << Cur
+    else:
+        Cur << min_plus(Cur @ A)
+        Mask << binary.lt(Cur & D)
+        if Mask.reduce_scalar(monoid.lor):
+            raise Unbounded("Negative cycle detected.")
+    if nodes is not None and expand_output:
+        rv = Matrix(D.dtype, n, n, name=D.name)
+        rv[ids, :] = D
+        return rv
+    return D

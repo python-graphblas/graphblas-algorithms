@@ -65,14 +65,14 @@ def dict_to_vector(self, d, *, size=None, dtype=None, name=None):
     return Vector.from_coo(indices, values, size=size, dtype=dtype, name=name)
 
 
-def list_to_vector(self, nodes, dtype=bool, *, size=None, name=None):
+def list_to_vector(self, nodes, dtype=None, *, values=True, size=None, name=None):
     if nodes is None:
         return None
     if size is None:
         size = len(self)
     key_to_id = self._key_to_id
     index = [key_to_id[key] for key in nodes]
-    return Vector.from_coo(index, True, size=size, dtype=dtype, name=name)
+    return Vector.from_coo(index, values, size=size, dtype=dtype, name=name)
 
 
 def list_to_mask(self, nodes, *, size=None, name="mask"):

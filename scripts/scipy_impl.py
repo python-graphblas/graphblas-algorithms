@@ -52,3 +52,14 @@ def pagerank(
             return x
             # return dict(zip(nodelist, map(float, x)))
     raise nx.PowerIterationFailedConvergence(max_iter)
+
+
+def all_pairs_bellman_ford_path_length(A, weight="weight"):
+    for source in range(A.shape[0]):
+        d = single_source_bellman_ford_path_length(A, source)
+        yield (source, d)
+
+
+def single_source_bellman_ford_path_length(A, source, weight="weight"):
+    return scipy.sparse.csgraph.bellman_ford(A, indices=source)  # So slow!
+    # return scipy.sparse.csgraph.dijkstra(A, indices=source)  # Faster
