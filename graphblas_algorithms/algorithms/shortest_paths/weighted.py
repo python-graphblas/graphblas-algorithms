@@ -1,6 +1,6 @@
 import numpy as np
-from graphblas import Matrix, Vector, binary, monoid, replace, unary
-from graphblas.semiring import min_plus
+from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
+from graphblas.semiring import any_pair, min_plus
 
 from ..exceptions import Unbounded
 
@@ -13,7 +13,7 @@ __all__ = [
 def single_source_bellman_ford_path_length(G, source):
     # No need for `is_weighted=` keyword, b/c this is assumed to be weighted (I think)
     index = G._key_to_id[source]
-    A = G._A
+    A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
     if A.dtype == bool:
         # Should we upcast e.g. INT8 to INT64 as well?
         dtype = int
@@ -47,6 +47,12 @@ def single_source_bellman_ford_path_length(G, source):
         mask << binary.lt(cur & d)
         if mask.reduce(monoid.lor):
             raise Unbounded("Negative cycle detected.")
+    if has_negative_diagonal:
+        # We removed diagonal entries above, so check if we visited one with a negative weight
+        diag = G.get_property("diag")
+        cur << select.valuelt(diag, 0)
+        if any_pair(d @ cur):
+            raise Unbounded("Negative cycle detected.")
     return d
 
 
@@ -61,7 +67,7 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
     """
     # Same algorithms as in `single_source_bellman_ford_path_length`, but with
     # `Cur` as a Matrix with each row corresponding to a source node.
-    A = G._A
+    A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
     if A.dtype == bool:
         dtype = int
     else:
@@ -92,6 +98,11 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
         Cur << min_plus(Cur @ A)
         Mask << binary.lt(Cur & D)
         if Mask.reduce_scalar(monoid.lor):
+            raise Unbounded("Negative cycle detected.")
+    if has_negative_diagonal:
+        diag = G.get_property("diag")
+        cur = select.valuelt(diag, 0)
+        if any_pair(D @ cur).nvals > 0:
             raise Unbounded("Negative cycle detected.")
     if nodes is not None and expand_output:
         rv = Matrix(D.dtype, n, n, name=D.name)

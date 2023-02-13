@@ -6,7 +6,7 @@ from graphblas import Matrix, Vector, select
 import graphblas_algorithms as ga
 
 from . import _utils
-from ._caching import get_reduce_to_scalar, get_reduce_to_vector
+from ._caching import NONNEGATIVE_DTYPES, get_reduce_to_scalar, get_reduce_to_vector
 
 
 def get_A(G, mask=None):
@@ -129,6 +129,65 @@ def get_diag(G, mask=None):
     return cache["diag"]
 
 
+def has_negative_diagonal(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_diagonal" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt or cache.get("has_self_edges") is False:
+            cache["has_negative_diagonal"] = False
+        elif (
+            cache.get("has_negative_edges+") is True
+            and cache.get("has_negative_edges-") is False
+            or cache.get("has_negative_edges+") is True
+            and cache.get("min_element-", 0) >= 0
+            or cache.get("min_element+", 0) < 0
+            and cache.get("min_element+", 0) < cache.get("min_element-", 0)
+        ):
+            cache["has_negative_diagonal"] = True
+        else:
+            cache["has_negative_diagonal"] = G.get_property("min_diagonal").get(0) < 0
+    return cache["has_negative_diagonal"]
+
+
+def has_negative_edgesp(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_edges+" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
+            cache["has_negative_edges+"] = False
+        elif (
+            cache.get("has_negative_edges-")
+            or cache.get("min_element+", 0) < 0
+            or cache.get("min_element-", 0) < 0
+            or cache.get("min_diagonal", 0) < 0
+            or cache.get("has_negative_diagonal")
+        ):
+            cache["has_negative_edges+"] = True
+        elif cache.get("has_negative_edges-") is False:
+            cache["has_negative_edges+"] = G.get_property("min_diagonal").get(0) < 0
+        else:
+            cache["has_negative_edges+"] = G.get_property("min_element+").get(0) < 0
+    return cache["has_negative_edges+"]
+
+
+def has_negative_edgesm(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_edges-" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
+            cache["has_negative_edges-"] = False
+        elif (
+            cache.get("has_negative_edges+")
+            and cache.get("has_self_edges") is False
+            or cache.get("has_negative_edges+")
+            and cache.get("has_negative_diagonal") is False
+        ):
+            cache["has_negative_edges-"] = True
+        else:
+            cache["has_negative_edges-"] = G.get_property("min_element-").get(0) < 0
+    return cache["has_negative_edges-"]
+
+
 def has_self_edges(G, mask=None):
     """A.diag().nvals > 0"""
     A = G._A
@@ -144,6 +203,8 @@ def has_self_edges(G, mask=None):
             cache["has_self_edges"] = 2 * cache["U-"].nvals < A.nvals
         elif "offdiag" in cache:
             cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
+        elif cache.get("has_negative_diagonal") is True:
+            cache["has_self_edges"] = True
         else:
             G.get_property("diag")
     return cache["has_self_edges"]
@@ -190,9 +251,14 @@ class AutoDict(dict):
             else:
                 get_reduction = get_reduce_to_vector(key, opname, methodname)
                 self[f"{opname}_columnwise{key[-1]}"] = get_reduction
-            self[key] = get_reduction
-            return get_reduction
-        raise KeyError(key)
+        elif key.endswith("_diagonal"):
+            # e.g., min_diagonal
+            opname = key[: -len("_diagonal")]
+            get_reduction = get_reduce_to_scalar(key, opname)
+        else:
+            raise KeyError(key)
+        self[key] = get_reduction
+        return get_reduction
 
 
 class Graph:
@@ -216,6 +282,12 @@ class Graph:
                     "diag",
                     "count_rowwise+",
                     "count_rowwise-",
+                    "min_diagonal",
+                    "min_element+",
+                    "min_element-",
+                    "has_negative_diagonal",
+                    "has_negative_edges-",
+                    "has_negative_edges+",
                     "has_self_edges",
                 ]
             )
@@ -231,6 +303,9 @@ class Graph:
             "U-": get_Um,
             "L-": get_Lm,
             "diag": get_diag,
+            "has_negative_diagonal": has_negative_diagonal,
+            "has_negative_edges-": has_negative_edgesm,
+            "has_negative_edges+": has_negative_edgesp,
             "has_self_edges": has_self_edges,
         }
     )
