@@ -13,6 +13,9 @@ __all__ = [
 def single_source_bellman_ford_path_length(G, source):
     # No need for `is_weighted=` keyword, b/c this is assumed to be weighted (I think)
     index = G._key_to_id[source]
+    # Use `offdiag` instead of `A`, b/c self-loops don't contribute to the result,
+    # and negative self-loops are easy negative cycles to avoid.
+    # We check if we hit a self-loop negative cycle at the end.
     A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
     if A.dtype == bool:
         # Should we upcast e.g. INT8 to INT64 as well?

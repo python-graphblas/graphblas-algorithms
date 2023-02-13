@@ -10,7 +10,7 @@ def has_path(G, source, target):
     dst = G._key_to_id[target]
     if src == dst:
         return True
-    A = G._A
+    A = G.get_property("offdiag")
     q_src = Vector.from_coo(src, True, size=A.nrows, name="q_src")
     seen_src = q_src.dup(name="seen_src")
     q_dst = Vector.from_coo(dst, True, size=A.nrows, name="q_dst")

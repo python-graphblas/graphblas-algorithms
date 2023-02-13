@@ -8,7 +8,7 @@ def is_simple_path(G, nodes):
         return False
     if len(nodes) == 1:
         return nodes[0] in G
-    A = G._A
+    A = G._A  # offdiag instead?
     if A.nvals < len(nodes) - 1:
         return False
     key_to_id = G._key_to_id
