@@ -24,6 +24,9 @@ def single_source_bellman_ford_path_length(G, source):
         # It's difficult to detect negative cycles with BFS
         if G._A[index, index].get() is not None:
             raise Unbounded("Negative cycle detected.")
+        if not G.is_directed() and G._A[index, :].nvals > 0:
+            # For undirected graphs, any negative edge is a cycle
+            raise Unbounded("Negative cycle detected.")
 
     # Use `offdiag` instead of `A`, b/c self-loops don't contribute to the result,
     # and negative self-loops are easy negative cycles to avoid.
@@ -94,6 +97,14 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
                 rv[ids, :] = D
                 return rv
             return D
+        if not G.is_directed():
+            # For undirected graphs, any negative edge is a cycle
+            if nodes is not None:
+                ids = G.list_to_ids(nodes)
+                if G._A[ids, :].nvals > 0:
+                    raise Unbounded("Negative cycle detected.")
+            elif G._A.nvals > 0:
+                raise Unbounded("Negative cycle detected.")
 
     A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
     if A.dtype == bool:
