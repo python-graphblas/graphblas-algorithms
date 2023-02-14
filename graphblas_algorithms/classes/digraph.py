@@ -1,18 +1,23 @@
 from collections import defaultdict
 
 import graphblas as gb
-from graphblas import Matrix, Vector, binary, replace, select, unary
+from graphblas import Matrix, binary, replace, select, unary
 
 import graphblas_algorithms as ga
 
 from . import _utils
-from ._caching import NONNEGATIVE_DTYPES, get_reduce_to_scalar, get_reduce_to_vector
-from .graph import Graph
-
-
-def get_A(G, mask=None):
-    """A"""
-    return G._A
+from ._caching import get_reduce_to_scalar, get_reduce_to_vector
+from .graph import (
+    Graph,
+    get_A,
+    get_diag,
+    get_iso_value,
+    get_offdiag,
+    has_negative_diagonal,
+    has_negative_edgesm,
+    has_negative_edgesp,
+    is_iso,
+)
 
 
 def get_AT(G, mask=None):
@@ -22,22 +27,6 @@ def get_AT(G, mask=None):
     if "AT" not in cache:
         cache["AT"] = A.T.new()
     return cache["AT"]
-
-
-def get_offdiag(G, mask=None):
-    """select.offdiag(A)"""
-    A = G._A
-    cache = G._cache
-    if "offdiag" not in cache:
-        if cache.get("has_self_edges") is False:
-            cache["offdiag"] = A
-        else:
-            cache["offdiag"] = select.offdiag(A).new(name="offdiag")
-    if "has_self_edges" not in cache:
-        cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
-    if not cache["has_self_edges"]:
-        cache["offdiag"] = A
-    return cache["offdiag"]
 
 
 def get_Up(G, mask=None):
@@ -124,26 +113,6 @@ def get_Lm(G, mask=None):
     if cache.get("has_self_edges") is False:
         cache["L+"] = cache["L-"]
     return cache["L-"]
-
-
-def get_diag(G, mask=None):
-    """select.diag(A)"""
-    A = G._A
-    cache = G._cache
-    if "diag" not in cache:
-        if cache.get("has_self_edges") is False:
-            cache["diag"] = Vector(A.dtype, size=A.nrows, name="diag")
-        elif "U+" in cache:
-            cache["diag"] = cache["U+"].diag(name="diag")
-        elif "L+" in cache:
-            cache["diag"] = cache["L+"].diag(name="diag")
-        else:
-            cache["diag"] = A.diag(name="diag")
-    if "has_self_edges" not in cache:
-        cache["has_self_edges"] = cache["diag"].nvals > 0
-    if mask is not None:
-        return cache["diag"].dup(mask=mask)
-    return cache["diag"]
 
 
 def get_recip_degreesp(G, mask=None):
@@ -371,65 +340,6 @@ def get_total_recipm(G, mask=None):
     return cache["total_recip-"]
 
 
-def has_negative_diagonal(G, mask=None):
-    A = G._A
-    cache = G._cache
-    if "has_negative_diagonal" not in cache:
-        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt or cache.get("has_self_edges") is False:
-            cache["has_negative_diagonal"] = False
-        elif (
-            cache.get("has_negative_edges+") is True
-            and cache.get("has_negative_edges-") is False
-            or cache.get("has_negative_edges+") is True
-            and cache.get("min_element-", 0) >= 0
-            or cache.get("min_element+", 0) < 0
-            and cache.get("min_element+", 0) < cache.get("min_element-", 0)
-        ):
-            cache["has_negative_diagonal"] = True
-        else:
-            cache["has_negative_diagonal"] = G.get_property("min_diagonal").get(0) < 0
-    return cache["has_negative_diagonal"]
-
-
-def has_negative_edgesp(G, mask=None):
-    A = G._A
-    cache = G._cache
-    if "has_negative_edges+" not in cache:
-        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
-            cache["has_negative_edges+"] = False
-        elif (
-            cache.get("has_negative_edges-")
-            or cache.get("min_element+", 0) < 0
-            or cache.get("min_element-", 0) < 0
-            or cache.get("min_diagonal", 0) < 0
-            or cache.get("has_negative_diagonal")
-        ):
-            cache["has_negative_edges+"] = True
-        elif cache.get("has_negative_edges-") is False:
-            cache["has_negative_edges+"] = G.get_property("min_diagonal").get(0) < 0
-        else:
-            cache["has_negative_edges+"] = G.get_property("min_element+").get(0) < 0
-    return cache["has_negative_edges+"]
-
-
-def has_negative_edgesm(G, mask=None):
-    A = G._A
-    cache = G._cache
-    if "has_negative_edges-" not in cache:
-        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
-            cache["has_negative_edges-"] = False
-        elif (
-            cache.get("has_negative_edges+")
-            and cache.get("has_self_edges") is False
-            or cache.get("has_negative_edges+")
-            and cache.get("has_negative_diagonal") is False
-        ):
-            cache["has_negative_edges-"] = True
-        else:
-            cache["has_negative_edges-"] = G.get_property("min_element-").get(0) < 0
-    return cache["has_negative_edges-"]
-
-
 def has_self_edges(G, mask=None):
     """A.diag().nvals > 0"""
     A = G._A
@@ -600,6 +510,8 @@ class DiGraph(Graph):
             "total_degrees-": get_total_degreesm,
             "total_recip+": get_total_recipp,
             "total_recip-": get_total_recipm,
+            "is_iso": is_iso,
+            "iso_value": get_iso_value,
             "has_negative_diagonal": has_negative_diagonal,
             "has_negative_edges-": has_negative_edgesm,
             "has_negative_edges+": has_negative_edgesp,
@@ -643,6 +555,7 @@ class DiGraph(Graph):
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
+    list_to_keys = _utils.list_to_keys
     matrix_to_dicts = _utils.matrix_to_dicts
     matrix_to_nodenodemap = _utils.matrix_to_nodenodemap
     matrix_to_vectornodemap = _utils.matrix_to_vectornodemap

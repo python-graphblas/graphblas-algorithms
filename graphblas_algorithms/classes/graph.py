@@ -126,6 +126,8 @@ def get_diag(G, mask=None):
             cache["diag"] = A.diag(name="diag")
     if "has_self_edges" not in cache:
         cache["has_self_edges"] = cache["diag"].nvals > 0
+    if mask is not None:
+        return cache["diag"].dup(mask=mask)
     return cache["diag"]
 
 
@@ -163,6 +165,8 @@ def has_negative_edgesp(G, mask=None):
             or cache.get("has_negative_diagonal")
         ):
             cache["has_negative_edges+"] = True
+        elif cache.get("iso_value") is not None:
+            cache["has_negative_edges+"] = cache["iso_value"].get(0) < 0
         elif cache.get("has_negative_edges-") is False:
             cache["has_negative_edges+"] = G.get_property("min_diagonal").get(0) < 0
         else:
@@ -208,6 +212,40 @@ def has_self_edges(G, mask=None):
         else:
             G.get_property("diag")
     return cache["has_self_edges"]
+
+
+def is_iso(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "is_iso" not in cache:
+        if "iso_value" in cache:
+            cache["is_iso"] = cache["iso_value"] is not None
+        else:
+            # SuiteSparse:GraphBLAS
+            cache["is_iso"] = A.ss.is_iso
+    return cache["is_iso"]
+
+
+def get_iso_value(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "iso_value" not in cache:
+        if "is_iso" in cache:
+            if cache["is_iso"]:
+                # SuiteSparse:GraphBLAS
+                cache["iso_value"] = A.ss.iso_value
+            else:
+                cache["iso_value"]
+        else:
+            # min_val, max_val = G.get_properties('min_element+ max_element+')
+            # SuiteSparse:GraphBLAS
+            if A.ss.is_iso:
+                cache["iso_value"] = A.ss.iso_value
+                cache["is_iso"] = True
+            else:
+                cache["iso_value"] = None
+                cache["is_iso"] = False
+    return cache["iso_value"]
 
 
 def to_undirected_graph(G, weight=None, dtype=None):
@@ -303,6 +341,8 @@ class Graph:
             "U-": get_Um,
             "L-": get_Lm,
             "diag": get_diag,
+            "is_iso": is_iso,
+            "iso_value": get_iso_value,
             "has_negative_diagonal": has_negative_diagonal,
             "has_negative_edges-": has_negative_edgesm,
             "has_negative_edges+": has_negative_edgesp,
