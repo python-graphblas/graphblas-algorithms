@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import gc
 import json
 import os
 import statistics
@@ -146,7 +147,9 @@ def getgraph(dataname, backend="graphblas", functionname=None):
     return readfile(filename, is_symmetric, backend)
 
 
-def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=True):
+def main(
+    dataname, backend, functionname, time=3.0, n=None, extra=None, display=True, enable_gc=False
+):
     G = getgraph(dataname, backend, functionname)
     func = getfunction(functionname, backend)
     benchstring = functioncall.get(functionname, "func(G)")
@@ -160,7 +163,12 @@ def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=
         globals["exc"] = nx.PowerIterationFailedConvergence
     if backend == "graphblas":
         benchstring = f"G._cache.clear()\n{benchstring}"
-    timer = timeit.Timer(benchstring, globals=globals)
+    if enable_gc:
+        setup = "gc.enable()"
+        globals["gc"] = gc
+    else:
+        setup = "pass"
+    timer = timeit.Timer(benchstring, setup=setup, globals=globals)
     if display:
         line = f"Backend = {backend}, function = {functionname}, data = {dataname}"
         if extra is not None:
@@ -237,6 +245,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Print results as json instead of human-readable text",
     )
+    parser.add_argument(
+        "--gc",
+        action="store_true",
+        help="Enable the garbage collector during timing (may help if running out of memory)",
+    )
     parser.add_argument("-f", "--func", required=True, help="Which function to benchmark")
     parser.add_argument("--extra", help="Extra string to add to the function call")
     args = parser.parse_args()
@@ -248,6 +261,7 @@ if __name__ == "__main__":
         n=args.n,
         extra=args.extra,
         display=not args.json,
+        enable_gc=args.gc,
     )
     if args.json:
         print(json.dumps(info))
