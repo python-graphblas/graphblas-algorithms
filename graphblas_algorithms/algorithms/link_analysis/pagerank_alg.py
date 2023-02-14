@@ -49,11 +49,10 @@ def pagerank(
         row_degrees = G.get_property("plus_rowwise+")  # XXX: What about self-edges?
     S = (alpha / row_degrees).new(name="S")
 
-    if A.ss.is_iso:
+    if (iso_value := G.get_property("iso_value")) is not None:
         # Fold iso-value of A into S
         # This lets us use the plus_first semiring, which is faster
-        iso_value = A.ss.iso_value
-        if iso_value != 1:
+        if iso_value.get(1) != 1:
             S *= iso_value
         semiring = plus_first[float]
     else:
