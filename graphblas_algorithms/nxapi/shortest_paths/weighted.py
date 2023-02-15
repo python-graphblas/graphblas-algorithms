@@ -9,10 +9,18 @@ __all__ = [
 ]
 
 
-def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize=128):
+def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize="auto"):
     # Larger chunksize offers more parallelism, but uses more memory.
+    # Chunksize indicates for how many source nodes to compute at one time.
+    # The default is to choose the number of rows so the result, if dense,
+    # will be about 10MB.
     G = to_graph(G, weight=weight)
-    if chunksize is None or chunksize <= 0:
+    if chunksize == "auto":
+        # TODO: make a utility function for this that can be reused
+        targetsize = 10 * 1024 * 1024  # 10 MB
+        chunksize = max(1, targetsize // (len(G) * G._A.dtype.np_type.itemsize))
+
+    if chunksize is None or chunksize <= 0 or chunksize >= len(G):
         # All at once
         try:
             D = algorithms.bellman_ford_path_lengths(G)
