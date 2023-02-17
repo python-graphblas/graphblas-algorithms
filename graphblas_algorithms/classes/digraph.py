@@ -1,18 +1,23 @@
 from collections import defaultdict
 
 import graphblas as gb
-from graphblas import Matrix, Vector, binary, replace, select, unary
+from graphblas import Matrix, binary, replace, select, unary
 
 import graphblas_algorithms as ga
 
 from . import _utils
 from ._caching import get_reduce_to_scalar, get_reduce_to_vector
-from .graph import Graph
-
-
-def get_A(G, mask=None):
-    """A"""
-    return G._A
+from .graph import (
+    Graph,
+    get_A,
+    get_diag,
+    get_iso_value,
+    get_offdiag,
+    has_negative_diagonal,
+    has_negative_edgesm,
+    has_negative_edgesp,
+    is_iso,
+)
 
 
 def get_AT(G, mask=None):
@@ -22,22 +27,6 @@ def get_AT(G, mask=None):
     if "AT" not in cache:
         cache["AT"] = A.T.new()
     return cache["AT"]
-
-
-def get_offdiag(G, mask=None):
-    """select.offdiag(A)"""
-    A = G._A
-    cache = G._cache
-    if "offdiag" not in cache:
-        if cache.get("has_self_edges") is False:
-            cache["offdiag"] = A
-        else:
-            cache["offdiag"] = select.offdiag(A).new(name="offdiag")
-    if "has_self_edges" not in cache:
-        cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
-    if not cache["has_self_edges"]:
-        cache["offdiag"] = A
-    return cache["offdiag"]
 
 
 def get_Up(G, mask=None):
@@ -124,26 +113,6 @@ def get_Lm(G, mask=None):
     if cache.get("has_self_edges") is False:
         cache["L+"] = cache["L-"]
     return cache["L-"]
-
-
-def get_diag(G, mask=None):
-    """select.diag(A)"""
-    A = G._A
-    cache = G._cache
-    if "diag" not in cache:
-        if cache.get("has_self_edges") is False:
-            cache["diag"] = Vector(A.dtype, size=A.nrows, name="diag")
-        elif "U+" in cache:
-            cache["diag"] = cache["U+"].diag(name="diag")
-        elif "L+" in cache:
-            cache["diag"] = cache["L+"].diag(name="diag")
-        else:
-            cache["diag"] = A.diag(name="diag")
-    if "has_self_edges" not in cache:
-        cache["has_self_edges"] = cache["diag"].nvals > 0
-    if mask is not None:
-        return cache["diag"].dup(mask=mask)
-    return cache["diag"]
 
 
 def get_recip_degreesp(G, mask=None):
@@ -388,6 +357,8 @@ def has_self_edges(G, mask=None):
                 cache["has_self_edges"] = cache["U-"].nvals < cache["U+"].nvals
             else:
                 cache["has_self_edges"] = cache["U-"].nvals + cache["L-"].nvals < A.nvals
+        elif cache.get("has_negative_diagonal") is True:
+            cache["has_self_edges"] = True
         elif "total_recip-" in cache and "total_recip+" in cache:
             cache["has_self_edges"] = cache["total_recip+"] > cache["total_recip-"]
         elif "row_degrees-" in cache and "row_degrees+" in cache:
@@ -473,9 +444,14 @@ class AutoDict(dict):
                 get_reduction = get_reduce_to_scalar(key, opname)
             else:
                 get_reduction = get_reduce_to_vector(key, opname, methodname)
-            self[key] = get_reduction
-            return get_reduction
-        raise KeyError(key)
+        elif key.endswith("_diagonal"):
+            # e.g., min_diagonal
+            opname = key[: -len("_diagonal")]
+            get_reduction = get_reduce_to_scalar(key, opname)
+        else:
+            raise KeyError(key)
+        self[key] = get_reduction
+        return get_reduction
 
 
 class DiGraph(Graph):
@@ -507,6 +483,12 @@ class DiGraph(Graph):
                     "total_degrees-",
                     "total_recip+",  # scalar; I don't like this name
                     "total_recip-",  # scalar; I don't like this name
+                    "min_diagonal",
+                    "min_element+",
+                    "min_element-",
+                    "has_negative_diagonal",
+                    "has_negative_edges-",
+                    "has_negative_edges+",
                     "has_self_edges",
                 ]
             )
@@ -528,6 +510,11 @@ class DiGraph(Graph):
             "total_degrees-": get_total_degreesm,
             "total_recip+": get_total_recipp,
             "total_recip-": get_total_recipm,
+            "is_iso": is_iso,
+            "iso_value": get_iso_value,
+            "has_negative_diagonal": has_negative_diagonal,
+            "has_negative_edges-": has_negative_edgesm,
+            "has_negative_edges+": has_negative_edgesp,
             "has_self_edges": has_self_edges,
         }
     )
@@ -568,6 +555,7 @@ class DiGraph(Graph):
     list_to_vector = _utils.list_to_vector
     list_to_mask = _utils.list_to_mask
     list_to_ids = _utils.list_to_ids
+    list_to_keys = _utils.list_to_keys
     matrix_to_dicts = _utils.matrix_to_dicts
     matrix_to_nodenodemap = _utils.matrix_to_nodenodemap
     matrix_to_vectornodemap = _utils.matrix_to_vectornodemap

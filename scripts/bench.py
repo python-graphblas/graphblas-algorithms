@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import gc
 import json
 import os
 import statistics
@@ -117,6 +118,7 @@ directed_only = {
 }
 # Is square_clustering undirected only? graphblas-algorthms doesn't implement it for directed
 undirected_only = {"generalized_degree", "k_truss", "triangles", "square_clustering"}
+returns_iterators = {"all_pairs_bellman_ford_path_length", "isolates"}
 
 
 def getfunction(functionname, backend):
@@ -145,19 +147,28 @@ def getgraph(dataname, backend="graphblas", functionname=None):
     return readfile(filename, is_symmetric, backend)
 
 
-def main(dataname, backend, functionname, time=3.0, n=None, extra=None, display=True):
+def main(
+    dataname, backend, functionname, time=3.0, n=None, extra=None, display=True, enable_gc=False
+):
     G = getgraph(dataname, backend, functionname)
     func = getfunction(functionname, backend)
     benchstring = functioncall.get(functionname, "func(G)")
     if extra is not None:
         benchstring = f"{benchstring[:-1]}, {extra})"
+    if functionname in returns_iterators:
+        benchstring = f"for _ in {benchstring}: pass"
     globals = {"func": func, "G": G}
     if functionname in poweriteration:
         benchstring = f"try:\n    {benchstring}\nexcept exc:\n    pass"
         globals["exc"] = nx.PowerIterationFailedConvergence
     if backend == "graphblas":
         benchstring = f"G._cache.clear()\n{benchstring}"
-    timer = timeit.Timer(benchstring, globals=globals)
+    if enable_gc:
+        setup = "gc.enable()"
+        globals["gc"] = gc
+    else:
+        setup = "pass"
+    timer = timeit.Timer(benchstring, setup=setup, globals=globals)
     if display:
         line = f"Backend = {backend}, function = {functionname}, data = {dataname}"
         if extra is not None:
@@ -234,6 +245,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Print results as json instead of human-readable text",
     )
+    parser.add_argument(
+        "--gc",
+        action="store_true",
+        help="Enable the garbage collector during timing (may help if running out of memory)",
+    )
     parser.add_argument("-f", "--func", required=True, help="Which function to benchmark")
     parser.add_argument("--extra", help="Extra string to add to the function call")
     args = parser.parse_args()
@@ -245,6 +261,7 @@ if __name__ == "__main__":
         n=args.n,
         extra=args.extra,
         display=not args.json,
+        enable_gc=args.gc,
     )
     if args.json:
         print(json.dumps(info))

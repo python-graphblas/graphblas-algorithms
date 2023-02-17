@@ -60,6 +60,12 @@ class Dispatcher:
         nxapi.shortest_paths.dense.floyd_warshall_predecessor_and_distance
     )
     has_path = nxapi.shortest_paths.generic.has_path
+    all_pairs_bellman_ford_path_length = (
+        nxapi.shortest_paths.weighted.all_pairs_bellman_ford_path_length
+    )
+    single_source_bellman_ford_path_length = (
+        nxapi.shortest_paths.weighted.single_source_bellman_ford_path_length
+    )
     # Simple Paths
     is_simple_path = nxapi.simple_paths.is_simple_path
     # S Metric
@@ -103,13 +109,23 @@ class Dispatcher:
             import pytest
         except ImportError:  # pragma: no cover (import)
             return
+
+        def key(testpath):
+            filename, path = testpath.split(":")
+            classname, testname = path.split(".")
+            return (testname, frozenset({classname, filename}))
+
+        # Reasons to skip tests
         multi_attributed = "unable to handle multi-attributed graphs"
         multidigraph = "unable to handle MultiDiGraph"
-        freeze = frozenset
+        multigraph = "unable to handle MultiGraph"
+
+        # Which tests to skip
         skip = {
-            ("test_attributes", freeze({"TestBoruvka", "test_mst.py"})): multi_attributed,
-            ("test_weight_attribute", freeze({"TestBoruvka", "test_mst.py"})): multi_attributed,
-            ("test_zero_weight", freeze({"TestFloyd", "test_dense.py"})): multidigraph,
+            key("test_mst.py:TestBoruvka.test_attributes"): multi_attributed,
+            key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
+            key("test_dense.py:TestFloyd.test_zero_weight"): multidigraph,
+            key("test_weighted.py:TestBellmanFordAndGoldbergRadzik.test_multigraph"): multigraph,
         }
         for item in items:
             kset = set(item.keywords)

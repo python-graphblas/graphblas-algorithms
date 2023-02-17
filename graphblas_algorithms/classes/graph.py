@@ -6,7 +6,7 @@ from graphblas import Matrix, Vector, select
 import graphblas_algorithms as ga
 
 from . import _utils
-from ._caching import get_reduce_to_scalar, get_reduce_to_vector
+from ._caching import NONNEGATIVE_DTYPES, get_reduce_to_scalar, get_reduce_to_vector
 
 
 def get_A(G, mask=None):
@@ -126,7 +126,70 @@ def get_diag(G, mask=None):
             cache["diag"] = A.diag(name="diag")
     if "has_self_edges" not in cache:
         cache["has_self_edges"] = cache["diag"].nvals > 0
+    if mask is not None:
+        return cache["diag"].dup(mask=mask)
     return cache["diag"]
+
+
+def has_negative_diagonal(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_diagonal" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt or cache.get("has_self_edges") is False:
+            cache["has_negative_diagonal"] = False
+        elif (
+            cache.get("has_negative_edges+") is True
+            and cache.get("has_negative_edges-") is False
+            or cache.get("has_negative_edges+") is True
+            and cache.get("min_element-", 0) >= 0
+            or cache.get("min_element+", 0) < 0
+            and cache.get("min_element+", 0) < cache.get("min_element-", 0)
+        ):
+            cache["has_negative_diagonal"] = True
+        else:
+            cache["has_negative_diagonal"] = G.get_property("min_diagonal").get(0) < 0
+    return cache["has_negative_diagonal"]
+
+
+def has_negative_edgesp(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_edges+" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
+            cache["has_negative_edges+"] = False
+        elif (
+            cache.get("has_negative_edges-")
+            or cache.get("min_element+", 0) < 0
+            or cache.get("min_element-", 0) < 0
+            or cache.get("min_diagonal", 0) < 0
+            or cache.get("has_negative_diagonal")
+        ):
+            cache["has_negative_edges+"] = True
+        elif cache.get("iso_value") is not None:
+            cache["has_negative_edges+"] = cache["iso_value"].get(0) < 0
+        elif cache.get("has_negative_edges-") is False:
+            cache["has_negative_edges+"] = G.get_property("min_diagonal").get(0) < 0
+        else:
+            cache["has_negative_edges+"] = G.get_property("min_element+").get(0) < 0
+    return cache["has_negative_edges+"]
+
+
+def has_negative_edgesm(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "has_negative_edges-" not in cache:
+        if A.dtype in NONNEGATIVE_DTYPES or A.dtype._is_udt:
+            cache["has_negative_edges-"] = False
+        elif (
+            cache.get("has_negative_edges+")
+            and cache.get("has_self_edges") is False
+            or cache.get("has_negative_edges+")
+            and cache.get("has_negative_diagonal") is False
+        ):
+            cache["has_negative_edges-"] = True
+        else:
+            cache["has_negative_edges-"] = G.get_property("min_element-").get(0) < 0
+    return cache["has_negative_edges-"]
 
 
 def has_self_edges(G, mask=None):
@@ -144,9 +207,46 @@ def has_self_edges(G, mask=None):
             cache["has_self_edges"] = 2 * cache["U-"].nvals < A.nvals
         elif "offdiag" in cache:
             cache["has_self_edges"] = A.nvals > cache["offdiag"].nvals
+        elif cache.get("has_negative_diagonal") is True:
+            cache["has_self_edges"] = True
         else:
             G.get_property("diag")
     return cache["has_self_edges"]
+
+
+def is_iso(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "is_iso" not in cache:
+        if "iso_value" in cache:
+            cache["is_iso"] = cache["iso_value"] is not None
+        else:
+            # SuiteSparse:GraphBLAS. `A` may still be iso-valued even if `A.ss.is_iso` is False.
+            # Should we check this or rely on `A.ss.is_iso` b/c it's fast and should usually work?
+            cache["is_iso"] = A.ss.is_iso
+    return cache["is_iso"]
+
+
+def get_iso_value(G, mask=None):
+    A = G._A
+    cache = G._cache
+    if "iso_value" not in cache:
+        if "is_iso" in cache:
+            if cache["is_iso"]:
+                # SuiteSparse:GraphBLAS
+                cache["iso_value"] = A.ss.iso_value
+            else:
+                cache["iso_value"]
+        else:
+            # min_val, max_val = G.get_properties('min_element+ max_element+')
+            # SuiteSparse:GraphBLAS
+            if A.ss.is_iso:
+                cache["iso_value"] = A.ss.iso_value
+                cache["is_iso"] = True
+            else:
+                cache["iso_value"] = None
+                cache["is_iso"] = False
+    return cache["iso_value"]
 
 
 def to_undirected_graph(G, weight=None, dtype=None):
@@ -190,9 +290,14 @@ class AutoDict(dict):
             else:
                 get_reduction = get_reduce_to_vector(key, opname, methodname)
                 self[f"{opname}_columnwise{key[-1]}"] = get_reduction
-            self[key] = get_reduction
-            return get_reduction
-        raise KeyError(key)
+        elif key.endswith("_diagonal"):
+            # e.g., min_diagonal
+            opname = key[: -len("_diagonal")]
+            get_reduction = get_reduce_to_scalar(key, opname)
+        else:
+            raise KeyError(key)
+        self[key] = get_reduction
+        return get_reduction
 
 
 class Graph:
@@ -216,6 +321,12 @@ class Graph:
                     "diag",
                     "count_rowwise+",
                     "count_rowwise-",
+                    "min_diagonal",
+                    "min_element+",
+                    "min_element-",
+                    "has_negative_diagonal",
+                    "has_negative_edges-",
+                    "has_negative_edges+",
                     "has_self_edges",
                 ]
             )
@@ -231,6 +342,11 @@ class Graph:
             "U-": get_Um,
             "L-": get_Lm,
             "diag": get_diag,
+            "is_iso": is_iso,
+            "iso_value": get_iso_value,
+            "has_negative_diagonal": has_negative_diagonal,
+            "has_negative_edges-": has_negative_edgesm,
+            "has_negative_edges+": has_negative_edgesp,
             "has_self_edges": has_self_edges,
         }
     )

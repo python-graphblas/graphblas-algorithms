@@ -12,3 +12,7 @@ class EmptyGraphError(GraphBlasAlgorithmException):
 
 class PointlessConcept(GraphBlasAlgorithmException):
     pass
+
+
+class Unbounded(GraphBlasAlgorithmException):
+    pass

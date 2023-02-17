@@ -94,7 +94,7 @@ def _split(L, k):
 # TODO: should this move into algorithms?
 def _square_clustering_split(G, node_ids=None, *, nsplits):
     if node_ids is None:
-        node_ids = G._A.reduce_rowwise(monoid.any).to_coo()[0]
+        node_ids, _ = G._A.reduce_rowwise(monoid.any).to_coo(values=False)
     result = None
     for chunk_ids in _split(node_ids, nsplits):
         res = algorithms.square_clustering(G, chunk_ids)
@@ -105,27 +105,37 @@ def _square_clustering_split(G, node_ids=None, *, nsplits):
     return result
 
 
-def square_clustering(G, nodes=None, *, nsplits=None):
+def square_clustering(G, nodes=None, *, nsplits="auto"):
+    # `nsplits` is used to split the computation into chunks.
+    # square_clustering computes `A @ A`, which can get very large, even dense.
+    # The default `nsplits` is to choose the number so that `Asubset @ A`
+    # will be about 256 MB if dense.
     G = to_undirected_graph(G)
     if len(G) == 0:
         return {}
-    elif nodes is None:
+    if nsplits == "auto":
+        # TODO: make a utility function for this that can be reused
+        # Also, should we use `chunksize` instead of `nsplits`?
+        targetsize = 256 * 1024 * 1024  # 256 MB
+        nsplits = len(G) ** 2 * G._A.dtype.np_type.itemsize // targetsize
+    if nsplits <= 1:
+        nsplits = None
+    if nodes is None:
         # Should we use this one for subsets of nodes as well?
         if nsplits is None:
             result = algorithms.square_clustering(G)
         else:
             result = _square_clustering_split(G, nsplits=nsplits)
         return G.vector_to_nodemap(result, fill_value=0)
-    elif nodes in G:
+    if nodes in G:
         idx = G._key_to_id[nodes]
         return algorithms.single_square_clustering(G, idx)
+    ids = G.list_to_ids(nodes)
+    if nsplits is None:
+        result = algorithms.square_clustering(G, ids)
     else:
-        ids = G.list_to_ids(nodes)
-        if nsplits is None:
-            result = algorithms.square_clustering(G, ids)
-        else:
-            result = _square_clustering_split(G, ids, nsplits=nsplits)
-        return G.vector_to_nodemap(result)
+        result = _square_clustering_split(G, ids, nsplits=nsplits)
+    return G.vector_to_nodemap(result)
 
 
 @not_implemented_for("directed")

@@ -35,9 +35,9 @@ def katz_centrality(
             raise GraphBlasAlgorithmException("beta must have a value for every node")
 
     A = G._A
-    if A.ss.is_iso:
+    if (iso_value := G.get_property("iso_value")) is not None:
         # Fold iso-value into alpha
-        alpha *= A.ss.iso_value.get(1.0)
+        alpha *= iso_value.get(1.0)
         semiring = plus_first[float]
     else:
         semiring = plus_times[float]

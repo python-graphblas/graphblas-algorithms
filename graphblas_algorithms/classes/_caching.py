@@ -1,5 +1,7 @@
-from graphblas import op
+from graphblas import Scalar, dtypes, op
 from graphblas.core import operator
+
+NONNEGATIVE_DTYPES = {dtypes.BOOL, dtypes.UINT8, dtypes.UINT16, dtypes.UINT32, dtypes.UINT64}
 
 
 def get_reduce_to_vector(key, opname, methodname):
@@ -142,7 +144,7 @@ def get_reduce_to_scalar(key, opname):
                 cache[f"{keybase}+"] = cache[key]
             return cache[key]
 
-    else:
+    elif key[-1] == "+":
 
         def get_reduction(G, mask=None):
             A = G._A
@@ -170,4 +172,18 @@ def get_reduce_to_scalar(key, opname):
                 cache[f"{keybase}-"] = cache[key]
             return cache[key]
 
+    elif key.endswith("_diagonal"):
+
+        def get_reduction(G, mask=None):
+            A = G._A
+            cache = G._cache
+            if key not in cache:
+                if not G.get_property("has_self_edges"):
+                    cache[key] = Scalar(op_[A.dtype].return_type, name=key)
+                else:
+                    cache[key] = G.get_property("diag").reduce(op_).new(name=key)
+            return cache[key]
+
+    else:  # pragma: no cover (sanity)
+        raise RuntimeError()
     return get_reduction
