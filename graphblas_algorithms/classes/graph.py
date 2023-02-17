@@ -221,7 +221,8 @@ def is_iso(G, mask=None):
         if "iso_value" in cache:
             cache["is_iso"] = cache["iso_value"] is not None
         else:
-            # SuiteSparse:GraphBLAS
+            # SuiteSparse:GraphBLAS. `A` may still be iso-valued even if `A.ss.is_iso` is False.
+            # Should we check this or rely on `A.ss.is_iso` b/c it's fast and should usually work?
             cache["is_iso"] = A.ss.is_iso
     return cache["is_iso"]
 
