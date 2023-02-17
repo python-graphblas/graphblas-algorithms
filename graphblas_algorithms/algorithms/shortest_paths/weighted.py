@@ -113,7 +113,7 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
         dtype = A.dtype
     n = A.nrows
     if nodes is None:
-        # TODO: `D = Vector.from_iso_value(0, n, dtype).diag()`
+        # TODO: `D = Vector.from_scalar(0, n, dtype).diag()`
         D = Vector(dtype, n, name="bellman_ford_path_lengths_vector")
         D << 0
         D = D.diag(name="bellman_ford_path_lengths")
@@ -181,7 +181,7 @@ def _bfs_levels(G, nodes=None, *, dtype=int):
     A = G.get_property("offdiag")
     n = A.nrows
     if nodes is None:
-        # TODO: `D = Vector.from_iso_value(0, n, dtype).diag()`
+        # TODO: `D = Vector.from_scalar(0, n, dtype).diag()`
         D = Vector(dtype, n, name="bfs_levels_vector")
         D << 0
         D = D.diag(name="bfs_levels")
