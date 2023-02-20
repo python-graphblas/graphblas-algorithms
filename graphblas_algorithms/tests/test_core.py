@@ -31,6 +31,6 @@ def test_packages():
     pyproject = path.parent / "pyproject.toml"
     if not pyproject.exists():
         pytest.skip("Did not find pyproject.toml")
-    with open(pyproject, "rb") as f:
+    with pyproject.open("rb") as f:
         pkgs2 = sorted(tomli.load(f)["tool"]["setuptools"]["packages"])
     assert pkgs == pkgs2
