@@ -50,6 +50,7 @@ dependencies:
     - requests
     # For debugging
     - icecream
+    - ipykernel
     - ipython
     # For type annotations
     - mypy

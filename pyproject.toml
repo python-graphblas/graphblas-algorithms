@@ -1,6 +1,156 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools >=64",
+    "setuptools-git-versioning",
+]
+
+[project]
+name = "graphblas-algorithms"
+dynamic = ["version"]
+description = "Graph algorithms written in GraphBLAS and backend for NetworkX"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Erik Welch"},
+    {name = "Jim Kitchen"},
+]
+maintainers = [
+    {name = "Erik Welch", email = "erik.n.welch@gmail.com"},
+    {name = "Jim Kitchen", email = "jim22k@gmail.com"},
+]
+keywords = [
+    "graphblas",
+    "graph",
+    "sparse",
+    "matrix",
+    "lagraph",
+    "suitesparse",
+    "Networks",
+    "Graph Theory",
+    "Mathematics",
+    "network",
+    "discrete mathematics",
+    "math",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Other Audience",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "python-graphblas >=2023.1.0",
+]
+
+[project.entry-points."networkx.plugins"]
+graphblas = "graphblas_algorithms.interface:Dispatcher"
+
+[project.urls]
+homepage = "https://github.com/python-graphblas/graphblas-algorithms"
+# documentation = "https://graphblas-algorithms.readthedocs.io"
+repository = "https://github.com/python-graphblas/graphblas-algorithms"
+changelog = "https://github.com/python-graphblas/graphblas-algorithms/releases"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "networkx >=3.0",
+    "scipy >=1.8",
+    "setuptools",
+    "tomli",
+]
+complete = [
+    "pytest",
+    "networkx >=3.0",
+    "scipy >=1.8",
+    "setuptools",
+    "tomli",
+]
+
+[tool.setuptools]
+# Let's be explicit (we test this too)
+# $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
+# $ find graphblas_algorithms/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
+# $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
+packages = [
+    "graphblas_algorithms",
+    "graphblas_algorithms.algorithms",
+    "graphblas_algorithms.algorithms.centrality",
+    "graphblas_algorithms.algorithms.community",
+    "graphblas_algorithms.algorithms.link_analysis",
+    "graphblas_algorithms.algorithms.shortest_paths",
+    "graphblas_algorithms.algorithms.tests",
+    "graphblas_algorithms.classes",
+    "graphblas_algorithms.nxapi",
+    "graphblas_algorithms.nxapi.centrality",
+    "graphblas_algorithms.nxapi.community",
+    "graphblas_algorithms.nxapi.link_analysis",
+    "graphblas_algorithms.nxapi.shortest_paths",
+    "graphblas_algorithms.nxapi.tests",
+    "graphblas_algorithms.tests",
+    "graphblas_algorithms.utils",
+]
+
+[tool.setuptools-git-versioning]
+enabled = true
+dev_template = "{tag}+{ccount}.g{sha}"
+dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
 target-version = ["py38", "py39", "py310", "py311"]
+
+[tool.isort]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+profile = "black"
+skip_gitignore = true
+float_to_top = true
+default_section = "THIRDPARTY"
+known_first_party = "graphblas_algorithms"
+line_length = 100
+skip = [
+    "graphblas_algorithms/nxapi/__init__.py",
+    "scripts/bench.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = "graphblas_algorithms"
+xfail_strict = false
+markers = [
+    "checkstructure: Skipped unless --check-structure passed",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["graphblas_algorithms"]
+omit = []
+
+[tool.coverage.report]
+ignore_errors = false
+precision = 1
+fail_under = 0
+skip_covered = true
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]

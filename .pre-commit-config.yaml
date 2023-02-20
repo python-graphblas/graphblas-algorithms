@@ -47,7 +47,6 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
-        args: [--target-version=py38]
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
@@ -68,6 +67,7 @@ repos:
     hooks:
       - id: codespell
         types_or: [python, rst, markdown]
+        additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
