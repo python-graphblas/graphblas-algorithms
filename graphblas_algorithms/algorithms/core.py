@@ -21,7 +21,7 @@ def k_truss(G: Graph, k) -> Graph:
         C = Matrix("int32", S.nrows, S.ncols)
         while True:
             C(S.S, replace) << plus_pair(S @ S.T)
-            C << select.value(C >= k - 2)
+            C << select.value(k - 2 <= C)
             if C.nvals == nvals_last:
                 break
             nvals_last = C.nvals

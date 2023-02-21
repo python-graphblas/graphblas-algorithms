@@ -47,6 +47,7 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
+      # - id: black-jupyter
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
@@ -69,6 +70,10 @@ repos:
         types_or: [python, rst, markdown]
         additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.249
+    hooks:
+      - id: ruff
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:

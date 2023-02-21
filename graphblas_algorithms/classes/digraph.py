@@ -119,24 +119,20 @@ def get_recip_degreesp(G, mask=None):
     """pair(A & A.T).reduce_rowwise()"""
     A = G._A
     cache = G._cache
-    if "AT" in cache:
-        AT = cache["AT"]
-    else:
-        AT = A.T
+    AT = cache.get("AT", A.T)
     if mask is not None:
         if "recip_degrees+" in cache:
             return cache["recip_degrees+"].dup(mask=mask)
-        elif cache.get("has_self_edges") is False and "recip_degrees-" in cache:
+        if cache.get("has_self_edges") is False and "recip_degrees-" in cache:
             cache["recip_degrees+"] = cache["recip_degrees-"]
             return cache["recip_degrees-"].dup(mask=mask)
-        elif "recip_degrees-" in cache and "diag" in cache:
+        if "recip_degrees-" in cache and "diag" in cache:
             return (unary.one(cache["diag"]) + cache["recip_degrees-"]).new(
                 mask=mask, name="recip_degrees+"
             )
-        elif "recip_degrees-" in cache and not G.get_property("has_self_edges"):
+        if "recip_degrees-" in cache and not G.get_property("has_self_edges"):
             return cache["recip_degrees-"].dup(mask=mask)
-        else:
-            return binary.pair(A & AT).reduce_rowwise().new(mask=mask, name="recip_degrees+")
+        return binary.pair(A & AT).reduce_rowwise().new(mask=mask, name="recip_degrees+")
     if "recip_degrees+" not in cache:
         if cache.get("has_self_edges") is False and "recip_degrees-" in cache:
             cache["recip_degrees+"] = cache["recip_degrees-"]
@@ -174,34 +170,33 @@ def get_recip_degreesm(G, mask=None):
     if mask is not None:
         if "recip_degrees-" in cache:
             return cache["recip_degrees-"].dup(mask=mask)
-        elif cache.get("has_self_edges") is False and "recip_degrees+" in cache:
+        if cache.get("has_self_edges") is False and "recip_degrees+" in cache:
             cache["recip_degrees-"] = cache["recip_degrees+"]
             return cache["recip_degrees-"].dup(mask=mask)
-        elif "recip_degrees+" in cache and "diag" in cache:
+        if "recip_degrees+" in cache and "diag" in cache:
             rv = binary.minus(cache["recip_degrees+"] | unary.one(cache["diag"])).new(
                 mask=mask, name="recip_degrees-"
             )
             rv(rv.V, replace) << rv  # drop 0s
             return rv
-        elif not G.get_property("has_self_edges"):
+        if not G.get_property("has_self_edges"):
             return G.get_property("recip_degrees+", mask=mask)
-        elif "offdiag" in cache:
+        if "offdiag" in cache:
             return (
                 binary.pair(cache["offdiag"] & AT)
                 .reduce_rowwise()
                 .new(mask=mask, name="recip_degrees-")
             )
-        elif "L-" in cache and "U-" in cache:
+        if "L-" in cache and "U-" in cache:
             return (
                 binary.pair(cache["L-"] & AT).reduce_rowwise().new(mask=mask)
                 + binary.pair(cache["U-"] & AT).reduce_rowwise().new(mask=mask)
             ).new(name="recip_degrees-")
-        else:
-            diag = G.get_property("diag", mask=mask)
-            overlap = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
-            rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
-            rv(rv.V, replace) << rv  # drop 0s
-            return rv
+        diag = G.get_property("diag", mask=mask)
+        overlap = binary.pair(A & AT).reduce_rowwise().new(mask=mask)
+        rv = binary.minus(overlap | unary.one(diag)).new(name="recip_degrees-")
+        rv(rv.V, replace) << rv  # drop 0s
+        return rv
     if "recip_degrees-" not in cache:
         if cache.get("has_self_edges") is False and "recip_degrees+" in cache:
             cache["recip_degrees-"] = cache["recip_degrees+"]
@@ -245,14 +240,12 @@ def get_total_degreesp(G, mask=None):
     if mask is not None:
         if "total_degrees+" in cache:
             return cache["total_degrees+"].dup(mask=mask)
-        elif cache.get("has_self_edges") is False and "total_degrees-" in cache:
+        if cache.get("has_self_edges") is False and "total_degrees-" in cache:
             cache["total_degrees+"] = cache["total_degrees-"]
             return cache["total_degrees+"].dup(mask=mask)
-        else:
-            return (
-                G.get_property("row_degrees+", mask=mask)
-                + G.get_property("column_degrees+", mask=mask)
-            ).new(name="total_degrees+")
+        return (
+            G.get_property("row_degrees+", mask=mask) + G.get_property("column_degrees+", mask=mask)
+        ).new(name="total_degrees+")
     if "total_degrees+" not in cache:
         if cache.get("has_self_edges") is False and "total_degrees-" in cache:
             cache["total_degrees+"] = cache["total_degrees-"]
@@ -277,14 +270,12 @@ def get_total_degreesm(G, mask=None):
     if mask is not None:
         if "total_degrees-" in cache:
             return cache["total_degrees-"].dup(mask=mask)
-        elif cache.get("has_self_edges") is False and "total_degrees+" in cache:
+        if cache.get("has_self_edges") is False and "total_degrees+" in cache:
             cache["total_degrees-"] = cache["total_degrees+"]
             return cache["total_degrees-"].dup(mask=mask)
-        else:
-            return (
-                G.get_property("row_degrees-", mask=mask)
-                + G.get_property("column_degrees-", mask=mask)
-            ).new(name="total_degrees-")
+        return (
+            G.get_property("row_degrees-", mask=mask) + G.get_property("column_degrees-", mask=mask)
+        ).new(name="total_degrees-")
     if "total_degrees-" not in cache:
         if cache.get("has_self_edges") is False and "total_degrees+" in cache:
             cache["total_degrees-"] = cache["total_degrees+"]
@@ -313,10 +304,7 @@ def get_total_recipp(G, mask=None):
         elif "recip_degrees+" in cache:
             cache["total_recip+"] = cache["recip_degrees+"].reduce().get(0)
         else:
-            if "AT" in cache:
-                AT = cache["AT"]
-            else:
-                AT = A.T
+            AT = cache.get("AT", A.T)
             cache["total_recip+"] = binary.pair(A & AT).reduce_scalar().get(0)
     if "has_self_edges" not in cache and "total_recip-" in cache:
         cache["has_self_edges"] = cache["total_recip+"] > cache["total_recip-"]
@@ -398,8 +386,7 @@ def to_directed_graph(G, weight=None, dtype=None):
             return DiGraph.from_networkx(G, weight=weight, dtype=dtype)
     except ImportError:
         pass
-
-    raise TypeError()
+    raise TypeError
 
 
 def to_graph(G, weight=None, dtype=None):
@@ -420,8 +407,7 @@ def to_graph(G, weight=None, dtype=None):
             return ga.Graph.from_networkx(G, weight=weight, dtype=dtype)
     except ImportError:
         pass
-
-    raise TypeError()
+    raise TypeError
 
 
 class AutoDict(dict):

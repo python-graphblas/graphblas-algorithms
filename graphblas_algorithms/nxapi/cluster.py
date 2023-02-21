@@ -46,8 +46,7 @@ def clustering(G, nodes=None, weight=None):
     if nodes in G:
         if G.is_directed():
             return algorithms.single_clustering_directed(G, nodes, weighted=weighted)
-        else:
-            return algorithms.single_clustering(G, nodes, weighted=weighted)
+        return algorithms.single_clustering(G, nodes, weighted=weighted)
     mask = G.list_to_mask(nodes)
     if G.is_directed():
         result = algorithms.clustering_directed(G, weighted=weighted, mask=mask)
@@ -59,7 +58,7 @@ def clustering(G, nodes=None, weight=None):
 def average_clustering(G, nodes=None, weight=None, count_zeros=True):
     G = to_graph(G, weight=weight)  # to directed or undirected
     if len(G) == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError
     weighted = weight is not None
     mask = G.list_to_mask(nodes)
     if G.is_directed():
@@ -74,8 +73,7 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
             weighted=weighted,
             count_zeros=count_zeros,
         )
-    else:
-        return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
+    return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
 
 
 def _split(L, k):

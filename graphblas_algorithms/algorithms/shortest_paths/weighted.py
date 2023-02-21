@@ -75,7 +75,7 @@ def single_source_bellman_ford_path_length(G, source):
 
 
 def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
-    """
+    """Extra parameter: expand_output
 
     Parameters
     ----------

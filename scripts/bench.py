@@ -2,7 +2,7 @@
 import argparse
 import gc
 import json
-import os
+from pathlib import Path
 import statistics
 import sys
 import timeit
@@ -15,28 +15,29 @@ import scipy.sparse
 
 import graphblas_algorithms as ga
 import scipy_impl
-from graphblas_algorithms.interface import Dispatcher as ga_dispatcher
+from graphblas_algorithms.interface import Dispatcher
 
-thisdir = os.path.dirname(__file__)
 datapaths = [
-    os.path.join(thisdir, "..", "data"),
-    os.path.curdir,
+    Path(__file__).parent / ".." / "data",
+    Path("."),
 ]
 
 
 def find_data(dataname):
-    if os.path.exists(dataname):
-        return os.path.relpath(dataname)
-    for path in datapaths:
-        path = os.path.join(path, dataname) + ".mtx"
-        if os.path.exists(path):
-            return os.path.relpath(path)
-        path = path.removesuffix(".mtx")
-        if os.path.exists(path):
-            return os.path.relpath(path)
-    if dataname in download_data.data_urls:
-        return os.path.relpath(download_data.main([dataname])[0])
-    raise FileNotFoundError(f"Unable to find data file for {dataname}")
+    curpath = Path(dataname)
+    if not curpath.exists():
+        for path in datapaths:
+            curpath = path / f"{dataname}.mtx"
+            if curpath.exists():
+                break
+            curpath = path / f"{dataname}"
+            if curpath.exists():
+                break
+        else:
+            if dataname not in download_data.data_urls:
+                raise FileNotFoundError(f"Unable to find data file for {dataname}")
+            curpath = Path(download_data.main([dataname])[0])
+    return curpath.resolve().relative_to(Path(".").resolve())
 
 
 def get_symmetry(file_or_mminfo):
@@ -47,15 +48,14 @@ def get_symmetry(file_or_mminfo):
     return mminfo[5]
 
 
-def readfile(filename, is_symmetric, backend):
-    name = filename.split(".", 1)[0].rsplit("/", 1)[0]
+def readfile(filepath, is_symmetric, backend):
     if backend == "graphblas":
-        A = gb.io.mmread(filename, name=name)
+        A = gb.io.mmread(filepath, name=filepath.stem)
         A.wait()
         if is_symmetric:
             return ga.Graph(A)
         return ga.DiGraph(A)
-    a = scipy.io.mmread(filename)
+    a = scipy.io.mmread(filepath)
     if backend == "networkx":
         create_using = nx.Graph if is_symmetric else nx.DiGraph
         return nx.from_scipy_sparse_array(a, create_using=create_using)
@@ -123,7 +123,7 @@ returns_iterators = {"all_pairs_bellman_ford_path_length", "isolates"}
 
 def getfunction(functionname, backend):
     if backend == "graphblas":
-        return getattr(ga_dispatcher, functionname)
+        return getattr(Dispatcher, functionname)
     if backend == "scipy":
         return getattr(scipy_impl, functionname)
     if functionname in functionpaths:
@@ -144,7 +144,8 @@ def getgraph(dataname, backend="graphblas", functionname=None):
         )
     if is_symmetric and functionname in directed_only:
         is_symmetric = False  # Make into directed graph
-    return readfile(filename, is_symmetric, backend)
+    rv = readfile(filename, is_symmetric, backend)
+    return rv
 
 
 def main(
@@ -157,18 +158,18 @@ def main(
         benchstring = f"{benchstring[:-1]}, {extra})"
     if functionname in returns_iterators:
         benchstring = f"for _ in {benchstring}: pass"
-    globals = {"func": func, "G": G}
+    globals_ = {"func": func, "G": G}
     if functionname in poweriteration:
         benchstring = f"try:\n    {benchstring}\nexcept exc:\n    pass"
-        globals["exc"] = nx.PowerIterationFailedConvergence
+        globals_["exc"] = nx.PowerIterationFailedConvergence
     if backend == "graphblas":
         benchstring = f"G._cache.clear()\n{benchstring}"
     if enable_gc:
         setup = "gc.enable()"
-        globals["gc"] = gc
+        globals_["gc"] = gc
     else:
         setup = "pass"
-    timer = timeit.Timer(benchstring, setup=setup, globals=globals)
+    timer = timeit.Timer(benchstring, setup=setup, globals=globals_)
     if display:
         line = f"Backend = {backend}, function = {functionname}, data = {dataname}"
         if extra is not None:

@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 import argparse
-import functools
 import gzip
 import io
 import os
 import sys
 import tarfile
+from pathlib import Path
 
 import requests
 
-thisdir = os.path.dirname(__file__)
-datapath = functools.partial(os.path.join, thisdir, "..", "data")
+datapath = Path(__file__).parent.parent / "data"
 
 data_urls = {
     "amazon0302": "https://sparse.tamu.edu/MM/SNAP/amazon0302.tar.gz",
@@ -33,23 +32,23 @@ def download(url, target=None):
     assert req.ok, req.reason
     tar = tarfile.open(fileobj=io.BytesIO(gzip.decompress(req.content)))
     for member in tar.members:
-        dirname, basename = os.path.split(member.name)
-        if not basename.endswith(".mtx"):
+        if not member.name.endswith(".mtx"):
             continue
         tar.extract(member)
         if target:
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            os.replace(member.name, target)
-            os.removedirs(dirname)
+            member = Path(member.name)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            member.replace(target)
+            os.removedirs(member.parent)
 
 
 def main(datanames, overwrite=False):
     filenames = []
     for name in datanames:
-        target = datapath(f"{name}.mtx")
+        target = datapath / f"{name}.mtx"
         filenames.append(target)
-        relpath = os.path.relpath(target)
-        if not overwrite and os.path.exists(target):
+        relpath = target.resolve().relative_to(Path(".").resolve())
+        if not overwrite and target.exists():
             print(f"{relpath} already exists; skipping", file=sys.stderr)
             continue
         url = data_urls[name]
@@ -60,7 +59,7 @@ def main(datanames, overwrite=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("datanames", nargs="*", choices=list(data_urls) + [[]])
+    parser.add_argument("datanames", nargs="*", choices=[*data_urls, []])
     args = parser.parse_args()
     datanames = args.datanames
     if not datanames:

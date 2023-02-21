@@ -255,7 +255,7 @@ class VectorNodeMap(MutableMapping):
         elif isinstance(val, dict):
             val = Vector.from_dict(val, self.matrix.dtype, size=self.matrix.ncols)
         else:
-            raise TypeError()
+            raise TypeError
         if val.nvals == 0:
             del self.matrix[idx, :]
             if self._rows is not None:
@@ -379,7 +379,7 @@ class NodeNodeMap(MutableMapping):
         elif isinstance(val, dict):
             val = Vector.from_dict(val, self.matrix.dtype, size=self.matrix.ncols)
         else:
-            raise TypeError()
+            raise TypeError
         if val.nvals == 0:
             del self.matrix[idx, :]
             if self._rows is not None:
