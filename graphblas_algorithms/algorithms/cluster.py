@@ -178,10 +178,9 @@ def average_clustering(G, *, count_zeros=True, weighted=False, mask=None):
     val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
-    elif mask is not None:
+    if mask is not None:
         return val / mask.parent.nvals
-    else:
-        return val / c.size
+    return val / c.size
 
 
 def average_clustering_directed(G, *, count_zeros=True, weighted=False, mask=None):
@@ -189,10 +188,9 @@ def average_clustering_directed(G, *, count_zeros=True, weighted=False, mask=Non
     val = c.reduce().get(0)
     if not count_zeros:
         return val / c.nvals
-    elif mask is not None:
+    if mask is not None:
         return val / mask.parent.nvals
-    else:
-        return val / c.size
+    return val / c.size
 
 
 def single_square_clustering(G, idx):

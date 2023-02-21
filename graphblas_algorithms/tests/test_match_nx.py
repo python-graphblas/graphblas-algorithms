@@ -1,4 +1,4 @@
-""" Test that `graphblas.nxapi` structure matches that of networkx.
+"""Test that `graphblas.nxapi` structure matches that of networkx.
 
 This currently checks the locations and names of all networkx-dispatchable functions
 that are implemented by `graphblas_algorithms`.  It ignores names that begin with `_`.
@@ -14,16 +14,14 @@ from collections import namedtuple
 
 import pytest
 
-import graphblas_algorithms as ga
-
 try:
-    import networkx as nx
+    import networkx as nx  # noqa: F401
 except ImportError:
     pytest.skip(
         "Matching networkx namespace requires networkx to be installed", allow_module_level=True
     )
 else:
-    from networkx.classes import backends
+    from networkx.classes import backends  # noqa: F401
 
 
 def isdispatched(func):
@@ -67,7 +65,7 @@ def nx_info():
 @pytest.fixture(scope="module")
 def gb_info():
     rv = {}  # {modulepath: {dispatchname: NameInfo}}
-    from graphblas_algorithms import nxapi
+    from graphblas_algorithms import nxapi  # noqa: F401
     from graphblas_algorithms.interface import Dispatcher
 
     ga_map = {
@@ -152,4 +150,4 @@ def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
                 for _, _, path in sorted(extra):
                     print("   ", ":".join(path.rsplit(".", 1)))
     if failing:  # pragma: no cover
-        raise AssertionError()
+        raise AssertionError

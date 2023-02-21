@@ -193,25 +193,24 @@ def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False, val
         return {
             row: dict(zip(col_indices[start:stop], values[start:stop])) for row, (start, stop) in it
         }
-    elif use_row_index:
+    if use_row_index:
         return {
             row: {
                 id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
             }
             for row, (start, stop) in it
         }
-    elif use_column_index:
+    if use_column_index:
         return {
             id_to_key[row]: dict(zip(col_indices[start:stop], values[start:stop]))
             for row, (start, stop) in it
         }
-    else:
-        return {
-            id_to_key[row]: {
-                id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
-            }
-            for row, (start, stop) in it
+    return {
+        id_to_key[row]: {
+            id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
         }
+        for row, (start, stop) in it
+    }
 
 
 def to_networkx(self, edge_attribute="weight"):

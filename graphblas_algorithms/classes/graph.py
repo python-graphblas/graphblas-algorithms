@@ -266,7 +266,7 @@ def to_undirected_graph(G, weight=None, dtype=None):
     except ImportError:
         pass
 
-    raise TypeError()
+    raise TypeError
 
 
 class AutoDict(dict):

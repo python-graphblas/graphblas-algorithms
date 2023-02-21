@@ -29,17 +29,17 @@ def pagerank(
     if nstart is None:
         x = np.repeat(1.0 / N, N)
     else:
-        raise NotImplementedError()
+        raise NotImplementedError
     # Personalization vector
     if personalization is None:
         p = np.repeat(1.0 / N, N)
     else:
-        raise NotImplementedError()
+        raise NotImplementedError
     # Dangling nodes
     if dangling is None:
         dangling_weights = p
     else:
-        raise NotImplementedError()
+        raise NotImplementedError
     is_dangling = np.where(S == 0)[0]
 
     # power iteration: make up to max_iter iterations

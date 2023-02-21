@@ -15,12 +15,12 @@ def get_reduce_to_vector(key, opname, methodname):
             if mask is not None:
                 if key in cache:
                     return cache[key].dup(mask=mask)
-                elif cache.get("has_self_edges") is False and f"{keybase}+" in cache:
+                if cache.get("has_self_edges") is False and f"{keybase}+" in cache:
                     cache[key] = cache[f"{keybase}+"]
                     return cache[key].dup(mask=mask)
-                elif "offdiag" in cache:
+                if "offdiag" in cache:
                     return getattr(cache["offdiag"], methodname)(op_).new(mask=mask, name=key)
-                elif (
+                if (
                     "L-" in cache
                     and "U-" in cache
                     and opclass in {"BinaryOp", "Monoid"}
@@ -30,12 +30,9 @@ def get_reduce_to_vector(key, opname, methodname):
                         getattr(cache["L-"], methodname)(op_).new(mask=mask)
                         | getattr(cache["U-"], methodname)(op_).new(mask=mask)
                     ).new(name=key)
-                elif not G.get_property("has_self_edges"):
+                if not G.get_property("has_self_edges"):
                     return G.get_property(f"{keybase}+", mask=mask)
-                else:
-                    return getattr(G.get_property("offdiag"), methodname)(op_).new(
-                        mask=mask, name=key
-                    )
+                return getattr(G.get_property("offdiag"), methodname)(op_).new(mask=mask, name=key)
             if key not in cache:
                 if cache.get("has_self_edges") is False and f"{keybase}+" in cache:
                     cache[key] = cache[f"{keybase}+"]
@@ -73,13 +70,12 @@ def get_reduce_to_vector(key, opname, methodname):
             if mask is not None:
                 if key in cache:
                     return cache[key].dup(mask=mask)
-                elif cache.get("has_self_edges") is False and f"{keybase}-" in cache:
+                if cache.get("has_self_edges") is False and f"{keybase}-" in cache:
                     cache[key] = cache[f"{keybase}-"]
                     return cache[key].dup(mask=mask)
-                elif methodname == "reduce_columnwise" and "AT" in cache:
+                if methodname == "reduce_columnwise" and "AT" in cache:
                     return cache["AT"].reduce_rowwise(op_).new(mask=mask, name=key)
-                else:
-                    return getattr(A, methodname)(op_).new(mask=mask, name=key)
+                return getattr(A, methodname)(op_).new(mask=mask, name=key)
             if key not in cache:
                 if cache.get("has_self_edges") is False and f"{keybase}-" in cache:
                     cache[key] = cache[f"{keybase}-"]
@@ -185,5 +181,5 @@ def get_reduce_to_scalar(key, opname):
             return cache[key]
 
     else:  # pragma: no cover (sanity)
-        raise RuntimeError()
+        raise RuntimeError
     return get_reduction

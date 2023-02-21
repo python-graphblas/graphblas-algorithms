@@ -16,8 +16,7 @@ def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True):
     except algorithms.exceptions.ConvergenceFailure as e:
         if max_iter < 1:
             raise ValueError(*e.args) from e
-        else:
-            raise ArpackNoConvergence(*e.args, (), ()) from e
+        raise ArpackNoConvergence(*e.args, (), ()) from e
         # TODO: it would be nice if networkx raised their own exception, such as:
         # raise nx.PowerIterationFailedConvergence(*e.args) from e
     return G.vector_to_nodemap(h, fill_value=0), G.vector_to_nodemap(a, fill_value=0)
