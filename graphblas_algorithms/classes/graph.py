@@ -237,15 +237,15 @@ def get_iso_value(G, mask=None):
                 cache["iso_value"] = A.ss.iso_value
             else:
                 cache["iso_value"]
+
+        # min_val, max_val = G.get_properties('min_element+ max_element+')
+        # SuiteSparse:GraphBLAS
+        elif A.ss.is_iso:
+            cache["iso_value"] = A.ss.iso_value
+            cache["is_iso"] = True
         else:
-            # min_val, max_val = G.get_properties('min_element+ max_element+')
-            # SuiteSparse:GraphBLAS
-            if A.ss.is_iso:
-                cache["iso_value"] = A.ss.iso_value
-                cache["is_iso"] = True
-            else:
-                cache["iso_value"] = None
-                cache["is_iso"] = False
+            cache["iso_value"] = None
+            cache["is_iso"] = False
     return cache["iso_value"]
 
 
