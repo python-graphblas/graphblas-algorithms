@@ -148,6 +148,9 @@ dispatch pattern shown above.
   - is_regular
 - Shortest Paths
   - floyd_warshall
+  - floyd_warshall_predecessor_and_distance
+  - single_source_bellman_ford_path_length
+  - all_pairs_bellman_ford_path_length
   - has_path
 - Simple Paths
   - is_simple_path
