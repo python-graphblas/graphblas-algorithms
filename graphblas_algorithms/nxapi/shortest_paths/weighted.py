@@ -1,6 +1,7 @@
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
+from .._utils import normalize_chunksize, partition
 from ..exception import NetworkXUnbounded, NodeNotFound
 
 __all__ = [
@@ -9,18 +10,14 @@ __all__ = [
 ]
 
 
-def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize="auto"):
+def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize="10 MiB"):
     # Larger chunksize offers more parallelism, but uses more memory.
     # Chunksize indicates for how many source nodes to compute at one time.
     # The default is to choose the number of rows so the result, if dense,
     # will be about 10MB.
     G = to_graph(G, weight=weight)
-    if chunksize == "auto":
-        # TODO: make a utility function for this that can be reused
-        targetsize = 10 * 1024 * 1024  # 10 MB
-        chunksize = max(1, targetsize // (len(G) * G._A.dtype.np_type.itemsize))
-
-    if chunksize is None or chunksize <= 0 or chunksize >= len(G):
+    chunksize = normalize_chunksize(chunksize, len(G) * G._A.dtype.np_type.itemsize, len(G))
+    if chunksize is None:
         # All at once
         try:
             D = algorithms.bellman_ford_path_lengths(G)
@@ -35,12 +32,7 @@ def all_pairs_bellman_ford_path_length(G, weight="weight", *, chunksize="auto"):
                 raise NetworkXUnbounded(*e.args) from e
             yield (source, G.vector_to_nodemap(d))
     else:
-        # We should probably make a utility function for chunking
-        nodes = list(G)
-        for start, stop in zip(
-            range(0, len(nodes), chunksize), range(chunksize, len(nodes) + chunksize, chunksize)
-        ):
-            cur_nodes = nodes[start:stop]
+        for cur_nodes in partition(chunksize, list(G)):
             try:
                 D = algorithms.bellman_ford_path_lengths(G, cur_nodes)
             except algorithms.exceptions.Unbounded as e:
