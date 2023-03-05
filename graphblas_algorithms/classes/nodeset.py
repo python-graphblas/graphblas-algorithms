@@ -1,6 +1,6 @@
 from collections.abc import MutableSet
 
-from graphblas.semiring import lor_pair, plus_pair
+from graphblas.semiring import any_pair, plus_pair
 
 from . import _utils
 
@@ -26,6 +26,7 @@ class NodeSet(MutableSet):
     set_to_vector = _utils.set_to_vector
     # to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
+    vector_to_list = _utils.vector_to_list
     vector_to_nodemap = _utils.vector_to_nodemap
     vector_to_nodeset = _utils.vector_to_nodeset
     vector_to_set = _utils.vector_to_set
@@ -76,7 +77,7 @@ class NodeSet(MutableSet):
 
     def isdisjoin(self, other):
         if isinstance(other, NodeSet):
-            return not lor_pair(self.vector @ other.vector)
+            return not any_pair[bool](self.vector @ other.vector)
         return super().isdisjoint(other)
 
     def pop(self):
@@ -104,3 +105,8 @@ class NodeSet(MutableSet):
     # Add more set methods (as needed)
     def union(self, *args):
         return set(self).union(*args)  # TODO: can we make this better?
+
+    def copy(self):
+        rv = type(self)(self.vector.dup(), key_to_id=self._key_to_id)
+        rv._id_to_key = self._id_to_key
+        return rv

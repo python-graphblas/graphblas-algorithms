@@ -27,7 +27,7 @@ def eigenvector_centrality(G, max_iter=100, tol=1.0e-6, nstart=None, name="eigen
     # Power iteration: make up to max_iter iterations
     A = G._A
     xprev = Vector(float, N, name="x_prev")
-    for _ in range(max_iter):
+    for _i in range(max_iter):
         xprev << x
         x += x @ A
         normalize(x, "L2")

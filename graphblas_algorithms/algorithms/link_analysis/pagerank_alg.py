@@ -79,7 +79,7 @@ def pagerank(
     # Power iteration: make up to max_iter iterations
     xprev = Vector(float, N, name="x_prev")
     w = Vector(float, N, name="w")
-    for _ in range(max_iter):
+    for _i in range(max_iter):
         xprev, x = x, xprev
 
         # x << alpha * ((xprev * S) @ A + "dangling_weights") + (1 - alpha) * p

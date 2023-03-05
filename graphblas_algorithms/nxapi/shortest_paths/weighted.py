@@ -52,3 +52,10 @@ def single_source_bellman_ford_path_length(G, source, weight="weight"):
     except KeyError as e:
         raise NodeNotFound(*e.args) from e
     return G.vector_to_nodemap(d)
+
+
+def negative_edge_cycle(G, weight="weight", heuristic=True):
+    # TODO: what if weight is a function?
+    # TODO: use a heuristic to try to stop early
+    G = to_graph(G, weight=weight)
+    return algorithms.negative_edge_cycle(G)

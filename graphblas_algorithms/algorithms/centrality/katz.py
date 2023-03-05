@@ -44,7 +44,7 @@ def katz_centrality(
 
     # Power iteration: make up to max_iter iterations
     xprev = Vector(float, N, name="x_prev")
-    for _ in range(max_iter):
+    for _i in range(max_iter):
         xprev, x = x, xprev
         # x << alpha * semiring(xprev @ A) + beta
         x << semiring(xprev @ A)

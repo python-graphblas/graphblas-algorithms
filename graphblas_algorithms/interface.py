@@ -25,6 +25,10 @@ class Dispatcher:
     # Community
     inter_community_edges = nxapi.community.quality.inter_community_edges
     intra_community_edges = nxapi.community.quality.intra_community_edges
+    # Components
+    is_connected = nxapi.components.connected.is_connected
+    node_connected_component = nxapi.components.connected.node_connected_component
+    is_weakly_connected = nxapi.components.weakly_connected.is_weakly_connected
     # Core
     k_truss = nxapi.core.k_truss
     # Cuts
@@ -60,9 +64,17 @@ class Dispatcher:
         nxapi.shortest_paths.dense.floyd_warshall_predecessor_and_distance
     )
     has_path = nxapi.shortest_paths.generic.has_path
+    single_source_shortest_path_length = (
+        nxapi.shortest_paths.unweighted.single_source_shortest_path_length
+    )
+    single_target_shortest_path_length = (
+        nxapi.shortest_paths.unweighted.single_target_shortest_path_length
+    )
+    all_pairs_shortest_path_length = nxapi.shortest_paths.unweighted.all_pairs_shortest_path_length
     all_pairs_bellman_ford_path_length = (
         nxapi.shortest_paths.weighted.all_pairs_bellman_ford_path_length
     )
+    negative_edge_cycle = nxapi.shortest_paths.weighted.negative_edge_cycle
     single_source_bellman_ford_path_length = (
         nxapi.shortest_paths.weighted.single_source_bellman_ford_path_length
     )
@@ -76,6 +88,9 @@ class Dispatcher:
     is_tournament = nxapi.tournament.is_tournament
     score_sequence = nxapi.tournament.score_sequence
     tournament_matrix = nxapi.tournament.tournament_matrix
+    # Traversal
+    bfs_layers = nxapi.traversal.breadth_first_search.bfs_layers
+    descendants_at_distance = nxapi.traversal.breadth_first_search.descendants_at_distance
     # Triads
     is_triad = nxapi.triads.is_triad
 

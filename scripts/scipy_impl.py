@@ -43,7 +43,7 @@ def pagerank(
     is_dangling = np.where(S == 0)[0]
 
     # power iteration: make up to max_iter iterations
-    for _ in range(max_iter):
+    for _i in range(max_iter):
         xlast = x
         x = alpha * (x @ A + sum(x[is_dangling]) * dangling_weights) + (1 - alpha) * p
         # check convergence, l1 norm

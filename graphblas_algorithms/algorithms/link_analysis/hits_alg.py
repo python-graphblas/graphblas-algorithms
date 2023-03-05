@@ -30,7 +30,7 @@ def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True, *, with_auth
         a, h = h, a
         ATA = (A.T @ A).new(name="ATA")  # Authority matrix
         aprev = Vector(float, N, name="a_prev")
-        for _ in range(max_iter):
+        for _i in range(max_iter):
             aprev, a = a, aprev
             a << ATA @ aprev
             normalize(a, "Linf")
@@ -41,7 +41,7 @@ def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True, *, with_auth
             raise ConvergenceFailure(max_iter)
     else:
         hprev = Vector(float, N, name="h_prev")
-        for _ in range(max_iter):
+        for _i in range(max_iter):
             hprev, h = h, hprev
             a << hprev @ A
             h << A @ a

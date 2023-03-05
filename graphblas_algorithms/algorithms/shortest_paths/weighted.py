@@ -7,6 +7,7 @@ from ..exceptions import Unbounded
 __all__ = [
     "single_source_bellman_ford_path_length",
     "bellman_ford_path_lengths",
+    "negative_edge_cycle",
 ]
 
 
@@ -196,8 +197,7 @@ def _bfs_levels(G, nodes=None, *, dtype=int):
             ncols=n,
             name="bfs_levels",
         )
-    Q = Matrix(bool, D.nrows, D.ncols, name="Q")
-    Q << unary.one[bool](D)
+    Q = unary.one[bool](D).new(name="Q")
     any_pair_bool = any_pair[bool]
     for i in range(1, n):
         Q(~D.S, replace) << any_pair_bool(Q @ A)
@@ -205,3 +205,43 @@ def _bfs_levels(G, nodes=None, *, dtype=int):
             break
         D(Q.S) << i
     return D
+
+
+def negative_edge_cycle(G):
+    # TODO: use a heuristic to try to stop early
+    if G.is_directed():
+        deg = "total_degrees-"
+    else:
+        deg = "degrees-"
+    A, degrees, has_negative_diagonal, has_negative_edges = G.get_properties(
+        f"offdiag {deg} has_negative_diagonal has_negative_edges-"
+    )
+    if has_negative_diagonal:
+        return True
+    if not has_negative_edges:
+        return False
+    if A.dtype == bool:
+        # Should we upcast e.g. INT8 to INT64 as well?
+        dtype = int
+    else:
+        dtype = A.dtype
+    n = A.nrows
+    # Begin from every node that has edges
+    d = Vector(dtype, n, name="negative_edge_cycle")
+    d(degrees.S) << 0
+    cur = d.dup(name="cur")
+    mask = Vector(bool, n, name="mask")
+    one = unary.one[bool]
+    for _i in range(n - 1):
+        cur << min_plus(cur @ A)
+        mask << one(cur)
+        mask(binary.second) << binary.lt(cur & d)
+        cur(mask.V, replace) << cur
+        if cur.nvals == 0:
+            return False
+        d(cur.S) << cur
+    cur << min_plus(cur @ A)
+    mask << binary.lt(cur & d)
+    if mask.reduce(monoid.lor):
+        return True
+    return False

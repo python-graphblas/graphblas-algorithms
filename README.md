@@ -117,6 +117,10 @@ dispatch pattern shown above.
 - Community
   - inter_community_edges
   - intra_community_edges
+- Components
+  - is_connected
+  - is_weakly_connected
+  - node_connected_component
 - Core
   - k_truss
 - Cuts
@@ -147,11 +151,15 @@ dispatch pattern shown above.
   - is_k_regular
   - is_regular
 - Shortest Paths
+  - all_pairs_bellman_ford_path_length
+  - all_pairs_shortest_path_length
   - floyd_warshall
   - floyd_warshall_predecessor_and_distance
-  - single_source_bellman_ford_path_length
-  - all_pairs_bellman_ford_path_length
   - has_path
+  - negative_edge_cycle
+  - single_source_bellman_ford_path_length
+  - single_source_shortest_path_length
+  - single_target_shortest_path_length
 - Simple Paths
   - is_simple_path
 - S Metric
@@ -162,5 +170,8 @@ dispatch pattern shown above.
   - is_tournament
   - score_sequence
   - tournament_matrix
+- Traversal
+  - bfs_layers
+  - descendants_at_distance
 - Triads
   - is_triad

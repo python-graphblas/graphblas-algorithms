@@ -3,6 +3,7 @@ from .boundary import *
 from .centrality import *
 from .cluster import *
 from .community import *
+from .components import *
 from .core import *
 from .cuts import *
 from .dag import *
@@ -16,4 +17,5 @@ from .simple_paths import *
 from .smetric import *
 from .structuralholes import *
 from .tournament import *
+from .traversal import *
 from .triads import *
