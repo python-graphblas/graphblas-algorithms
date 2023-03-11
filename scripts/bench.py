@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse
 
 import graphblas_algorithms as ga
+import igraph_impl
 import scipy_impl
 from graphblas_algorithms.interface import Dispatcher
 
@@ -56,13 +57,20 @@ def readfile(filepath, is_symmetric, backend):
             return ga.Graph(A)
         return ga.DiGraph(A)
     a = scipy.io.mmread(filepath)
-    if backend == "networkx":
+    if backend in {"networkx", "igraph"}:
         create_using = nx.Graph if is_symmetric else nx.DiGraph
-        return nx.from_scipy_sparse_array(a, create_using=create_using)
+        G = nx.from_scipy_sparse_array(a, create_using=create_using)
+        if backend == "networkx":
+            return G
+        if backend == "igraph":
+            # TODO: is there a better way for igraph to read MM files or scipy.sparse arrays?
+            import igraph
+
+            return igraph.Graph.from_networkx(G)
     if backend == "scipy":
         return scipy.sparse.csr_array(a)
     raise ValueError(
-        f"Backend {backend!r} not understood; must be 'graphblas', 'networkx', or 'scipy'"
+        f"Backend {backend!r} not understood; must be 'graphblas', 'networkx', 'igraph', or 'scipy'"
     )
 
 
@@ -126,6 +134,8 @@ def getfunction(functionname, backend):
         return getattr(Dispatcher, functionname)
     if backend == "scipy":
         return getattr(scipy_impl, functionname)
+    if backend == "igraph":
+        return getattr(igraph_impl, functionname)
     if functionname in functionpaths:
         func = nx
         for attr in functionpaths[functionname].split("."):
@@ -222,7 +232,7 @@ if __name__ == "__main__":
         description=f"Example usage: python {sys.argv[0]} -b graphblas -f pagerank -d amazon0302"
     )
     parser.add_argument(
-        "-b", "--backend", choices=["graphblas", "networkx", "scipy"], default="graphblas"
+        "-b", "--backend", choices=["graphblas", "networkx", "scipy", "igraph"], default="graphblas"
     )
     parser.add_argument(
         "-t", "--time", type=float, default=3.0, help="Target minimum time to run benchmarks"
