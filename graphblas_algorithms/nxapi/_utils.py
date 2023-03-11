@@ -100,7 +100,7 @@ def partition(chunksize, L, *, evenly=True):
         yield from L
         return
     if evenly:
-        k = ceil(L / chunksize)
+        k = ceil(len(L) / chunksize)
         if k * chunksize != N:
             yield from split_evenly(k, L)
             return
