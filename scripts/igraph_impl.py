@@ -44,3 +44,8 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
     # TODO: check results when `count_zeros=False`
     mode = "zero" if count_zeros else "nan"
     return G.transitivity_avglocal_undirected(mode=mode, weights=weight)
+
+
+def clustering(G, nodes=None, weight=None):
+    mode = "zero"  # or "nan"
+    return G.transitivity_local_undirected(vertices=nodes, mode=mode, weights=weight)
