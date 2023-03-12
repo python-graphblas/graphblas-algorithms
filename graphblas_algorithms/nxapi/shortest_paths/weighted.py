@@ -6,6 +6,7 @@ from ..exception import NetworkXUnbounded, NodeNotFound
 
 __all__ = [
     "all_pairs_bellman_ford_path_length",
+    "negative_edge_cycle",
     "single_source_bellman_ford_path_length",
 ]
 
