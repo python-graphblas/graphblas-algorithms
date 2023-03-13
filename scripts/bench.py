@@ -159,7 +159,7 @@ def getgraph(dataname, backend="graphblas", functionname=None):
 
 
 def main(
-    dataname, backend, functionname, time=3.0, n=None, extra=None, display=True, enable_gc=False
+    dataname, backend, functionname, time=3.0, n=None, min_n=None, extra=None, display=True, enable_gc=False
 ):
     G = getgraph(dataname, backend, functionname)
     func = getfunction(functionname, backend)
@@ -203,6 +203,8 @@ def main(
         n = 1
     elif n is None:
         n = 2 ** max(0, int(np.ceil(np.log2(time / first_time))))
+    if min_n is not None:
+        n = max(n, min_n)
     if display:
         print("Number of runs:", n)
         print("first: ", stime(first_time))
@@ -243,6 +245,11 @@ if __name__ == "__main__":
         help="The number of times to run the benchmark (the default is to run according to time)",
     )
     parser.add_argument(
+        "--min-n",
+        type=int,
+        help="The minimum number of times to run the benchmark",
+    )
+    parser.add_argument(
         "-d",
         "--data",
         required=True,
@@ -270,6 +277,7 @@ if __name__ == "__main__":
         args.func,
         time=args.time,
         n=args.n,
+        min_n = args.min_n,
         extra=args.extra,
         display=not args.json,
         enable_gc=args.gc,
