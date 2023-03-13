@@ -159,7 +159,15 @@ def getgraph(dataname, backend="graphblas", functionname=None):
 
 
 def main(
-    dataname, backend, functionname, time=3.0, n=None, min_n=None, extra=None, display=True, enable_gc=False
+    dataname,
+    backend,
+    functionname,
+    time=3.0,
+    n=None,
+    min_n=None,
+    extra=None,
+    display=True,
+    enable_gc=False,
 ):
     G = getgraph(dataname, backend, functionname)
     func = getfunction(functionname, backend)
@@ -277,7 +285,7 @@ if __name__ == "__main__":
         args.func,
         time=args.time,
         n=args.n,
-        min_n = args.min_n,
+        min_n=args.min_n,
         extra=args.extra,
         display=not args.json,
         enable_gc=args.gc,
