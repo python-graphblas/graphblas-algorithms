@@ -1,5 +1,9 @@
 recursive-include graphblas_algorithms *.py
+prune docs
 include setup.py
 include README.md
 include LICENSE
 include MANIFEST.in
+docs/_static/img/logo-name-medium.svg
+docs/_static/img/graphblas-vs-igraph.png
+docs/_static/img/graphblas-vs-networkx.png
