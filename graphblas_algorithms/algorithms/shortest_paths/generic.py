@@ -1,5 +1,5 @@
 from graphblas import Vector, replace
-from graphblas.semiring import lor_pair
+from graphblas.semiring import any_pair
 
 __all__ = ["has_path"]
 
@@ -11,23 +11,26 @@ def has_path(G, source, target):
     if src == dst:
         return True
     A = G.get_property("offdiag")
-    q_src = Vector.from_coo(src, True, size=A.nrows, name="q_src")
+    q_src = Vector(bool, size=A.nrows, name="q_src")
+    q_src[src] = True
     seen_src = q_src.dup(name="seen_src")
-    q_dst = Vector.from_coo(dst, True, size=A.nrows, name="q_dst")
-    seen_dst = q_dst.dup(name="seen_dst")
-    for _ in range(A.nrows // 2):
-        q_src(~seen_src.S, replace) << lor_pair(q_src @ A)
+    q_dst = Vector(bool, size=A.nrows, name="q_dst")
+    q_dst[dst] = True
+    seen_dst = q_dst.dup(name="seen_dst", clear=True)
+    any_pair_bool = any_pair[bool]
+    for _i in range(A.nrows // 2):
+        q_src(~seen_src.S, replace) << any_pair_bool(q_src @ A)
         if q_src.nvals == 0:
             return False
-        if lor_pair(q_src @ q_dst):
+        if any_pair_bool(q_src @ q_dst):
             return True
 
-        q_dst(~seen_dst.S, replace) << lor_pair(A @ q_dst)
+        seen_dst(q_dst.S) << True
+        q_dst(~seen_dst.S, replace) << any_pair_bool(A @ q_dst)
         if q_dst.nvals == 0:
             return False
-        if lor_pair(q_src @ q_dst):
+        if any_pair_bool(q_src @ q_dst):
             return True
 
         seen_src(q_src.S) << True
-        seen_dst(q_dst.S) << True
     return False

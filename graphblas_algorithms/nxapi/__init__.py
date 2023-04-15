@@ -2,6 +2,7 @@ from .boundary import *
 from .centrality import *
 from .cluster import *
 from .community import *
+from .components import *
 from .core import *
 from .cuts import *
 from .dag import *
@@ -14,11 +15,14 @@ from .shortest_paths import *
 from .simple_paths import *
 from .smetric import *
 from .structuralholes import *
+from .traversal import *
 from .triads import *
 
 from . import centrality
 from . import cluster
 from . import community
+from . import components
 from . import link_analysis
 from . import shortest_paths
 from . import tournament
+from . import traversal

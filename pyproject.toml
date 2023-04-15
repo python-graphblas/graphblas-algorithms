@@ -13,8 +13,9 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Erik Welch"},
+    {name = "Erik Welch", email = "erik.n.welch@gmail.com"},
     {name = "Jim Kitchen"},
+    {name = "Graphblas-algorithms contributors"},
 ]
 maintainers = [
     {name = "Erik Welch", email = "erik.n.welch@gmail.com"},
@@ -87,6 +88,7 @@ complete = [
 
 [tool.setuptools]
 # Let's be explicit (we test this too)
+# TODO: it would be nice if setuptools (or our build backend) could handle this automatically and reliably.
 # $ python -c 'from setuptools import find_packages ; [print(x) for x in sorted(find_packages())]'
 # $ find graphblas_algorithms/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
 # $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
@@ -95,16 +97,20 @@ packages = [
     "graphblas_algorithms.algorithms",
     "graphblas_algorithms.algorithms.centrality",
     "graphblas_algorithms.algorithms.community",
+    "graphblas_algorithms.algorithms.components",
     "graphblas_algorithms.algorithms.link_analysis",
     "graphblas_algorithms.algorithms.shortest_paths",
     "graphblas_algorithms.algorithms.tests",
+    "graphblas_algorithms.algorithms.traversal",
     "graphblas_algorithms.classes",
     "graphblas_algorithms.nxapi",
     "graphblas_algorithms.nxapi.centrality",
     "graphblas_algorithms.nxapi.community",
+    "graphblas_algorithms.nxapi.components",
     "graphblas_algorithms.nxapi.link_analysis",
     "graphblas_algorithms.nxapi.shortest_paths",
     "graphblas_algorithms.nxapi.tests",
+    "graphblas_algorithms.nxapi.traversal",
     "graphblas_algorithms.tests",
     "graphblas_algorithms.utils",
 ]

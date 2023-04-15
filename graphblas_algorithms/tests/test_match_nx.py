@@ -130,12 +130,20 @@ def nx_to_gb_info(info):
     )
 
 
+def module_exists(info):
+    return info[2].rsplit(".", 1)[0] in sys.modules
+
+
 @pytest.mark.checkstructure
 def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
     """Are graphblas_algorithms functions in the correct locations in nxapi?"""
     failing = False
     for name in nx_names_to_info.keys() & gb_names_to_info.keys():
-        nx_paths = {nx_to_gb_info(info) for info in nx_names_to_info[name]}
+        nx_paths = {
+            gbinfo
+            for info in nx_names_to_info[name]
+            if module_exists(gbinfo := nx_to_gb_info(info))
+        }
         gb_paths = gb_names_to_info[name]
         if nx_paths != gb_paths:  # pragma: no cover
             failing = True

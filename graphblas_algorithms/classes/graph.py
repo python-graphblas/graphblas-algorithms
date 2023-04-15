@@ -396,6 +396,7 @@ class Graph:
     set_to_vector = _utils.set_to_vector
     to_networkx = _utils.to_networkx
     vector_to_dict = _utils.vector_to_dict
+    vector_to_list = _utils.vector_to_list
     vector_to_nodemap = _utils.vector_to_nodemap
     vector_to_nodeset = _utils.vector_to_nodeset
     vector_to_set = _utils.vector_to_set
