@@ -1,4 +1,4 @@
-![GraphBLAS Algorithms](docs/_static/img/logo-name-medium.png)
+![GraphBLAS Algorithms](docs/_static/img/logo-name-medium.svg)
 <br>
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/graphblas-algorithms.svg)](https://anaconda.org/conda-forge/graphblas-algorithms)
 [![pypi](https://img.shields.io/pypi/v/graphblas-algorithms.svg)](https://pypi.python.org/pypi/graphblas-algorithms/)
