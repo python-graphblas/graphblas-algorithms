@@ -1,15 +1,29 @@
-# **GraphBLAS Algorithms**
-
+![GraphBLAS Algorithms](docs/_static/img/logo-name-medium.svg)
+<br>
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/graphblas-algorithms.svg)](https://anaconda.org/conda-forge/graphblas-algorithms)
 [![pypi](https://img.shields.io/pypi/v/graphblas-algorithms.svg)](https://pypi.python.org/pypi/graphblas-algorithms/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/graphblas-algorithms)](https://pypi.python.org/pypi/graphblas-algorithms/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/python-graphblas/graphblas-algorithms/blob/main/LICENSE)
+<br>
 [![Tests](https://github.com/python-graphblas/graphblas-algorithms/workflows/Tests/badge.svg?branch=main)](https://github.com/python-graphblas/graphblas-algorithms/actions)
 [![Coverage](https://codecov.io/gh/python-graphblas/graphblas-algorithms/branch/main/graph/badge.svg)](https://codecov.io/gh/python-graphblas/graphblas-algorithms)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7329185.svg)](https://doi.org/10.5281/zenodo.7329185)
 [![Discord](https://img.shields.io/badge/Chat-Discord-blue)](https://discord.com/invite/vur45CbwMz)
 <!--- [![Docs](https://readthedocs.org/projects/graphblas-algorithms/badge/?version=latest)](https://graphblas-algorithms.readthedocs.io/en/latest/) --->
 
-GraphBLAS algorithms written in Python with [Python-graphblas](https://python-graphblas.readthedocs.io/en/latest/).  We are trying to target the NetworkX API algorithms where possible.
+`graphblas-algorithms` is a collection of GraphBLAS algorithms written using
+[`python-graphblas`](https://python-graphblas.readthedocs.io/en/latest/).
+It may be used directly or as an experimental
+[backend to NetworkX](https://networkx.org/documentation/stable/reference/classes/index.html#backends).
+
+Why use GraphBLAS Algorithms? Because it is *fast*, *flexible*, and *familiar* by using the NetworkX API.
+
+Are we missing any [algorithms](#Plugin-Algorithms) that you want?
+[Please let us know!](https://github.com/python-graphblas/graphblas-algorithms/issues)
+<br>
+<img src="docs/_static/img/graphblas-vs-networkx.png" alt="GraphBLAS vs NetworkX" title="Even faster than scipy.sparse!" width="640" />
+<br>
+<img src="docs/_static/img/graphblas-vs-igraph.png" alt="GraphBLAS vs igraph" title="igraph may use different algorithms for PageRank" width="600" />
 
 ### Installation
 ```
