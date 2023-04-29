@@ -7,6 +7,7 @@ from .core import *
 from .cuts import *
 from .dag import *
 from .dominating import *
+from .generators import *
 from .isolate import *
 from .link_analysis import *
 from .reciprocity import *
@@ -22,6 +23,7 @@ from . import centrality
 from . import cluster
 from . import community
 from . import components
+from . import generators
 from . import link_analysis
 from . import shortest_paths
 from . import tournament

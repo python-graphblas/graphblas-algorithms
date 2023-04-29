@@ -553,6 +553,7 @@ class DiGraph(Graph):
     vector_to_nodeset = _utils.vector_to_nodeset
     vector_to_set = _utils.vector_to_set
     _cacheit = _utils._cacheit
+    renumber_key_to_id = _utils.renumber_key_to_id
 
     # NetworkX methods
     def to_directed_class(self):
@@ -597,6 +598,16 @@ class DiGraph(Graph):
 
     def is_directed(self):
         return True
+
+    def to_undirected(self, reciprocal=False, as_view=False, *, name=None):
+        if as_view:
+            raise NotImplementedError("`as_vew=True` is not implemented in `G.to_undirected`")
+        A = self._A
+        if reciprocal:
+            B = binary.any(A & A.T).new(name=name)
+        else:
+            B = binary.any(A | A.T).new(name=name)
+        return Graph(B, key_to_id=self._key_to_id)
 
 
 class MultiDiGraph(DiGraph):

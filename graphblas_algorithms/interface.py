@@ -45,6 +45,8 @@ class Dispatcher:
     descendants = nxapi.dag.descendants
     # Dominating
     is_dominating_set = nxapi.dominating.is_dominating_set
+    # Generators
+    ego_graph = nxapi.generators.ego.ego_graph
     # Isolate
     is_isolate = nxapi.isolate.is_isolate
     isolates = nxapi.isolate.isolates

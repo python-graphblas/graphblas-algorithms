@@ -2,11 +2,8 @@ from graphblas import Scalar, Vector
 from graphblas.core.utils import output_type
 from graphblas.semiring import plus_first, plus_times
 
-from graphblas_algorithms.algorithms._helpers import is_converged, normalize
-from graphblas_algorithms.algorithms.exceptions import (
-    ConvergenceFailure,
-    GraphBlasAlgorithmException,
-)
+from .._helpers import is_converged, normalize
+from ..exceptions import ConvergenceFailure, GraphBlasAlgorithmException
 
 __all__ = ["katz_centrality"]
 

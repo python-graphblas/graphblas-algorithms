@@ -1,5 +1,4 @@
-from graphblas_algorithms.classes.digraph import DiGraph
-from graphblas_algorithms.classes.graph import Graph
+from graphblas_algorithms import DiGraph, Graph
 
 __all__ = ["is_triad"]
 

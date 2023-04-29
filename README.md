@@ -151,6 +151,8 @@ dispatch pattern shown above.
   - descendants
 - Dominating
   - is_dominating_set
+- Generators
+  - ego_graph
 - Isolate
   - is_isolate
   - isolates

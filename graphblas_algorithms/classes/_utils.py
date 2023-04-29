@@ -250,3 +250,12 @@ def _cacheit(self, key, func, *args, **kwargs):
     if key not in self._cache:
         self._cache[key] = func(*args, **kwargs)
     return self._cache[key]
+
+
+def renumber_key_to_id(self, indices):
+    """Create `key_to_id` for e.g. a subgraph with node ids from `indices`"""
+    id_to_key = self.id_to_key
+    return {id_to_key[index]: i for i, index in enumerate(indices)}
+    # Alternative (about the same performance)
+    # keys = self.list_to_keys(indices)
+    # return dict(zip(keys, range(len(indices))))

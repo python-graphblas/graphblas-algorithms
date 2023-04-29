@@ -1,7 +1,7 @@
 from graphblas import Vector
 
-from graphblas_algorithms.algorithms._helpers import is_converged, normalize
-from graphblas_algorithms.algorithms.exceptions import ConvergenceFailure
+from .._helpers import is_converged, normalize
+from ..exceptions import ConvergenceFailure
 
 __all__ = ["hits"]
 
