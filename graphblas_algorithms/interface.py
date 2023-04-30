@@ -51,7 +51,16 @@ class Dispatcher:
     number_of_isolates = nxapi.isolate.number_of_isolates
     # Link Analysis
     hits = nxapi.link_analysis.hits_alg.hits
+    google_matrix = nxapi.link_analysis.pagerank_alg.google_matrix
     pagerank = nxapi.link_analysis.pagerank_alg.pagerank
+    # Operators
+    compose = nxapi.operators.binary.compose
+    difference = nxapi.operators.binary.difference
+    disjoint_union = nxapi.operators.binary.disjoint_union
+    full_join = nxapi.operators.binary.full_join
+    intersection = nxapi.operators.binary.intersection
+    symmetric_difference = nxapi.operators.binary.symmetric_difference
+    union = nxapi.operators.binary.union
     # Reciprocity
     overall_reciprocity = nxapi.overall_reciprocity
     reciprocity = nxapi.reciprocity
@@ -112,10 +121,14 @@ class Dispatcher:
 
     @staticmethod
     def convert_to_nx(obj, *, name=None):
+        from graphblas import Matrix
+
         from .classes import Graph
 
         if isinstance(obj, Graph):
             obj = obj.to_networkx()
+        elif isinstance(obj, Matrix):
+            obj = obj.to_dense(fill_value=False)
         return obj
 
     @staticmethod
@@ -127,8 +140,11 @@ class Dispatcher:
 
         def key(testpath):
             filename, path = testpath.split(":")
-            classname, testname = path.split(".")
-            return (testname, frozenset({classname, filename}))
+            *names, testname = path.split(".")
+            if names:
+                [classname] = names
+                return (testname, frozenset({classname, filename}))
+            return (testname, frozenset({filename}))
 
         # Reasons to skip tests
         multi_attributed = "unable to handle multi-attributed graphs"
@@ -141,6 +157,18 @@ class Dispatcher:
             key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
             key("test_dense.py:TestFloyd.test_zero_weight"): multidigraph,
             key("test_weighted.py:TestBellmanFordAndGoldbergRadzik.test_multigraph"): multigraph,
+            key("test_binary.py:test_compose_multigraph"): multigraph,
+            key("test_binary.py:test_difference_multigraph_attributes"): multigraph,
+            key("test_binary.py:test_disjoint_union_multigraph"): multigraph,
+            key("test_binary.py:test_full_join_multigraph"): multigraph,
+            key("test_binary.py:test_intersection_multigraph_attributes"): multigraph,
+            key(
+                "test_binary.py:test_intersection_multigraph_attributes_node_set_different"
+            ): multigraph,
+            key("test_binary.py:test_symmetric_difference_multigraph"): multigraph,
+            key("test_binary.py:test_union_attributes"): multi_attributed,
+            key("test_binary.py:test_union_multigraph"): multigraph,
+            key("test_vf2pp.py:test_custom_multigraph4_different_labels"): multigraph,
         }
         for item in items:
             kset = set(item.keywords)

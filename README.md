@@ -156,8 +156,17 @@ dispatch pattern shown above.
   - isolates
   - number_of_isolates
 - Link Analysis
+  - google_matrix
   - hits
   - pagerank
+- Operators
+  - compose
+  - difference
+  - disjoint_union
+  - full_join
+  - intersection
+  - symmetric_difference
+  - union
 - Reciprocity
   - overall_reciprocity
   - reciprocity
