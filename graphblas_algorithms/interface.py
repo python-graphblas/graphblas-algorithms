@@ -69,6 +69,7 @@ class Dispatcher:
     is_regular = nxapi.regular.is_regular
     # Shortest Paths
     floyd_warshall = nxapi.shortest_paths.dense.floyd_warshall
+    floyd_warshall_numpy = nxapi.shortest_paths.dense.floyd_warshall_numpy
     floyd_warshall_predecessor_and_distance = (
         nxapi.shortest_paths.dense.floyd_warshall_predecessor_and_distance
     )
@@ -156,6 +157,7 @@ class Dispatcher:
             key("test_mst.py:TestBoruvka.test_attributes"): multi_attributed,
             key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
             key("test_dense.py:TestFloyd.test_zero_weight"): multidigraph,
+            key("test_dense_numpy.py:test_zero_weight"): multidigraph,
             key("test_weighted.py:TestBellmanFordAndGoldbergRadzik.test_multigraph"): multigraph,
             key("test_binary.py:test_compose_multigraph"): multigraph,
             key("test_binary.py:test_difference_multigraph_attributes"): multigraph,
@@ -167,6 +169,8 @@ class Dispatcher:
             ): multigraph,
             key("test_binary.py:test_symmetric_difference_multigraph"): multigraph,
             key("test_binary.py:test_union_attributes"): multi_attributed,
+            # TODO: move failing assertion from `test_union_and_compose`
+            key("test_binary.py:test_union_and_compose"): multi_attributed,
             key("test_binary.py:test_union_multigraph"): multigraph,
             key("test_vf2pp.py:test_custom_multigraph4_different_labels"): multigraph,
         }
