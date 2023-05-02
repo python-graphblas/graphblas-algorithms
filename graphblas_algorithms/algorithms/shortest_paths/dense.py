@@ -1,28 +1,13 @@
-import numpy as np
 from graphblas import Matrix, Vector, binary, indexunary, replace, select
 from graphblas.semiring import any_plus, any_second
 
 from ..exceptions import GraphBlasAlgorithmException
 
-__all__ = ["floyd_warshall", "floyd_warshall_predecessor_and_distance", "floyd_warshall_numpy"]
+__all__ = ["floyd_warshall", "floyd_warshall_predecessor_and_distance"]
 
 
 def floyd_warshall(G, is_weighted=False):
     return floyd_warshall_predecessor_and_distance(G, is_weighted, compute_predecessors=False)[1]
-
-
-def floyd_warshall_numpy(G, nodelist=None, is_weighted=False):
-    if nodelist is not None:
-        if not (len(nodelist) == len(G) == len(set(nodelist))):
-            raise GraphBlasAlgorithmException(
-                "nodelist must contain every node in G with no repeats."
-            )
-        permutation = np.array(G.list_to_ids(nodelist), np.uint64)
-    else:
-        permutation = None
-    return floyd_warshall_predecessor_and_distance(
-        G, is_weighted, compute_predecessors=False, permutation=permutation
-    )[1]
 
 
 def floyd_warshall_predecessor_and_distance(

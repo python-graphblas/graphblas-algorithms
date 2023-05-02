@@ -1,3 +1,5 @@
+import numpy as np
+
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
@@ -23,7 +25,15 @@ def floyd_warshall_predecessor_and_distance(G, weight="weight"):
 
 def floyd_warshall_numpy(G, nodelist=None, weight="weight"):
     G = to_graph(G, weight=weight)
+    if nodelist is not None:
+        if not (len(nodelist) == len(G) == len(set(nodelist))):
+            raise NetworkXError("nodelist must contain every node in G with no repeats.")
+        permutation = np.array(G.list_to_ids(nodelist), np.uint64)
+    else:
+        permutation = None
     try:
-        return algorithms.floyd_warshall_numpy(G, nodelist, is_weighted=weight is not None)
+        return algorithms.floyd_warshall_predecessor_and_distance(
+            G, is_weighted=weight is not None, compute_predecessors=False, permutation=permutation
+        )[1]
     except algorithms.exceptions.GraphBlasAlgorithmException as e:
         raise NetworkXError(*e.args) from e
