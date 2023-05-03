@@ -36,7 +36,7 @@ keywords = [
     "math",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
@@ -46,6 +46,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3 :: Only",
     "Intended Audience :: Developers",
     "Intended Audience :: Other Audience",
@@ -78,12 +79,8 @@ test = [
     "setuptools",
     "tomli",
 ]
-complete = [
-    "pytest",
-    "networkx >=3.0",
-    "scipy >=1.8",
-    "setuptools",
-    "tomli",
+all = [
+    "graphblas-algorithms[test]",
 ]
 
 [tool.setuptools]
