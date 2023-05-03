@@ -3,8 +3,9 @@ from graphblas import Matrix, Vector, binary, monoid
 from graphblas.semiring import plus_first, plus_times
 
 from graphblas_algorithms import Graph
-from graphblas_algorithms.algorithms._helpers import is_converged
-from graphblas_algorithms.algorithms.exceptions import ConvergenceFailure
+
+from .._helpers import is_converged
+from ..exceptions import ConvergenceFailure
 
 __all__ = ["pagerank", "google_matrix"]
 

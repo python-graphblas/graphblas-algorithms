@@ -1,11 +1,7 @@
 from graphblas import Vector
 
-from graphblas_algorithms.algorithms._helpers import is_converged, normalize
-from graphblas_algorithms.algorithms.exceptions import (
-    ConvergenceFailure,
-    GraphBlasAlgorithmException,
-    PointlessConcept,
-)
+from .._helpers import is_converged, normalize
+from ..exceptions import ConvergenceFailure, GraphBlasAlgorithmException, PointlessConcept
 
 __all__ = ["eigenvector_centrality"]
 

@@ -1,4 +1,4 @@
-![GraphBLAS Algorithms](docs/_static/img/logo-name-medium.svg)
+![GraphBLAS Algorithms](https://raw.githubusercontent.com/python-graphblas/graphblas-algorithms/main/docs/_static/img/logo-name-medium.svg)
 <br>
 [![conda-forge](https://img.shields.io/conda/vn/conda-forge/graphblas-algorithms.svg)](https://anaconda.org/conda-forge/graphblas-algorithms)
 [![pypi](https://img.shields.io/pypi/v/graphblas-algorithms.svg)](https://pypi.python.org/pypi/graphblas-algorithms/)
@@ -21,9 +21,9 @@ Why use GraphBLAS Algorithms? Because it is *fast*, *flexible*, and *familiar* b
 Are we missing any [algorithms](#Plugin-Algorithms) that you want?
 [Please let us know!](https://github.com/python-graphblas/graphblas-algorithms/issues)
 <br>
-<img src="docs/_static/img/graphblas-vs-networkx.png" alt="GraphBLAS vs NetworkX" title="Even faster than scipy.sparse!" width="640" />
+<img src="https://raw.githubusercontent.com/python-graphblas/graphblas-algorithms/main/docs/_static/img/graphblas-vs-networkx.png" alt="GraphBLAS vs NetworkX" title="Even faster than scipy.sparse!" width="640" />
 <br>
-<img src="docs/_static/img/graphblas-vs-igraph.png" alt="GraphBLAS vs igraph" title="igraph may use different algorithms for PageRank" width="600" />
+<img src="https://raw.githubusercontent.com/python-graphblas/graphblas-algorithms/main/docs/_static/img/graphblas-vs-igraph.png" alt="GraphBLAS vs igraph" title="igraph may use different algorithms for PageRank" width="600" />
 
 ### Installation
 ```
@@ -151,6 +151,8 @@ dispatch pattern shown above.
   - descendants
 - Dominating
   - is_dominating_set
+- Generators
+  - ego_graph
 - Isolate
   - is_isolate
   - isolates

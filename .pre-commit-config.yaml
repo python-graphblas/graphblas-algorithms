@@ -55,7 +55,7 @@ repos:
       - id: black
       # - id: black-jupyter
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.263
+    rev: v0.0.264
     hooks:
       - id: ruff
         args: [--fix-only, --show-fixes]
@@ -81,7 +81,7 @@ repos:
         additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.263
+    rev: v0.0.264
     hooks:
       - id: ruff
   # `pyroma` may help keep our package standards up to date if best practices change.

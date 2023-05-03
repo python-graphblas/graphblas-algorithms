@@ -2,6 +2,7 @@ import numpy as np
 from graphblas import Matrix, Vector, binary, monoid, replace, select, unary
 from graphblas.semiring import any_pair, min_plus
 
+from .._bfs import _bfs_level, _bfs_levels
 from ..exceptions import Unbounded
 
 __all__ = [
@@ -11,14 +12,16 @@ __all__ = [
 ]
 
 
-def single_source_bellman_ford_path_length(G, source):
+def single_source_bellman_ford_path_length(G, source, *, cutoff=None):
     # No need for `is_weighted=` keyword, b/c this is assumed to be weighted (I think)
     index = G._key_to_id[source]
     if G.get_property("is_iso"):
         # If the edges are iso-valued (and positive), then we can simply do level BFS
         is_negative, iso_value = G.get_properties("has_negative_edges+ iso_value")
         if not is_negative:
-            d = _bfs_level(G, source, dtype=iso_value.dtype)
+            if cutoff is not None:
+                cutoff = int(cutoff // iso_value)
+            d = _bfs_level(G, source, cutoff, dtype=iso_value.dtype)
             if iso_value != 1:
                 d *= iso_value
             return d
@@ -49,6 +52,8 @@ def single_source_bellman_ford_path_length(G, source):
         # `cur` is the current frontier of values that improved in the previous iteration.
         # This means that in this iteration we drop values from `cur` that are not better.
         cur << min_plus(cur @ A)
+        if cutoff is not None:
+            cur << select.valuele(cur, cutoff)
 
         # Mask is True where cur not in d or cur < d
         mask << one(cur)
@@ -63,6 +68,8 @@ def single_source_bellman_ford_path_length(G, source):
     else:
         # Check for negative cycle when for loop completes without breaking
         cur << min_plus(cur @ A)
+        if cutoff is not None:
+            cur << select.valuele(cur, cutoff)
         mask << binary.lt(cur & d)
         if mask.reduce(monoid.lor):
             raise Unbounded("Negative cycle detected.")
@@ -154,56 +161,6 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
         rv = Matrix(D.dtype, n, n, name=D.name)
         rv[ids, :] = D
         return rv
-    return D
-
-
-def _bfs_level(G, source, *, dtype=int):
-    if dtype == bool:
-        dtype = int
-    index = G._key_to_id[source]
-    A = G.get_property("offdiag")
-    n = A.nrows
-    v = Vector(dtype, n, name="bfs_level")
-    q = Vector(bool, n, name="q")
-    v[index] = 0
-    q[index] = True
-    any_pair_bool = any_pair[bool]
-    for i in range(1, n):
-        q(~v.S, replace) << any_pair_bool(q @ A)
-        if q.nvals == 0:
-            break
-        v(q.S) << i
-    return v
-
-
-def _bfs_levels(G, nodes=None, *, dtype=int):
-    if dtype == bool:
-        dtype = int
-    A = G.get_property("offdiag")
-    n = A.nrows
-    if nodes is None:
-        # TODO: `D = Vector.from_scalar(0, n, dtype).diag()`
-        D = Vector(dtype, n, name="bfs_levels_vector")
-        D << 0
-        D = D.diag(name="bfs_levels")
-    else:
-        ids = G.list_to_ids(nodes)
-        D = Matrix.from_coo(
-            np.arange(len(ids), dtype=np.uint64),
-            ids,
-            0,
-            dtype,
-            nrows=len(ids),
-            ncols=n,
-            name="bfs_levels",
-        )
-    Q = unary.one[bool](D).new(name="Q")
-    any_pair_bool = any_pair[bool]
-    for i in range(1, n):
-        Q(~D.S, replace) << any_pair_bool(Q @ A)
-        if Q.nvals == 0:
-            break
-        D(Q.S) << i
     return D
 
 

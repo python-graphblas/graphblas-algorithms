@@ -4,6 +4,3 @@ include setup.py
 include README.md
 include LICENSE
 include MANIFEST.in
-docs/_static/img/logo-name-medium.png
-docs/_static/img/graphblas-vs-igraph.png
-docs/_static/img/graphblas-vs-networkx.png
