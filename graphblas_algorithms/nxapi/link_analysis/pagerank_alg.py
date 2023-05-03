@@ -3,7 +3,7 @@ from graphblas_algorithms.classes.digraph import to_graph
 
 from ..exception import PowerIterationFailedConvergence
 
-_all = ["pagerank"]
+_all = ["pagerank", "google_matrix"]
 
 
 def pagerank(
@@ -43,3 +43,21 @@ def pagerank(
         raise PowerIterationFailedConvergence(*e.args) from e
     else:
         return G.vector_to_nodemap(result, fill_value=0.0)
+
+
+def google_matrix(
+    G, alpha=0.85, personalization=None, nodelist=None, weight="weight", dangling=None
+):
+    G = to_graph(G, weight=weight, dtype=float)
+    p = G.dict_to_vector(personalization, dtype=float, name="personalization")
+    if dangling is not None and G.get_property("row_degrees+").nvals < len(G):
+        dangling_weights = G.dict_to_vector(dangling, dtype=float, name="dangling")
+    else:
+        dangling_weights = None
+    return algorithms.google_matrix(
+        G,
+        alpha=alpha,
+        personalization=p,
+        nodelist=nodelist,
+        dangling=dangling_weights,
+    )

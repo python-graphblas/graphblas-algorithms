@@ -10,6 +10,7 @@ from .dag import *
 from .dominating import *
 from .isolate import *
 from .link_analysis import *
+from .operators import *
 from .reciprocity import *
 from .regular import *
 from .shortest_paths import *

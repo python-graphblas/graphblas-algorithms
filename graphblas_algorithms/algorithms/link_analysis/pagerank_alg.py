@@ -1,4 +1,5 @@
-from graphblas import Vector
+import numpy as np
+from graphblas import Matrix, Vector, binary, monoid
 from graphblas.semiring import plus_first, plus_times
 
 from graphblas_algorithms import Graph
@@ -6,7 +7,7 @@ from graphblas_algorithms import Graph
 from .._helpers import is_converged
 from ..exceptions import ConvergenceFailure
 
-__all__ = ["pagerank"]
+__all__ = ["pagerank", "google_matrix"]
 
 
 def pagerank(
@@ -99,3 +100,65 @@ def pagerank(
             x.name = name
             return x
     raise ConvergenceFailure(max_iter)
+
+
+def google_matrix(
+    G: Graph,
+    alpha=0.85,
+    personalization=None,
+    nodelist=None,
+    dangling=None,
+    name="google_matrix",
+) -> Matrix:
+    A = G._A
+    ids = G.list_to_ids(nodelist)
+    if ids is not None:
+        ids = np.array(ids, np.uint64)
+        A = A[ids, ids].new(float, name=name)
+    else:
+        A = A.dup(float, name=name)
+    N = A.nrows
+    if N == 0:
+        return A
+
+    # Personalization vector or scalar
+    if personalization is None:
+        p = 1.0 / N
+    else:
+        if ids is not None:
+            personalization = personalization[ids].new(name="personalization")
+        denom = personalization.reduce().get(0)
+        if denom == 0:
+            raise ZeroDivisionError("personalization sums to 0")
+        p = (personalization / denom).new(mask=personalization.V, name="p")
+
+    if ids is None or len(ids) == len(G):
+        nonempty_rows = G.get_property("any_rowwise+")  # XXX: What about self-edges?
+    else:
+        nonempty_rows = A.reduce_rowwise(monoid.any).new(name="nonempty_rows")
+
+    is_dangling = nonempty_rows.nvals < N
+    if is_dangling:
+        empty_rows = (~nonempty_rows.S).new(name="empty_rows")
+        if dangling is not None:
+            if ids is not None:
+                dangling = dangling[ids].new(name="dangling")
+            dangling_weights = (1.0 / dangling.reduce().get(0) * dangling).new(
+                mask=dangling.V, name="dangling_weights"
+            )
+            A << binary.first(empty_rows.outer(dangling_weights) | A)
+        elif personalization is None:
+            A << binary.first((p * empty_rows) | A)
+        else:
+            A << binary.first(empty_rows.outer(p) | A)
+
+    scale = A.reduce_rowwise(monoid.plus).new(float)
+    scale << alpha / scale
+    A << scale * A
+    p *= 1 - alpha
+    if personalization is None:
+        # Add a scalar everywhere, which makes A dense
+        A(binary.plus)[:, :] = p
+    else:
+        A << A + p
+    return A

@@ -10,6 +10,7 @@ from .dominating import *
 from .generators import *
 from .isolate import *
 from .link_analysis import *
+from .operators import *
 from .reciprocity import *
 from .regular import *
 from .shortest_paths import *
@@ -25,6 +26,7 @@ from . import community
 from . import components
 from . import generators
 from . import link_analysis
+from . import operators
 from . import shortest_paths
 from . import tournament
 from . import traversal

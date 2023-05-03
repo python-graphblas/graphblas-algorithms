@@ -158,8 +158,17 @@ dispatch pattern shown above.
   - isolates
   - number_of_isolates
 - Link Analysis
+  - google_matrix
   - hits
   - pagerank
+- Operators
+  - compose
+  - difference
+  - disjoint_union
+  - full_join
+  - intersection
+  - symmetric_difference
+  - union
 - Reciprocity
   - overall_reciprocity
   - reciprocity
@@ -170,6 +179,7 @@ dispatch pattern shown above.
   - all_pairs_bellman_ford_path_length
   - all_pairs_shortest_path_length
   - floyd_warshall
+  - floyd_warshall_numpy
   - floyd_warshall_predecessor_and_distance
   - has_path
   - negative_edge_cycle
