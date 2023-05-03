@@ -178,6 +178,7 @@ dispatch pattern shown above.
 - Shortest Paths
   - all_pairs_bellman_ford_path_length
   - all_pairs_shortest_path_length
+  - bellman_ford_path
   - floyd_warshall
   - floyd_warshall_numpy
   - floyd_warshall_predecessor_and_distance

@@ -83,6 +83,7 @@ class Dispatcher:
         nxapi.shortest_paths.unweighted.single_target_shortest_path_length
     )
     all_pairs_shortest_path_length = nxapi.shortest_paths.unweighted.all_pairs_shortest_path_length
+    bellman_ford_path = nxapi.shortest_paths.weighted.bellman_ford_path
     all_pairs_bellman_ford_path_length = (
         nxapi.shortest_paths.weighted.all_pairs_bellman_ford_path_length
     )

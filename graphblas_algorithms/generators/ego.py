@@ -1,4 +1,4 @@
-from ..algorithms.components.connected import _plain_bfs
+from ..algorithms.components.connected import _bfs_plain
 from ..algorithms.shortest_paths.weighted import single_source_bellman_ford_path_length
 
 __all__ = ["ego_graph"]
@@ -14,7 +14,7 @@ def ego_graph(G, n, radius=1, center=True, undirected=False, is_weighted=False):
     if is_weighted:
         v = single_source_bellman_ford_path_length(G2, n, cutoff=radius)
     else:
-        v = _plain_bfs(G2, n, cutoff=radius)
+        v = _bfs_plain(G2, n, cutoff=radius)
     if not center:
         del v[G._key_to_id[n]]
 
