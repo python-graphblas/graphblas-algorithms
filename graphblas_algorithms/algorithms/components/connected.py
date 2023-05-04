@@ -1,12 +1,12 @@
-from .._bfs import _plain_bfs
+from .._bfs import _bfs_plain
 from ..exceptions import PointlessConcept
 
 
 def is_connected(G):
     if len(G) == 0:
         raise PointlessConcept("Connectivity is undefined for the null graph.")
-    return _plain_bfs(G, next(iter(G))).nvals == len(G)
+    return _bfs_plain(G, next(iter(G))).nvals == len(G)
 
 
 def node_connected_component(G, n):
-    return _plain_bfs(G, n)
+    return _bfs_plain(G, n)

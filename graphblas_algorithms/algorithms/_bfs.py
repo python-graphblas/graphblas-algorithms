@@ -1,7 +1,7 @@
 """BFS routines used by other algorithms"""
 
 import numpy as np
-from graphblas import Matrix, Vector, binary, replace, unary
+from graphblas import Matrix, Vector, binary, indexunary, replace, semiring, unary
 from graphblas.semiring import any_pair
 
 
@@ -11,8 +11,13 @@ def _get_cutoff(n, cutoff):
     return cutoff + 1  # Inclusive
 
 
-def _plain_bfs(G, source, *, cutoff=None):
-    index = G._key_to_id[source]
+def _bfs_plain(G, source=None, target=None, *, index=None, cutoff=None):
+    if source is not None:
+        index = G._key_to_id[source]
+    if target is not None:
+        dst_id = G._key_to_id[target]
+    else:
+        dst_id = None
     A = G.get_property("offdiag")
     n = A.nrows
     v = Vector(bool, n, name="bfs_plain")
@@ -24,6 +29,8 @@ def _plain_bfs(G, source, *, cutoff=None):
     for _i in range(1, cutoff):
         q(~v.S, replace) << any_pair_bool(q @ A)
         if q.nvals == 0:
+            break
+        if dst_id is not None and dst_id in q:
             break
         v(q.S) << True
     return v
@@ -83,8 +90,38 @@ def _bfs_levels(G, nodes, cutoff=None, *, dtype=int):
     return D
 
 
+def _bfs_parent(G, source, cutoff=None, *, target=None, transpose=False, dtype=int):
+    if dtype == bool:
+        dtype = int
+    index = G._key_to_id[source]
+    if target is not None:
+        dst_id = G._key_to_id[target]
+    else:
+        dst_id = None
+    A = G.get_property("offdiag")
+    if transpose and G.is_directed():
+        A = A.T  # TODO: should we use "AT" instead?
+    n = A.nrows
+    v = Vector(dtype, n, name="bfs_parent")
+    q = Vector(dtype, n, name="q")
+    v[index] = index
+    q[index] = index
+    min_first = semiring.min_first[v.dtype]
+    index = indexunary.index[v.dtype]
+    cutoff = _get_cutoff(n, cutoff)
+    for _i in range(1, cutoff):
+        q(~v.S, replace) << min_first(q @ A)
+        if q.nvals == 0:
+            break
+        v(q.S) << q
+        if dst_id is not None and dst_id in q:
+            break
+        q << index(q)
+    return v
+
+
 # TODO: benchmark this and the version commented out below
-def _plain_bfs_bidirectional(G, source):
+def _bfs_plain_bidirectional(G, source):
     # Bi-directional BFS w/o symmetrizing the adjacency matrix
     index = G._key_to_id[source]
     A = G.get_property("offdiag")
@@ -125,7 +162,7 @@ def _plain_bfs_bidirectional(G, source):
 
 
 """
-def _plain_bfs_bidirectional(G, source):
+def _bfs_plain_bidirectional(G, source):
     # Bi-directional BFS w/o symmetrizing the adjacency matrix
     index = G._key_to_id[source]
     A = G.get_property("offdiag")
