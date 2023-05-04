@@ -11,6 +11,7 @@ For now, though, let's try to match and stay up-to-date with NetworkX!
 """
 import sys
 from collections import namedtuple
+from pathlib import Path
 
 import pytest
 
@@ -130,12 +131,20 @@ def nx_to_gb_info(info):
     )
 
 
+def module_exists(info):
+    return info[2].rsplit(".", 1)[0] in sys.modules
+
+
 @pytest.mark.checkstructure
 def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
     """Are graphblas_algorithms functions in the correct locations in nxapi?"""
     failing = False
     for name in nx_names_to_info.keys() & gb_names_to_info.keys():
-        nx_paths = {nx_to_gb_info(info) for info in nx_names_to_info[name]}
+        nx_paths = {
+            gbinfo
+            for info in nx_names_to_info[name]
+            if module_exists(gbinfo := nx_to_gb_info(info))
+        }
         gb_paths = gb_names_to_info[name]
         if nx_paths != gb_paths:  # pragma: no cover
             failing = True
@@ -151,3 +160,53 @@ def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
                     print("   ", ":".join(path.rsplit(".", 1)))
     if failing:  # pragma: no cover
         raise AssertionError
+
+
+def test_print_dispatched_not_implemented(nx_names_to_info, gb_names_to_info):
+    """It may be informative to see the results from this to identify functions to implement.
+
+    $ pytest -s -k test_print_dispatched_not_implemented
+    """
+    not_implemented = nx_names_to_info.keys() - gb_names_to_info.keys()
+    fullnames = {next(iter(nx_names_to_info[name])).fullname for name in not_implemented}
+    print()
+    print("=================================================================================")
+    print("Functions dispatched in NetworkX that ARE NOT implemented in graphblas-algorithms")
+    print("---------------------------------------------------------------------------------")
+    for i, name in enumerate(sorted(fullnames)):
+        print(i, name)
+    print("=================================================================================")
+
+
+def test_print_dispatched_implemented(nx_names_to_info, gb_names_to_info):
+    """It may be informative to see the results from this to identify implemented functions.
+
+    $ pytest -s -k test_print_dispatched_implemented
+    """
+    implemented = nx_names_to_info.keys() & gb_names_to_info.keys()
+    fullnames = {next(iter(nx_names_to_info[name])).fullname for name in implemented}
+    print()
+    print("=============================================================================")
+    print("Functions dispatched in NetworkX that ARE implemented in graphblas-algorithms")
+    print("-----------------------------------------------------------------------------")
+    for i, name in enumerate(sorted(fullnames)):
+        print(i, name)
+    print("=============================================================================")
+
+
+def test_algorithms_in_readme(nx_names_to_info, gb_names_to_info):
+    """Ensure all algorithms are mentioned in README.md."""
+    implemented = nx_names_to_info.keys() & gb_names_to_info.keys()
+    path = Path(__file__).parent.parent.parent / "README.md"
+    if not path.exists():
+        return
+    with path.open("r") as f:
+        text = f.read()
+    missing = set()
+    for name in sorted(implemented):
+        if name not in text:
+            missing.add(name)
+    if missing:
+        msg = f"Algorithms missing in README.md: {', '.join(sorted(missing))}"
+        print(msg)
+        raise AssertionError(msg)

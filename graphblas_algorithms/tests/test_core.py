@@ -33,4 +33,6 @@ def test_packages():
         pytest.skip("Did not find pyproject.toml")
     with pyproject.open("rb") as f:
         pkgs2 = sorted(tomli.load(f)["tool"]["setuptools"]["packages"])
-    assert pkgs == pkgs2
+    assert (
+        pkgs == pkgs2
+    ), "If there are extra items on the left, add them to pyproject.toml:tool.setuptools.packages"

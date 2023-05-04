@@ -3,12 +3,14 @@ from .boundary import *
 from .centrality import *
 from .cluster import *
 from .community import *
+from .components import *
 from .core import *
 from .cuts import *
 from .dag import *
 from .dominating import *
 from .isolate import *
 from .link_analysis import *
+from .operators import *
 from .reciprocity import *
 from .regular import *
 from .shortest_paths import *
@@ -16,4 +18,5 @@ from .simple_paths import *
 from .smetric import *
 from .structuralholes import *
 from .tournament import *
+from .traversal import *
 from .triads import *

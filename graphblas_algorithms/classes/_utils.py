@@ -119,6 +119,16 @@ def vector_to_dict(self, v, *, mask=None, fill_value=None):
     return {id_to_key[index]: value for index, value in zip(*v.to_coo(sort=False))}
 
 
+def vector_to_list(self, v, *, values_are_keys=False):
+    id_to_key = self.id_to_key
+    return [
+        id_to_key[idx]
+        for idx in v.to_coo(indices=not values_are_keys, values=values_are_keys, sort=True)[
+            bool(values_are_keys)
+        ].tolist()
+    ]
+
+
 def vector_to_nodemap(self, v, *, mask=None, fill_value=None, values_are_keys=False):
     from .nodemap import NodeMap
 
@@ -240,3 +250,12 @@ def _cacheit(self, key, func, *args, **kwargs):
     if key not in self._cache:
         self._cache[key] = func(*args, **kwargs)
     return self._cache[key]
+
+
+def renumber_key_to_id(self, indices):
+    """Create `key_to_id` for e.g. a subgraph with node ids from `indices`"""
+    id_to_key = self.id_to_key
+    return {id_to_key[index]: i for i, index in enumerate(indices)}
+    # Alternative (about the same performance)
+    # keys = self.list_to_keys(indices)
+    # return dict(zip(keys, range(len(indices))))

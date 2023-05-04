@@ -1,6 +1,8 @@
 from graphblas import Matrix, Vector, binary, indexunary, replace, select
 from graphblas.semiring import any_plus, any_second
 
+from ..exceptions import GraphBlasAlgorithmException
+
 __all__ = ["floyd_warshall", "floyd_warshall_predecessor_and_distance"]
 
 
@@ -8,7 +10,9 @@ def floyd_warshall(G, is_weighted=False):
     return floyd_warshall_predecessor_and_distance(G, is_weighted, compute_predecessors=False)[1]
 
 
-def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_predecessors=True):
+def floyd_warshall_predecessor_and_distance(
+    G, is_weighted=False, *, compute_predecessors=True, permutation=None
+):
     # By using `offdiag` instead of `G._A`, we ensure that D will not become dense.
     # Dense D may be better at times, but not including the diagonal will result in less work.
     # Typically, Floyd-Warshall algorithms sets the diagonal of D to 0 at the beginning.
@@ -19,6 +23,13 @@ def floyd_warshall_predecessor_and_distance(G, is_weighted=False, *, compute_pre
         nonempty_nodes = binary.pair(row_degrees & column_degrees).new(name="nonempty_nodes")
     else:
         A, nonempty_nodes = G.get_properties("U- degrees-")
+    if permutation is not None:
+        if len(permutation) != nonempty_nodes.size:
+            raise GraphBlasAlgorithmException(
+                "permutation must contain every node in G with no repeats."
+            )
+        A = A[permutation, permutation].new()
+        nonempty_nodes = nonempty_nodes[permutation].new(name="nonempty_nodes")
 
     if A.dtype == bool or not is_weighted:
         dtype = int

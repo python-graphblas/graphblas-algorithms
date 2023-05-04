@@ -14,5 +14,9 @@ class PointlessConcept(GraphBlasAlgorithmException):
     pass
 
 
+class NoPath(GraphBlasAlgorithmException):
+    pass
+
+
 class Unbounded(GraphBlasAlgorithmException):
     pass

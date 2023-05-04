@@ -25,6 +25,10 @@ class Dispatcher:
     # Community
     inter_community_edges = nxapi.community.quality.inter_community_edges
     intra_community_edges = nxapi.community.quality.intra_community_edges
+    # Components
+    is_connected = nxapi.components.connected.is_connected
+    node_connected_component = nxapi.components.connected.node_connected_component
+    is_weakly_connected = nxapi.components.weakly_connected.is_weakly_connected
     # Core
     k_truss = nxapi.core.k_truss
     # Cuts
@@ -41,13 +45,24 @@ class Dispatcher:
     descendants = nxapi.dag.descendants
     # Dominating
     is_dominating_set = nxapi.dominating.is_dominating_set
+    # Generators
+    ego_graph = nxapi.generators.ego.ego_graph
     # Isolate
     is_isolate = nxapi.isolate.is_isolate
     isolates = nxapi.isolate.isolates
     number_of_isolates = nxapi.isolate.number_of_isolates
     # Link Analysis
     hits = nxapi.link_analysis.hits_alg.hits
+    google_matrix = nxapi.link_analysis.pagerank_alg.google_matrix
     pagerank = nxapi.link_analysis.pagerank_alg.pagerank
+    # Operators
+    compose = nxapi.operators.binary.compose
+    difference = nxapi.operators.binary.difference
+    disjoint_union = nxapi.operators.binary.disjoint_union
+    full_join = nxapi.operators.binary.full_join
+    intersection = nxapi.operators.binary.intersection
+    symmetric_difference = nxapi.operators.binary.symmetric_difference
+    union = nxapi.operators.binary.union
     # Reciprocity
     overall_reciprocity = nxapi.overall_reciprocity
     reciprocity = nxapi.reciprocity
@@ -56,13 +71,23 @@ class Dispatcher:
     is_regular = nxapi.regular.is_regular
     # Shortest Paths
     floyd_warshall = nxapi.shortest_paths.dense.floyd_warshall
+    floyd_warshall_numpy = nxapi.shortest_paths.dense.floyd_warshall_numpy
     floyd_warshall_predecessor_and_distance = (
         nxapi.shortest_paths.dense.floyd_warshall_predecessor_and_distance
     )
     has_path = nxapi.shortest_paths.generic.has_path
+    single_source_shortest_path_length = (
+        nxapi.shortest_paths.unweighted.single_source_shortest_path_length
+    )
+    single_target_shortest_path_length = (
+        nxapi.shortest_paths.unweighted.single_target_shortest_path_length
+    )
+    all_pairs_shortest_path_length = nxapi.shortest_paths.unweighted.all_pairs_shortest_path_length
+    bellman_ford_path = nxapi.shortest_paths.weighted.bellman_ford_path
     all_pairs_bellman_ford_path_length = (
         nxapi.shortest_paths.weighted.all_pairs_bellman_ford_path_length
     )
+    negative_edge_cycle = nxapi.shortest_paths.weighted.negative_edge_cycle
     single_source_bellman_ford_path_length = (
         nxapi.shortest_paths.weighted.single_source_bellman_ford_path_length
     )
@@ -76,6 +101,9 @@ class Dispatcher:
     is_tournament = nxapi.tournament.is_tournament
     score_sequence = nxapi.tournament.score_sequence
     tournament_matrix = nxapi.tournament.tournament_matrix
+    # Traversal
+    bfs_layers = nxapi.traversal.breadth_first_search.bfs_layers
+    descendants_at_distance = nxapi.traversal.breadth_first_search.descendants_at_distance
     # Triads
     is_triad = nxapi.triads.is_triad
 
@@ -97,10 +125,14 @@ class Dispatcher:
 
     @staticmethod
     def convert_to_nx(obj, *, name=None):
+        from graphblas import Matrix
+
         from .classes import Graph
 
         if isinstance(obj, Graph):
             obj = obj.to_networkx()
+        elif isinstance(obj, Matrix):
+            obj = obj.to_dense(fill_value=False)
         return obj
 
     @staticmethod
@@ -112,8 +144,11 @@ class Dispatcher:
 
         def key(testpath):
             filename, path = testpath.split(":")
-            classname, testname = path.split(".")
-            return (testname, frozenset({classname, filename}))
+            *names, testname = path.split(".")
+            if names:
+                [classname] = names
+                return (testname, frozenset({classname, filename}))
+            return (testname, frozenset({filename}))
 
         # Reasons to skip tests
         multi_attributed = "unable to handle multi-attributed graphs"
@@ -125,7 +160,22 @@ class Dispatcher:
             key("test_mst.py:TestBoruvka.test_attributes"): multi_attributed,
             key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
             key("test_dense.py:TestFloyd.test_zero_weight"): multidigraph,
+            key("test_dense_numpy.py:test_zero_weight"): multidigraph,
             key("test_weighted.py:TestBellmanFordAndGoldbergRadzik.test_multigraph"): multigraph,
+            key("test_binary.py:test_compose_multigraph"): multigraph,
+            key("test_binary.py:test_difference_multigraph_attributes"): multigraph,
+            key("test_binary.py:test_disjoint_union_multigraph"): multigraph,
+            key("test_binary.py:test_full_join_multigraph"): multigraph,
+            key("test_binary.py:test_intersection_multigraph_attributes"): multigraph,
+            key(
+                "test_binary.py:test_intersection_multigraph_attributes_node_set_different"
+            ): multigraph,
+            key("test_binary.py:test_symmetric_difference_multigraph"): multigraph,
+            key("test_binary.py:test_union_attributes"): multi_attributed,
+            # TODO: move failing assertion from `test_union_and_compose`
+            key("test_binary.py:test_union_and_compose"): multi_attributed,
+            key("test_binary.py:test_union_multigraph"): multigraph,
+            key("test_vf2pp.py:test_custom_multigraph4_different_labels"): multigraph,
         }
         for item in items:
             kset = set(item.keywords)

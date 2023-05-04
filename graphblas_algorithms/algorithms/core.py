@@ -1,11 +1,12 @@
 from graphblas import Matrix, monoid, replace, select, semiring
 
-from graphblas_algorithms.classes.graph import Graph
+from graphblas_algorithms import Graph
 
 __all__ = ["k_truss"]
 
 
 def k_truss(G: Graph, k) -> Graph:
+    # TODO: should we have an option to keep the output matrix the same size?
     # Ignore self-edges
     S = G.get_property("offdiag")
 
@@ -32,6 +33,5 @@ def k_truss(G: Graph, k) -> Graph:
     Ktruss = C[indices, indices].new()
 
     # Convert back to networkx graph with correct node ids
-    keys = G.list_to_keys(indices)
-    key_to_id = dict(zip(keys, range(len(indices))))
+    key_to_id = G.renumber_key_to_id(indices.tolist())
     return Graph(Ktruss, key_to_id=key_to_id)

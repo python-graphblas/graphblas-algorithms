@@ -78,19 +78,6 @@ def average_clustering(G, nodes=None, weight=None, count_zeros=True):
     return func(G, weighted=weighted, count_zeros=count_zeros, mask=mask)
 
 
-def _split(L, k):
-    """Split a list into approximately-equal parts"""
-    N = len(L)
-    start = 0
-    for i in range(1, k):
-        stop = (N * i + k - 1) // k
-        if stop != start:
-            yield L[start:stop]
-            start = stop
-    if stop != N:
-        yield L[stop:]
-
-
 # TODO: should this move into algorithms?
 def _square_clustering_split(G, node_ids=None, *, chunksize):
     if node_ids is None:
