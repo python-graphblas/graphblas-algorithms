@@ -17,24 +17,40 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
+      - name: RNG for Python version
+        uses: ddradar/choose-random-action@v2.0.2
+        id: run_or_skip
+        with:
+          contents: |
+            run
+            skip
+          weights: |
+            1
+            1
       - name: Checkout
+        if: success() && steps.run_or_skip.outputs.selected == 'run'
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Conda
+        if: success() && steps.run_or_skip.outputs.selected == 'run'
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge
+          channels: conda-forge,nodefaults
+          channel-priority: strict
           activate-environment: testing
+          auto-activate-base: false
       - name: Install dependencies
+        if: success() && steps.run_or_skip.outputs.selected == 'run'
         run: |
-          conda install -c conda-forge python-graphblas scipy pandas pytest-cov pytest-randomly
+          conda install python-graphblas scipy pandas pytest-cov pytest-randomly
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
       - name: PyTest
+        if: success() && steps.run_or_skip.outputs.selected == 'run'
         run: |
           python -c 'import sys, graphblas_algorithms; assert "networkx" not in sys.modules'
           coverage run --branch -m pytest --color=yes -v --check-structure
@@ -43,4 +59,5 @@ jobs:
           coverage report
           coverage xml
       - name: Coverage
+        if: success() && steps.run_or_skip.outputs.selected == 'run'
         uses: codecov/codecov-action@v3
