@@ -1,12 +1,13 @@
-from graphblas_algorithms import algorithms
+from graphblas_algorithms import algorithms, exceptions
 from graphblas_algorithms.classes.digraph import to_graph
 
 from .._utils import normalize_chunksize, partition
-from ..exception import NetworkXUnbounded, NodeNotFound
+from ..exception import NetworkXNoPath, NetworkXUnbounded, NodeNotFound
 
 __all__ = [
     "all_pairs_bellman_ford_path_length",
     "bellman_ford_path",
+    "bellman_ford_path_length",
     "negative_edge_cycle",
     "single_source_bellman_ford_path_length",
 ]
@@ -63,6 +64,16 @@ def bellman_ford_path(G, source, target, weight="weight"):
         return algorithms.bellman_ford_path(G, source, target)
     except KeyError as e:
         raise NodeNotFound(*e.args) from e
+
+
+def bellman_ford_path_length(G, source, target, weight="weight"):
+    G = to_graph(G, weight=weight)
+    try:
+        return algorithms.bellman_ford_path_length(G, source, target)
+    except KeyError as e:
+        raise NodeNotFound(*e.args) from e
+    except exceptions.NoPath as e:
+        raise NetworkXNoPath(*e.args) from e
 
 
 def negative_edge_cycle(G, weight="weight", heuristic=True):

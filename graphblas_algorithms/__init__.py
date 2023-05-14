@@ -1,9 +1,10 @@
 import importlib.metadata
 
 from .classes import *
+from .generators import *
+from .linalg import *
 
 from .algorithms import *  # isort:skip
-from .generators import *  # isort:skip
 
 try:
     __version__ = importlib.metadata.version("graphblas-algorithms")

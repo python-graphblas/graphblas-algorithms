@@ -1,4 +1,3 @@
-import numpy as np
 from graphblas import Matrix, binary, dtypes, unary
 
 from ..exceptions import GraphBlasAlgorithmException
@@ -63,9 +62,9 @@ def intersection(G, H, *, name="intersection"):
     if G.is_multigraph():
         raise NotImplementedError("Not yet implemented for multigraphs")
     keys = sorted(G._key_to_id.keys() & H._key_to_id.keys(), key=G._key_to_id.__getitem__)
-    ids = np.array(G.list_to_ids(keys), np.uint64)
+    ids = G.list_to_ids(keys)
     A = G._A[ids, ids].new()
-    ids = np.array(H.list_to_ids(keys), np.uint64)
+    ids = H.list_to_ids(keys)
     B = H._A[ids, ids].new(dtypes.unify(A.dtype, H._A.dtype), mask=A.S, name=name)
     B << unary.one(B)
     return type(G)(B, key_to_id=dict(zip(keys, range(len(keys)))))
@@ -84,7 +83,7 @@ def difference(G, H, *, name="difference"):
     else:
         # Need to perform a permutation
         keys = sorted(G._key_to_id, key=G._key_to_id.__getitem__)
-        ids = np.array(H.list_to_ids(keys), np.uint64)
+        ids = H.list_to_ids(keys)
         B = H._A[ids, ids].new()
     C = unary.one(A).new(mask=~B.S, name=name)
     return type(G)(C, key_to_id=G._key_to_id)
@@ -103,7 +102,7 @@ def symmetric_difference(G, H, *, name="symmetric_difference"):
     else:
         # Need to perform a permutation
         keys = sorted(G._key_to_id, key=G._key_to_id.__getitem__)
-        ids = np.array(H.list_to_ids(keys), np.uint64)
+        ids = H.list_to_ids(keys)
         B = H._A[ids, ids].new()
     Mask = binary.pair[bool](A & B).new(name="mask")
     C = binary.pair(A | B, left_default=True, right_default=True).new(mask=~Mask.S, name=name)
@@ -121,7 +120,7 @@ def compose(G, H, *, name="compose"):
         if G._key_to_id != H._key_to_id:
             # Need to perform a permutation
             keys = sorted(G._key_to_id, key=G._key_to_id.__getitem__)
-            ids = np.array(H.list_to_ids(keys), np.uint64)
+            ids = H.list_to_ids(keys)
             B = B[ids, ids].new()
         C = binary.second(A | B).new(name=name)
         key_to_id = G._key_to_id
@@ -135,11 +134,11 @@ def compose(G, H, *, name="compose"):
             name=name,
         )
         C[: A.nrows, : A.ncols] = A
-        ids1 = np.array(G.list_to_ids(keys), np.uint64)
-        ids2 = np.array(H.list_to_ids(keys), np.uint64)
+        ids1 = G.list_to_ids(keys)
+        ids2 = H.list_to_ids(keys)
         C[ids1, ids1] = B[ids2, ids2]
         newkeys = sorted(H._key_to_id.keys() - G._key_to_id.keys(), key=H._key_to_id.__getitem__)
-        ids = np.array(H.list_to_ids(newkeys), np.uint64)
+        ids = H.list_to_ids(newkeys)
         C[A.nrows :, A.ncols :] = B[ids, ids]
         # Now make new `key_to_id`
         ids += A.nrows

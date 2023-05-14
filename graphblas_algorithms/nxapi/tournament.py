@@ -1,5 +1,3 @@
-from graphblas import io
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_directed_graph
 from graphblas_algorithms.utils import not_implemented_for
@@ -28,6 +26,5 @@ def score_sequence(G):
 @not_implemented_for("multigraph")
 def tournament_matrix(G):
     G = to_directed_graph(G)
-    T = algorithms.tournament_matrix(G)
     # TODO: can we return a different, more native object?
-    return io.to_scipy_sparse(T)
+    return algorithms.tournament_matrix(G)

@@ -8,8 +8,11 @@ from .core import *
 from .cuts import *
 from .dag import *
 from .dominating import *
+from .efficiency_measures import *
 from .isolate import *
+from .isomorphism import *
 from .link_analysis import *
+from .lowest_common_ancestors import *
 from .operators import *
 from .reciprocity import *
 from .regular import *

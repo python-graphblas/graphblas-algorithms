@@ -95,6 +95,7 @@ packages = [
     "graphblas_algorithms.algorithms.centrality",
     "graphblas_algorithms.algorithms.community",
     "graphblas_algorithms.algorithms.components",
+    "graphblas_algorithms.algorithms.isomorphism",
     "graphblas_algorithms.algorithms.link_analysis",
     "graphblas_algorithms.algorithms.operators",
     "graphblas_algorithms.algorithms.shortest_paths",
@@ -102,11 +103,14 @@ packages = [
     "graphblas_algorithms.algorithms.traversal",
     "graphblas_algorithms.classes",
     "graphblas_algorithms.generators",
+    "graphblas_algorithms.linalg",
     "graphblas_algorithms.nxapi",
     "graphblas_algorithms.nxapi.centrality",
     "graphblas_algorithms.nxapi.community",
     "graphblas_algorithms.nxapi.components",
     "graphblas_algorithms.nxapi.generators",
+    "graphblas_algorithms.nxapi.isomorphism",
+    "graphblas_algorithms.nxapi.linalg",
     "graphblas_algorithms.nxapi.link_analysis",
     "graphblas_algorithms.nxapi.operators",
     "graphblas_algorithms.nxapi.shortest_paths",
@@ -238,6 +242,7 @@ ignore = [
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports (w/o defining `__all__`)
 "graphblas_algorithms/**/tests/*py" = ["S101", "T201", "D103", "D100"]  # Allow assert, print, and no docstring
+"graphblas_algorithms/interface.py" = ["PIE794"]  # Allow us to use `mod = nxapi.<module>` repeatedly
 "graphblas_algorithms/nxapi/exception.py" = ["F401"]  # Allow unused imports (w/o defining `__all__`)
 "scripts/*.py" = ["INP001", "S101", "T201"]  # Not a package, allow assert, allow print
 

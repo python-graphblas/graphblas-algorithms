@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 
 import graphblas as gb
 from graphblas import Matrix, binary, replace, select, unary
@@ -608,6 +609,15 @@ class DiGraph(Graph):
         else:
             B = binary.any(A | A.T).new(name=name)
         return Graph(B, key_to_id=self._key_to_id)
+
+    def reverse(self, copy=True):
+        # We could even re-use many of the cached values
+        A = self._A.T  # This probably mostly works, but does not yet support assignment
+        if copy:
+            A = A.new()
+        rv = type(self)(A, key_to_id=self._key_to_id)
+        rv.graph.update(deepcopy(self.graph))
+        return rv
 
 
 class MultiDiGraph(DiGraph):

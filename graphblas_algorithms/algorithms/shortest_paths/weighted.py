@@ -3,40 +3,55 @@ from graphblas import Matrix, Vector, binary, indexunary, monoid, replace, selec
 from graphblas.semiring import any_pair, min_plus
 
 from .._bfs import _bfs_level, _bfs_levels, _bfs_parent, _bfs_plain
-from ..exceptions import Unbounded
+from ..exceptions import NoPath, Unbounded
 
 __all__ = [
     "single_source_bellman_ford_path_length",
     "bellman_ford_path",
+    "bellman_ford_path_length",
     "bellman_ford_path_lengths",
     "negative_edge_cycle",
 ]
 
 
-def single_source_bellman_ford_path_length(G, source, *, cutoff=None):
+def _bellman_ford_path_length(G, source, target=None, *, cutoff=None, name):
     # No need for `is_weighted=` keyword, b/c this is assumed to be weighted (I think)
-    index = G._key_to_id[source]
+    src_id = G._key_to_id[source]
+    if target is not None:
+        dst_id = G._key_to_id[target]
+    else:
+        dst_id = None
+
     if G.get_property("is_iso"):
         # If the edges are iso-valued (and positive), then we can simply do level BFS
         is_negative, iso_value = G.get_properties("has_negative_edges+ iso_value")
         if not is_negative:
             if cutoff is not None:
                 cutoff = int(cutoff // iso_value)
-            d = _bfs_level(G, source, cutoff, dtype=iso_value.dtype)
+            d = _bfs_level(G, source, target, cutoff=cutoff, dtype=iso_value.dtype)
+            if dst_id is not None:
+                d = d.get(dst_id)
+                if d is None:
+                    raise NoPath(f"node {target} not reachable from {source}")
             if iso_value != 1:
                 d *= iso_value
             return d
         # It's difficult to detect negative cycles with BFS
-        if G._A[index, index].get() is not None:
+        if G._A[src_id, src_id].get() is not None:
             raise Unbounded("Negative cycle detected.")
-        if not G.is_directed() and G._A[index, :].nvals > 0:
+        if not G.is_directed() and G._A[src_id, :].nvals > 0:
             # For undirected graphs, any negative edge is a cycle
             raise Unbounded("Negative cycle detected.")
 
     # Use `offdiag` instead of `A`, b/c self-loops don't contribute to the result,
     # and negative self-loops are easy negative cycles to avoid.
     # We check if we hit a self-loop negative cycle at the end.
-    A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
+    if dst_id is None:
+        A, has_negative_diagonal = G.get_properties("offdiag has_negative_diagonal")
+    else:
+        A, is_negative, has_negative_diagonal = G.get_properties(
+            "offdiag has_negative_edges- has_negative_diagonal"
+        )
     if A.dtype == bool:
         # Should we upcast e.g. INT8 to INT64 as well?
         dtype = int
@@ -44,7 +59,7 @@ def single_source_bellman_ford_path_length(G, source, *, cutoff=None):
         dtype = A.dtype
     n = A.nrows
     d = Vector(dtype, n, name="single_source_bellman_ford_path_length")
-    d[index] = 0
+    d[src_id] = 0
     cur = d.dup(name="cur")
     mask = Vector(bool, n, name="mask")
     one = unary.one[bool]
@@ -66,13 +81,16 @@ def single_source_bellman_ford_path_length(G, source, *, cutoff=None):
             break
         # Update `d` with values that improved
         d(cur.S) << cur
+        if dst_id is not None and not is_negative:
+            # Limit exploration if we have a target
+            cutoff = cur.get(dst_id, cutoff)
     else:
         # Check for negative cycle when for loop completes without breaking
         cur << min_plus(cur @ A)
         if cutoff is not None:
             cur << select.valuele(cur, cutoff)
         mask << binary.lt(cur & d)
-        if mask.reduce(monoid.lor):
+        if dst_id is None and mask.reduce(monoid.lor) or dst_id is not None and mask.get(dst_id):
             raise Unbounded("Negative cycle detected.")
     if has_negative_diagonal:
         # We removed diagonal entries above, so check if we visited one with a negative weight
@@ -80,7 +98,21 @@ def single_source_bellman_ford_path_length(G, source, *, cutoff=None):
         cur << select.valuelt(diag, 0)
         if any_pair(d @ cur):
             raise Unbounded("Negative cycle detected.")
+    if dst_id is not None:
+        d = d.get(dst_id)
+        if d is None:
+            raise NoPath(f"node {target} not reachable from {source}")
     return d
+
+
+def single_source_bellman_ford_path_length(
+    G, source, *, cutoff=None, name="single_source_bellman_ford_path_length"
+):
+    return _bellman_ford_path_length(G, source, cutoff=cutoff, name=name)
+
+
+def bellman_ford_path_length(G, source, target):
+    return _bellman_ford_path_length(G, source, target, name="bellman_ford_path_length")
 
 
 def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
@@ -185,7 +217,7 @@ def bellman_ford_path(G, source, target):
         # If the edges are iso-valued (and positive), then we can simply do level BFS
         is_negative = G.get_property("has_negative_edges+")
         if not is_negative:
-            p = _bfs_parent(G, source, target=target)
+            p = _bfs_parent(G, source, target)
             return _reconstruct_path_from_parents(G, p, src_id, dst_id)
         raise Unbounded("Negative cycle detected.")
     A, is_negative, has_negative_diagonal = G.get_properties(

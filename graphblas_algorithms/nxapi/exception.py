@@ -5,6 +5,9 @@ except ImportError:
     class NetworkXError(Exception):
         pass
 
+    class NetworkXNoPath(Exception):
+        pass
+
     class NetworkXPointlessConcept(Exception):
         pass
 
@@ -20,6 +23,7 @@ except ImportError:
 else:
     from networkx import (
         NetworkXError,
+        NetworkXNoPath,
         NetworkXPointlessConcept,
         NetworkXUnbounded,
         NodeNotFound,

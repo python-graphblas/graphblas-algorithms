@@ -11,16 +11,25 @@ def _get_cutoff(n, cutoff):
     return cutoff + 1  # Inclusive
 
 
-def _bfs_plain(G, source=None, target=None, *, index=None, cutoff=None):
+# Push-pull optimization is possible, but annoying to implement
+def _bfs_plain(
+    G, source=None, target=None, *, index=None, cutoff=None, transpose=False, name="bfs_plain"
+):
     if source is not None:
+        if source not in G._key_to_id:
+            raise KeyError(f"The node {source} is not in the graph")
         index = G._key_to_id[source]
     if target is not None:
+        if target not in G._key_to_id:
+            raise KeyError(f"The node {target} is not in the graph")
         dst_id = G._key_to_id[target]
     else:
         dst_id = None
     A = G.get_property("offdiag")
+    if transpose and G.is_directed():
+        A = A.T  # TODO: should we use "AT" instead?
     n = A.nrows
-    v = Vector(bool, n, name="bfs_plain")
+    v = Vector(bool, n, name=name)
     q = Vector(bool, n, name="q")
     v[index] = True
     q[index] = True
@@ -30,16 +39,22 @@ def _bfs_plain(G, source=None, target=None, *, index=None, cutoff=None):
         q(~v.S, replace) << any_pair_bool(q @ A)
         if q.nvals == 0:
             break
+        v(q.S) << True
         if dst_id is not None and dst_id in q:
             break
-        v(q.S) << True
     return v
 
 
-def _bfs_level(G, source, cutoff=None, *, transpose=False, dtype=int):
+def _bfs_level(G, source, target=None, *, cutoff=None, transpose=False, dtype=int):
     if dtype == bool:
         dtype = int
     index = G._key_to_id[source]
+    if target is not None:
+        if target not in G._key_to_id:
+            raise KeyError(f"The node {target} is not in the graph")
+        dst_id = G._key_to_id[target]
+    else:
+        dst_id = None
     A = G.get_property("offdiag")
     if transpose and G.is_directed():
         A = A.T  # TODO: should we use "AT" instead?
@@ -55,10 +70,12 @@ def _bfs_level(G, source, cutoff=None, *, transpose=False, dtype=int):
         if q.nvals == 0:
             break
         v(q.S) << i
+        if dst_id is not None and dst_id in q:
+            break
     return v
 
 
-def _bfs_levels(G, nodes, cutoff=None, *, dtype=int):
+def _bfs_levels(G, nodes, *, cutoff=None, dtype=int):
     if dtype == bool:
         dtype = int
     A = G.get_property("offdiag")
@@ -90,7 +107,7 @@ def _bfs_levels(G, nodes, cutoff=None, *, dtype=int):
     return D
 
 
-def _bfs_parent(G, source, cutoff=None, *, target=None, transpose=False, dtype=int):
+def _bfs_parent(G, source, target=None, *, cutoff=None, transpose=False, dtype=int):
     if dtype == bool:
         dtype = int
     index = G._key_to_id[source]
