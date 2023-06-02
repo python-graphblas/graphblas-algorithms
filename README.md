@@ -112,93 +112,138 @@ The following NetworkX algorithms have been implemented
 by graphblas-algorithms and can be used following the
 dispatch pattern shown above.
 
-- Boundary
-  - edge_boundary
-  - node_boundary
-- Centrality
-  - degree_centrality
-  - eigenvector_centrality
-  - in_degree_centrality
-  - katz_centrality
-  - out_degree_centrality
-- Cluster
-  - average_clustering
-  - clustering
-  - generalized_degree
-  - square_clustering
-  - transitivity
-  - triangles
-- Community
-  - inter_community_edges
-  - intra_community_edges
-- Components
-  - is_connected
-  - is_weakly_connected
-  - node_connected_component
-- Core
-  - k_truss
-- Cuts
-  - boundary_expansion
-  - conductance
-  - cut_size
-  - edge_expansion
-  - mixing_expansion
-  - node_expansion
-  - normalized_cut_size
-  - volume
-- DAG
-  - ancestors
-  - descendants
-- Dominating
-  - is_dominating_set
-- Generators
-  - ego_graph
-- Isolate
-  - is_isolate
-  - isolates
-  - number_of_isolates
-- Link Analysis
-  - google_matrix
-  - hits
-  - pagerank
-- Operators
-  - compose
-  - difference
-  - disjoint_union
-  - full_join
-  - intersection
-  - symmetric_difference
-  - union
-- Reciprocity
-  - overall_reciprocity
-  - reciprocity
-- Regular
-  - is_k_regular
-  - is_regular
-- Shortest Paths
-  - all_pairs_bellman_ford_path_length
-  - all_pairs_shortest_path_length
-  - bellman_ford_path
-  - floyd_warshall
-  - floyd_warshall_numpy
-  - floyd_warshall_predecessor_and_distance
-  - has_path
-  - negative_edge_cycle
-  - single_source_bellman_ford_path_length
-  - single_source_shortest_path_length
-  - single_target_shortest_path_length
-- Simple Paths
-  - is_simple_path
-- S Metric
-  - s_metric
-- Structural Holes
-  - mutual_weight
-- Tournament
-  - is_tournament
-  - score_sequence
-  - tournament_matrix
-- Traversal
-  - bfs_layers
-  - descendants_at_distance
-- Triads
-  - is_triad
+[//]: # (Begin auto-generated code)
+
+```
+graphblas_algorithms.nxapi
+├── boundary
+│   ├── edge_boundary
+│   └── node_boundary
+├── centrality
+│   ├── degree_alg
+│   │   ├── degree_centrality
+│   │   ├── in_degree_centrality
+│   │   └── out_degree_centrality
+│   ├── eigenvector
+│   │   └── eigenvector_centrality
+│   └── katz
+│       └── katz_centrality
+├── cluster
+│   ├── average_clustering
+│   ├── clustering
+│   ├── generalized_degree
+│   ├── square_clustering
+│   ├── transitivity
+│   └── triangles
+├── community
+│   └── quality
+│       ├── inter_community_edges
+│       └── intra_community_edges
+├── components
+│   ├── connected
+│   │   ├── is_connected
+│   │   └── node_connected_component
+│   └── weakly_connected
+│       └── is_weakly_connected
+├── core
+│   └── k_truss
+├── cuts
+│   ├── boundary_expansion
+│   ├── conductance
+│   ├── cut_size
+│   ├── edge_expansion
+│   ├── mixing_expansion
+│   ├── node_expansion
+│   ├── normalized_cut_size
+│   └── volume
+├── dag
+│   ├── ancestors
+│   └── descendants
+├── dominating
+│   └── is_dominating_set
+├── efficiency_measures
+│   └── efficiency
+├── generators
+│   └── ego
+│       └── ego_graph
+├── isolate
+│   ├── is_isolate
+│   ├── isolates
+│   └── number_of_isolates
+├── isomorphism
+│   └── isomorph
+│       ├── fast_could_be_isomorphic
+│       └── faster_could_be_isomorphic
+├── linalg
+│   ├── bethehessianmatrix
+│   │   └── bethe_hessian_matrix
+│   ├── graphmatrix
+│   │   └── adjacency_matrix
+│   ├── laplacianmatrix
+│   │   ├── laplacian_matrix
+│   │   └── normalized_laplacian_matrix
+│   └── modularitymatrix
+│       ├── directed_modularity_matrix
+│       └── modularity_matrix
+├── link_analysis
+│   ├── hits_alg
+│   │   └── hits
+│   └── pagerank_alg
+│       ├── google_matrix
+│       └── pagerank
+├── lowest_common_ancestors
+│   └── lowest_common_ancestor
+├── operators
+│   ├── binary
+│   │   ├── compose
+│   │   ├── difference
+│   │   ├── disjoint_union
+│   │   ├── full_join
+│   │   ├── intersection
+│   │   ├── symmetric_difference
+│   │   └── union
+│   └── unary
+│       ├── complement
+│       └── reverse
+├── reciprocity
+│   ├── overall_reciprocity
+│   └── reciprocity
+├── regular
+│   ├── is_k_regular
+│   └── is_regular
+├── shortest_paths
+│   ├── dense
+│   │   ├── floyd_warshall
+│   │   ├── floyd_warshall_numpy
+│   │   └── floyd_warshall_predecessor_and_distance
+│   ├── generic
+│   │   └── has_path
+│   ├── unweighted
+│   │   ├── all_pairs_shortest_path_length
+│   │   ├── single_source_shortest_path_length
+│   │   └── single_target_shortest_path_length
+│   └── weighted
+│       ├── all_pairs_bellman_ford_path_length
+│       ├── bellman_ford_path
+│       ├── bellman_ford_path_length
+│       ├── negative_edge_cycle
+│       └── single_source_bellman_ford_path_length
+├── simple_paths
+│   └── is_simple_path
+├── smetric
+│   └── s_metric
+├── structuralholes
+│   └── mutual_weight
+├── tournament
+│   ├── is_tournament
+│   ├── score_sequence
+│   └── tournament_matrix
+├── traversal
+│   └── breadth_first_search
+│       ├── bfs_layers
+│       └── descendants_at_distance
+└── triads
+    └── is_triad
+```
+
+[//]: # (End auto-generated code)

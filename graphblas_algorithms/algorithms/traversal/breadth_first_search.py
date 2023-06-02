@@ -11,7 +11,7 @@ def bfs_layers(G, sources):
     if sources in G:
         sources = [sources]
     ids = G.list_to_ids(sources)
-    if not ids:
+    if ids is None or len(ids) == 0:
         return
     A = G.get_property("offdiag")
     n = A.nrows

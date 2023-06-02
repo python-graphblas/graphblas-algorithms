@@ -7,9 +7,13 @@ from .core import *
 from .cuts import *
 from .dag import *
 from .dominating import *
+from .efficiency_measures import *
 from .generators import *
 from .isolate import *
+from .isomorphism import fast_could_be_isomorphic, faster_could_be_isomorphic
+from .linalg import *
 from .link_analysis import *
+from .lowest_common_ancestors import *
 from .operators import *
 from .reciprocity import *
 from .regular import *
@@ -19,13 +23,18 @@ from .smetric import *
 from .structuralholes import *
 from .traversal import *
 from .triads import *
+from .tournament import is_tournament
 
 from . import centrality
 from . import cluster
 from . import community
 from . import components
+from . import efficiency_measures
 from . import generators
+from . import isomorphism
+from . import linalg
 from . import link_analysis
+from . import lowest_common_ancestors
 from . import operators
 from . import shortest_paths
 from . import tournament

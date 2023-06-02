@@ -85,7 +85,7 @@ def list_to_ids(self, nodes):
     if nodes is None:
         return None
     key_to_id = self._key_to_id
-    return [key_to_id[key] for key in nodes]
+    return np.fromiter((key_to_id[key] for key in nodes), np.uint64)
 
 
 def list_to_keys(self, indices):

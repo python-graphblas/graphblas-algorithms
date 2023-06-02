@@ -1,5 +1,3 @@
-import numpy as np
-
 from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
@@ -28,7 +26,7 @@ def floyd_warshall_numpy(G, nodelist=None, weight="weight"):
     if nodelist is not None:
         if not (len(nodelist) == len(G) == len(set(nodelist))):
             raise NetworkXError("nodelist must contain every node in G with no repeats.")
-        permutation = np.array(G.list_to_ids(nodelist), np.uint64)
+        permutation = G.list_to_ids(nodelist)
     else:
         permutation = None
     try:

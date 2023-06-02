@@ -162,13 +162,20 @@ def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
         raise AssertionError
 
 
+def get_fullname(info):
+    fullname = info.fullname
+    if not fullname.endswith(f".{info.dispatchname}"):
+        fullname += f" ({info.dispatchname})"
+    return fullname
+
+
 def test_print_dispatched_not_implemented(nx_names_to_info, gb_names_to_info):
     """It may be informative to see the results from this to identify functions to implement.
 
     $ pytest -s -k test_print_dispatched_not_implemented
     """
     not_implemented = nx_names_to_info.keys() - gb_names_to_info.keys()
-    fullnames = {next(iter(nx_names_to_info[name])).fullname for name in not_implemented}
+    fullnames = {get_fullname(next(iter(nx_names_to_info[name]))) for name in not_implemented}
     print()
     print("=================================================================================")
     print("Functions dispatched in NetworkX that ARE NOT implemented in graphblas-algorithms")
@@ -184,7 +191,7 @@ def test_print_dispatched_implemented(nx_names_to_info, gb_names_to_info):
     $ pytest -s -k test_print_dispatched_implemented
     """
     implemented = nx_names_to_info.keys() & gb_names_to_info.keys()
-    fullnames = {next(iter(nx_names_to_info[name])).fullname for name in implemented}
+    fullnames = {get_fullname(next(iter(nx_names_to_info[name]))) for name in implemented}
     print()
     print("=============================================================================")
     print("Functions dispatched in NetworkX that ARE implemented in graphblas-algorithms")

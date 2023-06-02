@@ -1,4 +1,3 @@
-import numpy as np
 from graphblas import Matrix, Vector, binary, monoid
 from graphblas.semiring import plus_first, plus_times
 
@@ -113,7 +112,6 @@ def google_matrix(
     A = G._A
     ids = G.list_to_ids(nodelist)
     if ids is not None:
-        ids = np.array(ids, np.uint64)
         A = A[ids, ids].new(float, name=name)
     else:
         A = A.dup(float, name=name)

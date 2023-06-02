@@ -42,6 +42,8 @@ dependencies:
     - pydot
     - pygraphviz
     - sympy
+    # For updating algorithm list in README
+    - rich
     # For linting
     - pre-commit
     # For testing
