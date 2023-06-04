@@ -32,7 +32,8 @@ jobs:
         run: |
           conda install -c conda-forge python-graphblas scipy pandas pytest-cov pytest-randomly
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
-          pip install git+https://github.com/networkx/networkx.git@main --no-deps
+          # pip install git+https://github.com/networkx/networkx.git@main --no-deps
+          pip install git+https://github.com/eriknw/networkx.git@dispatch_many --no-deps  # XXX: temporary
           pip install -e . --no-deps
       - name: PyTest
         run: |

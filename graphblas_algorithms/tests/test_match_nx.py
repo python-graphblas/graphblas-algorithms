@@ -22,7 +22,11 @@ except ImportError:
         "Matching networkx namespace requires networkx to be installed", allow_module_level=True
     )
 else:
-    from networkx.classes import backends  # noqa: F401
+    try:
+        from networkx.utils import backends
+    except ImportError:  # pragma: no cover (import)
+        # This is the location in nx 3.1
+        from networkx.classes import backends  # noqa: F401
 
 
 def isdispatched(func):

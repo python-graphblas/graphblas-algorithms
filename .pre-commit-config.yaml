@@ -17,13 +17,19 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
       - id: check-ast
       - id: check-toml
       - id: check-yaml
       - id: debug-statements
       - id: end-of-file-fixer
+        exclude_types: [svg]
       - id: mixed-line-ending
       - id: trailing-whitespace
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.13
     hooks:
@@ -55,7 +61,7 @@ repos:
       - id: black
       # - id: black-jupyter
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.269
+    rev: v0.0.270
     hooks:
       - id: ruff
         args: [--fix-only, --show-fixes]
@@ -81,7 +87,7 @@ repos:
         additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.269
+    rev: v0.0.270
     hooks:
       - id: ruff
   # `pyroma` may help keep our package standards up to date if best practices change.
