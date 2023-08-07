@@ -31,7 +31,7 @@ repos:
         name: Validate pyproject.toml
   # I don't yet trust ruff to do what autoflake does
   - repo: https://github.com/PyCQA/autoflake
-    rev: v2.1.1
+    rev: v2.2.0
     hooks:
       - id: autoflake
         args: [--in-place]
@@ -40,7 +40,7 @@ repos:
     hooks:
       - id: isort
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.4.0
+    rev: v3.10.1
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
@@ -50,17 +50,17 @@ repos:
       - id: auto-walrus
         args: [--line-length, "100"]
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black
       # - id: black-jupyter
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.270
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.282
     hooks:
       - id: ruff
         args: [--fix-only, --show-fixes]
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies: &flake8_dependencies
@@ -69,19 +69,19 @@ repos:
         - flake8-bugbear==23.5.9
         - flake8-simplify==0.20.0
   - repo: https://github.com/asottile/yesqa
-    rev: v1.4.0
+    rev: v1.5.0
     hooks:
       - id: yesqa
         additional_dependencies: *flake8_dependencies
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
+    rev: v2.2.5
     hooks:
       - id: codespell
         types_or: [python, rst, markdown]
         additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.270
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.0.282
     hooks:
       - id: ruff
   # `pyroma` may help keep our package standards up to date if best practices change.
