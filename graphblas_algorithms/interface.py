@@ -171,20 +171,71 @@ class Dispatcher:
     # End auto-generated code: dispatch
 
     @staticmethod
-    def convert_from_nx(graph, weight=None, *, name=None):
+    def convert_from_nx(
+        graph,
+        edge_attrs=None,
+        node_attrs=None,
+        preserve_edge_attrs=False,
+        preserve_node_attrs=False,
+        preserve_graph_attrs=False,
+        name=None,
+        graph_name=None,
+        *,
+        weight=None,  # For nx.__version__ <= 3.1
+    ):
         import networkx as nx
 
         from .classes import DiGraph, Graph, MultiDiGraph, MultiGraph
 
+        if preserve_edge_attrs:
+            if graph.is_multigraph():
+                attrs = set().union(
+                    *(
+                        datadict
+                        for nbrs in graph._adj.values()
+                        for keydict in nbrs.values()
+                        for datadict in keydict.values()
+                    )
+                )
+            else:
+                attrs = set().union(
+                    *(datadict for nbrs in graph._adj.values() for datadict in nbrs.values())
+                )
+            if len(attrs) == 1:
+                [attr] = attrs
+                edge_attrs = {attr: None}
+            elif attrs:
+                raise NotImplementedError("`preserve_edge_attrs=True` is not fully implemented")
+        if node_attrs:
+            raise NotImplementedError("non-None `node_attrs` is not yet implemented")
+        if preserve_node_attrs:
+            attrs = set().union(*(datadict for node, datadict in graph.nodes(data=True)))
+            if attrs:
+                raise NotImplementedError("`preserve_node_attrs=True` is not implemented")
+        if edge_attrs:
+            if len(edge_attrs) > 1:
+                raise NotImplementedError(
+                    "Multiple edge attributes is not implemented (bad value for edge_attrs)"
+                )
+            if weight is not None:
+                raise TypeError("edge_attrs and weight both given")
+            [[weight, default]] = edge_attrs.items()
+            if default is not None and default != 1:
+                raise NotImplementedError(f"edge default != 1 is not implemented; got {default}")
+
         if isinstance(graph, nx.MultiDiGraph):
-            return MultiDiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.MultiGraph):
-            return MultiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.DiGraph):
-            return DiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.Graph):
-            return Graph.from_networkx(graph, weight=weight)
-        raise TypeError(f"Unsupported type of graph: {type(graph)}")
+            G = MultiDiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.MultiGraph):
+            G = MultiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.DiGraph):
+            G = DiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.Graph):
+            G = Graph.from_networkx(graph, weight=weight)
+        else:
+            raise TypeError(f"Unsupported type of graph: {type(graph)}")
+        if preserve_graph_attrs:
+            G.graph.update(graph.graph)
+        return G
 
     @staticmethod
     def convert_to_nx(obj, *, name=None):
