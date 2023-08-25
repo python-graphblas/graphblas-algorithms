@@ -7,7 +7,7 @@
 ci:
     # See: https://pre-commit.ci/#configuration
     autofix_prs: false
-    autoupdate_schedule: monthly
+    autoupdate_schedule: quarterly
     skip: [no-commit-to-branch]
 fail_fast: true
 default_language_version:
