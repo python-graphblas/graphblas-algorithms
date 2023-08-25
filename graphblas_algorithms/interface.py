@@ -177,7 +177,9 @@ class Dispatcher:
         node_attrs=None,
         preserve_edge_attrs=None,
         preserve_node_attrs=None,
+        preserve_graph_attrs=None,
         name=None,
+        graph_name=None,
         *,
         weight=None,  # For nx.__version__ <= 3.1
     ):
@@ -191,6 +193,10 @@ class Dispatcher:
             raise NotImplementedError("non-None `node_attrs` is not implemented")
         if preserve_node_attrs:
             raise NotImplementedError("`preserve_node_attrs=True` is not implemented")
+        if preserve_graph_attrs:
+            raise NotImplementedError("`preserve_graphs_attrs=True` is not implemented")
+        if graph_name:
+            raise NotImplementedError("Not possible to set a graph name")
         if edge_attrs:
             if len(edge_attrs) > 1:
                 raise NotImplementedError(
