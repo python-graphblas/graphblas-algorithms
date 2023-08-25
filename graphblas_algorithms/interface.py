@@ -175,9 +175,9 @@ class Dispatcher:
         graph,
         edge_attrs=None,
         node_attrs=None,
-        preserve_edge_attrs=None,
-        preserve_node_attrs=None,
-        preserve_graph_attrs=None,
+        preserve_edge_attrs=False,
+        preserve_node_attrs=False,
+        preserve_graph_attrs=False,
         name=None,
         graph_name=None,
         *,
@@ -188,15 +188,30 @@ class Dispatcher:
         from .classes import DiGraph, Graph, MultiDiGraph, MultiGraph
 
         if preserve_edge_attrs:
-            raise NotImplementedError("`preserve_edge_attrs=True` is not implemented")
+            if graph.is_multigraph():
+                attrs = set().union(
+                    *(
+                        datadict
+                        for nbrs in graph._adj.values()
+                        for keydict in nbrs.values()
+                        for datadict in keydict.values()
+                    )
+                )
+            else:
+                attrs = set().union(
+                    *(datadict for nbrs in graph._adj.values() for datadict in nbrs.values())
+                )
+            if len(attrs) == 1:
+                [attr] = attrs
+                edge_attrs = {attr: None}
+            elif attrs:
+                raise NotImplementedError("`preserve_edge_attrs=True` is not fully implemented")
         if node_attrs:
-            raise NotImplementedError("non-None `node_attrs` is not implemented")
+            raise NotImplementedError("non-None `node_attrs` is not yet implemented")
         if preserve_node_attrs:
-            raise NotImplementedError("`preserve_node_attrs=True` is not implemented")
-        if preserve_graph_attrs:
-            raise NotImplementedError("`preserve_graphs_attrs=True` is not implemented")
-        if graph_name:
-            raise NotImplementedError("Not possible to set a graph name")
+            attrs = set().union(*(datadict for node, datadict in graph.nodes(data=True)))
+            if attrs:
+                raise NotImplementedError("`preserve_node_attrs=True` is not implemented")
         if edge_attrs:
             if len(edge_attrs) > 1:
                 raise NotImplementedError(
@@ -209,14 +224,18 @@ class Dispatcher:
                 raise NotImplementedError(f"edge default != 1 is not implemented; got {default}")
 
         if isinstance(graph, nx.MultiDiGraph):
-            return MultiDiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.MultiGraph):
-            return MultiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.DiGraph):
-            return DiGraph.from_networkx(graph, weight=weight)
-        if isinstance(graph, nx.Graph):
-            return Graph.from_networkx(graph, weight=weight)
-        raise TypeError(f"Unsupported type of graph: {type(graph)}")
+            G = MultiDiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.MultiGraph):
+            G = MultiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.DiGraph):
+            G = DiGraph.from_networkx(graph, weight=weight)
+        elif isinstance(graph, nx.Graph):
+            G = Graph.from_networkx(graph, weight=weight)
+        else:
+            raise TypeError(f"Unsupported type of graph: {type(graph)}")
+        if preserve_graph_attrs:
+            G.graph.update(graph.graph)
+        return G
 
     @staticmethod
     def convert_to_nx(obj, *, name=None):

@@ -24,15 +24,27 @@ except ImportError:
 else:
     try:
         from networkx.utils import backends
+
+        IS_NX_30_OR_31 = False
     except ImportError:  # pragma: no cover (import)
         # This is the location in nx 3.1
         from networkx.classes import backends  # noqa: F401
 
+        IS_NX_30_OR_31 = True
+
 
 def isdispatched(func):
     """Can this NetworkX function dispatch to other backends?"""
+    if IS_NX_30_OR_31:
+        return (
+            callable(func)
+            and hasattr(func, "dispatchname")
+            and func.__module__.startswith("networkx")
+        )
     return (
-        callable(func) and hasattr(func, "dispatchname") and func.__module__.startswith("networkx")
+        callable(func)
+        and hasattr(func, "preserve_edge_attrs")
+        and func.__module__.startswith("networkx")
     )
 
 
@@ -41,7 +53,9 @@ def dispatchname(func):
     # Haha, there should be a better way to get this
     if not isdispatched(func):
         raise ValueError(f"Function is not dispatched in NetworkX: {func.__name__}")
-    return func.dispatchname
+    if IS_NX_30_OR_31:
+        return func.dispatchname
+    return func.name
 
 
 def fullname(func):
