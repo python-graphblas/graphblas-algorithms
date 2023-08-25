@@ -19,7 +19,7 @@ from graphblas_algorithms.interface import Dispatcher
 
 datapaths = [
     Path(__file__).parent / ".." / "data",
-    Path("."),
+    Path(),
 ]
 
 
@@ -37,7 +37,7 @@ def find_data(dataname):
             if dataname not in download_data.data_urls:
                 raise FileNotFoundError(f"Unable to find data file for {dataname}")
             curpath = Path(download_data.main([dataname])[0])
-    return curpath.resolve().relative_to(Path(".").resolve())
+    return curpath.resolve().relative_to(Path().resolve())
 
 
 def get_symmetry(file_or_mminfo):

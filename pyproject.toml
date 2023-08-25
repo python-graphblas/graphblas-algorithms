@@ -214,12 +214,14 @@ ignore = [
     "RET502",  # Do not implicitly `return None` in function able to return non-`None` value
     "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
     "RET504",  # Unnecessary variable assignment before `return` statement
+    "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar` (Note: no annotations yet)
     "S110",  # `try`-`except`-`pass` detected, consider logging the exception (Note: good advice, but we don't log)
     "S112",  # `try`-`except`-`continue` detected, consider logging the exception (Note: good advice, but we don't log)
     "SIM102",  # Use a single `if` statement instead of nested `if` statements (Note: often necessary)
     "SIM105",  # Use contextlib.suppress(...) instead of try-except-pass (Note: try-except-pass is much faster)
     "SIM108",  # Use ternary operator ... instead of if-else-block (Note: if-else better for coverage and sometimes clearer)
     "TRY003",  # Avoid specifying long messages outside the exception class (Note: why?)
+    "FIX001", "FIX002", "FIX003", "FIX004",  # flake8-fixme (like flake8-todos)
 
     # Ignored categories
     "C90",  # mccabe (Too strict, but maybe we should make things less complex)
@@ -236,7 +238,6 @@ ignore = [
     "TCH",  # flake8-type-checking (Note: figure out type checking later)
     "ARG",  # flake8-unused-arguments (Sometimes helpful, but too strict)
     "TD",  # flake8-todos (Maybe okay to add some of these)
-    "T", "T001", "T002", "T003", "T004",  # flake8-fixme (like flake8-todos)
     "ERA",  # eradicate (We like code in comments!)
     "PD",  # pandas-vet (Intended for scripts that use pandas, not libraries)
 ]

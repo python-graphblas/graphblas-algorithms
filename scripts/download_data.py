@@ -47,7 +47,7 @@ def main(datanames, overwrite=False):
     for name in datanames:
         target = datapath / f"{name}.mtx"
         filenames.append(target)
-        relpath = target.resolve().relative_to(Path(".").resolve())
+        relpath = target.resolve().relative_to(Path().resolve())
         if not overwrite and target.exists():
             print(f"{relpath} already exists; skipping", file=sys.stderr)
             continue
