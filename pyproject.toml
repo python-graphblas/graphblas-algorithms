@@ -10,7 +10,7 @@ name = "graphblas-algorithms"
 dynamic = ["version"]
 description = "Graph algorithms written in GraphBLAS and backend for NetworkX"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Erik Welch", email = "erik.n.welch@gmail.com"},
@@ -43,7 +43,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -64,6 +63,12 @@ dependencies = [
 
 [project.entry-points."networkx.plugins"]
 graphblas = "graphblas_algorithms.interface:Dispatcher"
+
+[project.entry-points."networkx.backends"]
+graphblas = "graphblas_algorithms.interface:Dispatcher"
+
+[project.entry-points."networkx.backend_info"]
+graphblas = "_nx_graphblas:get_info"
 
 [project.urls]
 homepage = "https://github.com/python-graphblas/graphblas-algorithms"
@@ -90,6 +95,7 @@ all = [
 # $ find graphblas_algorithms/ -name __init__.py -print | sort | sed -e 's/\/__init__.py//g' -e 's/\//./g'
 # $ python -c 'import tomli ; [print(x) for x in sorted(tomli.load(open("pyproject.toml", "rb"))["tool"]["setuptools"]["packages"])]'
 packages = [
+    "_nx_graphblas",
     "graphblas_algorithms",
     "graphblas_algorithms.algorithms",
     "graphblas_algorithms.algorithms.centrality",
@@ -127,7 +133,7 @@ dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
@@ -143,6 +149,7 @@ skip = [
 ]
 
 [tool.pytest.ini_options]
+minversion = "6.0"
 testpaths = "graphblas_algorithms"
 xfail_strict = false
 markers = [
@@ -169,7 +176,10 @@ exclude_lines = [
 [tool.ruff]
 # https://github.com/charliermarsh/ruff/
 line-length = 100
-target-version = "py38"
+target-version = "py39"
+unfixable = [
+    "F841"  # unused-variable (Note: can leave useless expression)
+]
 select = [
     "ALL",
 ]

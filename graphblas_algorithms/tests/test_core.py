@@ -27,6 +27,7 @@ def test_packages():
     path = pathlib.Path(ga.__file__).parent
     pkgs = [f"graphblas_algorithms.{x}" for x in setuptools.find_packages(path)]
     pkgs.append("graphblas_algorithms")
+    pkgs.append("_nx_graphblas")
     pkgs.sort()
     pyproject = path.parent / "pyproject.toml"
     if not pyproject.exists():
