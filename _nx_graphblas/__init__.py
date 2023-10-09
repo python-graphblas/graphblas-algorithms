@@ -9,14 +9,14 @@ def get_info():
         "functions": {
             "adjacency_matrix": {},
             "all_pairs_bellman_ford_path_length": {
-                "extra_parameters : int or str, optional": {
-                    "chunksize": "Split the computation into chunks; "
+                "extra_parameters": {
+                    "chunksize : int or str, optional": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "10 MiB"',
                 },
             },
             "all_pairs_shortest_path_length": {
-                "extra_parameters : int or str, optional": {
-                    "chunksize": "Split the computation into chunks; "
+                "extra_parameters": {
+                    "chunksize : int or str, optional": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "10 MiB"',
                 },
             },
@@ -92,8 +92,8 @@ def get_info():
             "single_target_shortest_path_length": {},
             "s_metric": {},
             "square_clustering": {
-                "extra_parameters : int or str, optional": {
-                    "chunksize": "Split the computation into chunks; "
+                "extra_parameters": {
+                    "chunksize : int or str, optional": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "256 MiB"',
                 },
             },
