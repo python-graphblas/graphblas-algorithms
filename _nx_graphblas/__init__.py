@@ -4,18 +4,18 @@ def get_info():
         "project": "graphblas-algorithms",
         "package": "graphblas_algorithms",
         "url": "https://github.com/python-graphblas/graphblas-algorithms",
-        "short_summary": "Fast, OpenMP-enabled backend using GraphBLAS",
+        "short_summary": "OpenMP-enabled sparse linear algebra backend.",
         # "description": "TODO",
         "functions": {
             "adjacency_matrix": {},
             "all_pairs_bellman_ford_path_length": {
-                "extra_parameters": {
+                "extra_parameters : int or str, optional": {
                     "chunksize": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "10 MiB"',
                 },
             },
             "all_pairs_shortest_path_length": {
-                "extra_parameters": {
+                "extra_parameters : int or str, optional": {
                     "chunksize": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "10 MiB"',
                 },
@@ -92,7 +92,7 @@ def get_info():
             "single_target_shortest_path_length": {},
             "s_metric": {},
             "square_clustering": {
-                "extra_parameters": {
+                "extra_parameters : int or str, optional": {
                     "chunksize": "Split the computation into chunks; "
                     'may specify size as string or number of rows. Default "256 MiB"',
                 },
