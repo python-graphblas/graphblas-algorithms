@@ -442,6 +442,7 @@ class AutoDict(dict):
 
 
 class DiGraph(Graph):
+    __networkx_backend__ = "graphblas"
     __networkx_plugin__ = "graphblas"
 
     # "-" properties ignore self-edges, "+" properties include self-edges
@@ -611,7 +612,7 @@ class DiGraph(Graph):
         return Graph(B, key_to_id=self._key_to_id)
 
     def reverse(self, copy=True):
-        # We could even re-use many of the cached values
+        # We could even reuse many of the cached values
         A = self._A.T  # This probably mostly works, but does not yet support assignment
         if copy:
             A = A.new()

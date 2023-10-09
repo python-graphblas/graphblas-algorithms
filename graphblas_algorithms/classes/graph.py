@@ -301,6 +301,7 @@ class AutoDict(dict):
 
 
 class Graph:
+    __networkx_backend__ = "graphblas"
     __networkx_plugin__ = "graphblas"
 
     # "-" properties ignore self-edges, "+" properties include self-edges
