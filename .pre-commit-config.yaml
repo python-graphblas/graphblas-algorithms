@@ -33,7 +33,7 @@ repos:
       - id: name-tests-test
         args: ["--pytest-test-first"]
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.14
+    rev: v0.15
     hooks:
       - id: validate-pyproject
         name: Validate pyproject.toml
@@ -58,12 +58,12 @@ repos:
       - id: auto-walrus
         args: [--line-length, "100"]
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 23.10.0
     hooks:
       - id: black
       # - id: black-jupyter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.1.0
     hooks:
       - id: ruff
         args: [--fix-only, --show-fixes]
@@ -89,7 +89,7 @@ repos:
         additional_dependencies: [tomli]
         files: ^(graphblas_algorithms|docs)/
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.1.0
     hooks:
       - id: ruff
   # `pyroma` may help keep our package standards up to date if best practices change.

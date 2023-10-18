@@ -46,6 +46,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
     "Intended Audience :: Developers",
     "Intended Audience :: Other Audience",
@@ -80,7 +81,7 @@ changelog = "https://github.com/python-graphblas/graphblas-algorithms/releases"
 test = [
     "pytest",
     "networkx >=3.0",
-    "scipy >=1.8",
+    "scipy >=1.9",
     "setuptools",
     "tomli",
 ]
@@ -133,7 +134,7 @@ dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
