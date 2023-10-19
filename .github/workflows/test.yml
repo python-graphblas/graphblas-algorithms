@@ -49,11 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy \
-            pytest-cov pytest-randomly pytest-mpl ${{ matrix.python-version != '3.12' && 'python-graphblas' || '' }}
-          if [[ ${{ matrix.python-version }} == "3.12" ]]; then
-            # TODO: install via conda once there are builds for 3.12
-            pip install --no-deps python-graphblas
-          fi
+            pytest-cov pytest-randomly pytest-mpl
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
