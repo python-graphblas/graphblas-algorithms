@@ -27,7 +27,7 @@ def _bellman_ford_path_length(G, source, target=None, *, cutoff=None, name):
         is_negative, iso_value = G.get_properties("has_negative_edges+ iso_value")
         if not is_negative:
             if cutoff is not None:
-                cutoff = int(cutoff // iso_value)
+                cutoff = int(cutoff // iso_value.get())
             d = _bfs_level(G, source, target, cutoff=cutoff, dtype=iso_value.dtype)
             if dst_id is not None:
                 d = d.get(dst_id)

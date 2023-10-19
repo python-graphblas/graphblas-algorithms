@@ -48,7 +48,8 @@ jobs:
           auto-activate-base: false
       - name: Install dependencies
         run: |
-          $(command -v mamba || command -v conda) install python-graphblas scipy pandas pytest-cov pytest-randomly pytest-mpl
+          $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
+            pytest-cov pytest-randomly pytest-mpl
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
