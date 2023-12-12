@@ -50,7 +50,7 @@ def pagerank(
         err = np.absolute(x - xlast).sum()
         if err < N * tol:
             return x
-            # return dict(zip(nodelist, map(float, x)))
+            # return dict(zip(nodelist, map(float, x), strict=True))
     raise nx.PowerIterationFailedConvergence(max_iter)
 
 

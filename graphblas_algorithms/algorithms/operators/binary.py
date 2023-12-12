@@ -67,7 +67,7 @@ def intersection(G, H, *, name="intersection"):
     ids = H.list_to_ids(keys)
     B = H._A[ids, ids].new(dtypes.unify(A.dtype, H._A.dtype), mask=A.S, name=name)
     B << unary.one(B)
-    return type(G)(B, key_to_id=dict(zip(keys, range(len(keys)))))
+    return type(G)(B, key_to_id=dict(zip(keys, range(len(keys)), strict=True)))
 
 
 def difference(G, H, *, name="difference"):
@@ -142,7 +142,7 @@ def compose(G, H, *, name="compose"):
         C[A.nrows :, A.ncols :] = B[ids, ids]
         # Now make new `key_to_id`
         ids += A.nrows
-        key_to_id = dict(zip(newkeys, ids.tolist()))
+        key_to_id = dict(zip(newkeys, ids.tolist(), strict=True))
         key_to_id.update(G._key_to_id)
     return type(G)(C, key_to_id=key_to_id)
 

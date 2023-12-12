@@ -10,7 +10,7 @@ name = "graphblas-algorithms"
 dynamic = ["version"]
 description = "Graph algorithms written in GraphBLAS and backend for NetworkX"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
     {name = "Erik Welch", email = "erik.n.welch@gmail.com"},
@@ -43,7 +43,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -134,7 +133,7 @@ dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
@@ -177,7 +176,7 @@ exclude_lines = [
 [tool.ruff]
 # https://github.com/charliermarsh/ruff/
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 unfixable = [
     "F841"  # unused-variable (Note: can leave useless expression)
 ]
@@ -205,6 +204,7 @@ ignore = [
     # "SIM401",  # Use dict.get ... instead of if-else-block (Note: if-else better for coverage and sometimes clearer)
     # "TRY004",  # Prefer `TypeError` exception for invalid type (Note: good advice, but not worth the nuisance)
     # "TRY200",  # Use `raise from` to specify exception cause (Note: sometimes okay to raise original exception)
+    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` (Note: using `|` seems to be slower)
 
     # Intentionally ignored
     "COM812",  # Trailing comma missing
