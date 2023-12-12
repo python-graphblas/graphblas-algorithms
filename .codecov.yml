@@ -1,0 +1,14 @@
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+    changes: false
+comment:
+  layout: "header, diff"
+  behavior: default
+github_checks:
+  annotations: false
