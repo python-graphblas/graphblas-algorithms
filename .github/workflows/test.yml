@@ -49,9 +49,10 @@ jobs:
       - name: Install dependencies
         run: |
           $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
-            pytest-cov pytest-randomly pytest-mpl
+            pytest-cov pytest-randomly pytest-mpl networkx
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
-          pip install git+https://github.com/networkx/networkx.git@main --no-deps
+          # Sometimes we prefer to use the latest release of NetworkX or the latest development from github
+          # pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
       - name: PyTest
         run: |
