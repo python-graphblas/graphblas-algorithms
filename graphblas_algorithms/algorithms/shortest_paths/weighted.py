@@ -199,7 +199,7 @@ def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
 
 def _reconstruct_path_from_parents(G, parents, src, dst):
     indices, values = parents.to_coo(sort=False)
-    d = dict(zip(indices.tolist(), values.tolist()))
+    d = dict(zip(indices.tolist(), values.tolist(), strict=True))
     if dst not in d:
         return []
     cur = dst

@@ -15,7 +15,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,9 +49,10 @@ jobs:
       - name: Install dependencies
         run: |
           $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
-            pytest-cov pytest-randomly pytest-mpl
+            pytest-cov pytest-randomly pytest-mpl networkx
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
-          pip install git+https://github.com/networkx/networkx.git@main --no-deps
+          # Sometimes we prefer to use the latest release of NetworkX or the latest development from github
+          # pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
       - name: PyTest
         run: |

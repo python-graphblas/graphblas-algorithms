@@ -61,7 +61,7 @@ def dict_to_vector(self, d, *, size=None, dtype=None, name=None):
     if size is None:
         size = len(self)
     key_to_id = self._key_to_id
-    indices, values = zip(*((key_to_id[key], val) for key, val in d.items()))
+    indices, values = zip(*((key_to_id[key], val) for key, val in d.items()), strict=True)
     return Vector.from_coo(indices, values, size=size, dtype=dtype, name=name)
 
 
@@ -116,7 +116,7 @@ def vector_to_dict(self, v, *, mask=None, fill_value=None):
     elif fill_value is not None and v.nvals < v.size:
         v(mask=~v.S) << fill_value
     id_to_key = self.id_to_key
-    return {id_to_key[index]: value for index, value in zip(*v.to_coo(sort=False))}
+    return {id_to_key[index]: value for index, value in zip(*v.to_coo(sort=False), strict=True)}
 
 
 def vector_to_list(self, v, *, values_are_keys=False):
@@ -198,26 +198,29 @@ def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False, val
     id_to_key = self.id_to_key
     if values_are_keys:
         values = [id_to_key[val] for val in values]
-    it = zip(rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist())
+    it = zip(rows, np.lib.stride_tricks.sliding_window_view(indptr, 2).tolist(), strict=True)
     if use_row_index and use_column_index:
         return {
-            row: dict(zip(col_indices[start:stop], values[start:stop])) for row, (start, stop) in it
+            row: dict(zip(col_indices[start:stop], values[start:stop], strict=True))
+            for row, (start, stop) in it
         }
     if use_row_index:
         return {
             row: {
-                id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+                id_to_key[col]: val
+                for col, val in zip(col_indices[start:stop], values[start:stop], strict=True)
             }
             for row, (start, stop) in it
         }
     if use_column_index:
         return {
-            id_to_key[row]: dict(zip(col_indices[start:stop], values[start:stop]))
+            id_to_key[row]: dict(zip(col_indices[start:stop], values[start:stop], strict=True))
             for row, (start, stop) in it
         }
     return {
         id_to_key[row]: {
-            id_to_key[col]: val for col, val in zip(col_indices[start:stop], values[start:stop])
+            id_to_key[col]: val
+            for col, val in zip(col_indices[start:stop], values[start:stop], strict=True)
         }
         for row, (start, stop) in it
     }
@@ -239,9 +242,9 @@ def to_networkx(self, edge_attribute="weight"):
     rows = (id_to_key[row] for row in rows.tolist())
     cols = (id_to_key[col] for col in cols.tolist())
     if edge_attribute is None:
-        G.add_edges_from(zip(rows, cols))
+        G.add_edges_from(zip(rows, cols, strict=True))
     else:
-        G.add_weighted_edges_from(zip(rows, cols, vals), weight=edge_attribute)
+        G.add_weighted_edges_from(zip(rows, cols, vals, strict=True), weight=edge_attribute)
     # What else should we copy over?
     return G
 
@@ -258,4 +261,4 @@ def renumber_key_to_id(self, indices):
     return {id_to_key[index]: i for i, index in enumerate(indices)}
     # Alternative (about the same performance)
     # keys = self.list_to_keys(indices)
-    # return dict(zip(keys, range(len(indices))))
+    # return dict(zip(keys, range(len(indices)), strict=True))

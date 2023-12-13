@@ -281,31 +281,31 @@ class Dispatcher:
             return (testname, frozenset({filename}))
 
         # Reasons to skip tests
-        multi_attributed = "unable to handle multi-attributed graphs"
+        # multi_attributed = "unable to handle multi-attributed graphs"
         multidigraph = "unable to handle MultiDiGraph"
         multigraph = "unable to handle MultiGraph"
 
         # Which tests to skip
         skip = {
-            key("test_mst.py:TestBoruvka.test_attributes"): multi_attributed,
-            key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
+            # key("test_mst.py:TestBoruvka.test_attributes"): multi_attributed,
+            # key("test_mst.py:TestBoruvka.test_weight_attribute"): multi_attributed,
             key("test_dense.py:TestFloyd.test_zero_weight"): multidigraph,
             key("test_dense_numpy.py:test_zero_weight"): multidigraph,
             key("test_weighted.py:TestBellmanFordAndGoldbergRadzik.test_multigraph"): multigraph,
-            key("test_binary.py:test_compose_multigraph"): multigraph,
-            key("test_binary.py:test_difference_multigraph_attributes"): multigraph,
-            key("test_binary.py:test_disjoint_union_multigraph"): multigraph,
-            key("test_binary.py:test_full_join_multigraph"): multigraph,
-            key("test_binary.py:test_intersection_multigraph_attributes"): multigraph,
-            key(
-                "test_binary.py:test_intersection_multigraph_attributes_node_set_different"
-            ): multigraph,
-            key("test_binary.py:test_symmetric_difference_multigraph"): multigraph,
-            key("test_binary.py:test_union_attributes"): multi_attributed,
+            # key("test_binary.py:test_compose_multigraph"): multigraph,
+            # key("test_binary.py:test_difference_multigraph_attributes"): multigraph,
+            # key("test_binary.py:test_disjoint_union_multigraph"): multigraph,
+            # key("test_binary.py:test_full_join_multigraph"): multigraph,
+            # key("test_binary.py:test_intersection_multigraph_attributes"): multigraph,
+            # key(
+            #     "test_binary.py:test_intersection_multigraph_attributes_node_set_different"
+            # ): multigraph,
+            # key("test_binary.py:test_symmetric_difference_multigraph"): multigraph,
+            # key("test_binary.py:test_union_attributes"): multi_attributed,
             # TODO: move failing assertion from `test_union_and_compose`
-            key("test_binary.py:test_union_and_compose"): multi_attributed,
-            key("test_binary.py:test_union_multigraph"): multigraph,
-            key("test_vf2pp.py:test_custom_multigraph4_different_labels"): multigraph,
+            # key("test_binary.py:test_union_and_compose"): multi_attributed,
+            # key("test_binary.py:test_union_multigraph"): multigraph,
+            # key("test_vf2pp.py:test_custom_multigraph4_different_labels"): multigraph,
         }
         for item in items:
             kset = set(item.keywords)

@@ -29,15 +29,19 @@ def edge_boundary(G, nbunch1, nbunch2=None, data=False, keys=False, default=None
             (id_to_key[col] for col in cols),
             # Unsure about this; data argument may mean *all* edge attributes
             ({weight: val} for val in vals),
+            strict=True,
         )
     else:
         it = zip(
             (id_to_key[row] for row in rows),
             (id_to_key[col] for col in cols),
+            strict=True,
         )
     if is_multigraph:
         # Edge weights indicate number of times to repeat edges
-        it = itertools.chain.from_iterable(itertools.starmap(itertools.repeat, zip(it, vals)))
+        it = itertools.chain.from_iterable(
+            itertools.starmap(itertools.repeat, zip(it, vals, strict=True))
+        )
     return it
 
 
