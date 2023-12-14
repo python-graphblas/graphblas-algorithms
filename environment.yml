@@ -33,6 +33,9 @@ dependencies:
     - numba
     - python-suitesparse-graphblas
     - pyyaml
+    # python-graphblas extra dependencies
+    - fast_matrix_market
+    - packaging
     # networkx default dependencies
     - matplotlib
     - pandas
@@ -56,3 +59,9 @@ dependencies:
     - ipython
     # For type annotations
     - mypy
+    # For benchmark comparisons (optional; uncomment as desired)
+    # - igraph
+    # - python-igraph
+    # - networkit
+    # - graph-tool
+    # - xorg-libxcursor  # for graph-tool
