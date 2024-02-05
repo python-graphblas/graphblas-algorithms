@@ -64,4 +64,4 @@ jobs:
           coverage report
           coverage xml
       - name: Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
