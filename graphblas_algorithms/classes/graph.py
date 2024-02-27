@@ -10,19 +10,19 @@ from ._caching import NONNEGATIVE_DTYPES, get_reduce_to_scalar, get_reduce_to_ve
 
 
 def get_A(G, mask=None):
-    """A"""
+    """``A``."""
     return G._A
 
 
 def get_AT(G, mask=None):
-    """A.T"""
+    """``A.T``."""
     A = G._A
     G._cache["AT"] = A
     return A
 
 
 def get_offdiag(G, mask=None):
-    """select.offdiag(A)"""
+    """``select.offdiag(A)``."""
     A = G._A
     cache = G._cache
     if "offdiag" not in cache:
@@ -38,7 +38,7 @@ def get_offdiag(G, mask=None):
 
 
 def get_Up(G, mask=None):
-    """select.triu(A)"""
+    """``select.triu(A)``."""
     A = G._A
     cache = G._cache
     if "U+" not in cache:
@@ -54,7 +54,7 @@ def get_Up(G, mask=None):
 
 
 def get_Lp(G, mask=None):
-    """select.tril(A)"""
+    """``select.tril(A)``."""
     A = G._A
     cache = G._cache
     if "L+" not in cache:
@@ -70,7 +70,7 @@ def get_Lp(G, mask=None):
 
 
 def get_Um(G, mask=None):
-    """select.triu(A, 1)"""
+    """``select.triu(A, 1)``."""
     A = G._A
     cache = G._cache
     if "U-" not in cache:
@@ -91,7 +91,7 @@ def get_Um(G, mask=None):
 
 
 def get_Lm(G, mask=None):
-    """select.tril(A, -1)"""
+    """``select.tril(A, -1)``."""
     A = G._A
     cache = G._cache
     if "L-" not in cache:
@@ -112,7 +112,7 @@ def get_Lm(G, mask=None):
 
 
 def get_diag(G, mask=None):
-    """A.diag()"""
+    """``A.diag()``."""
     A = G._A
     cache = G._cache
     if "diag" not in cache:
@@ -193,7 +193,7 @@ def has_negative_edgesm(G, mask=None):
 
 
 def has_self_edges(G, mask=None):
-    """A.diag().nvals > 0"""
+    """``A.diag().nvals > 0``."""
     A = G._A
     cache = G._cache
     if "has_self_edges" not in cache:

@@ -177,8 +177,10 @@ exclude_lines = [
 # https://github.com/charliermarsh/ruff/
 line-length = 100
 target-version = "py310"
+[tool.ruff.lint]
 unfixable = [
-    "F841"  # unused-variable (Note: can leave useless expression)
+    "F841",  # unused-variable (Note: can leave useless expression)
+    "B905",  # zip-without-explicit-strict (Note: prefer `zip(x, y, strict=True)`)
 ]
 select = [
     "ALL",
@@ -194,9 +196,9 @@ ignore = [
     "D103",  # Missing docstring in public function
     "D104",  # Missing docstring in public package
     "D105",  # Missing docstring in magic method
-    # "D107",  # Missing docstring in `__init__`
+    "D107",  # Missing docstring in `__init__`
     "D401",  # First line of docstring should be in imperative mood:
-    # "D417",  # Missing argument description in the docstring:
+    "D417",  # D417 Missing argument description in the docstring for ...: ...
     "PLE0605",  # Invalid format for `__all__`, must be `tuple` or `list` (Note: broken in v0.0.237)
 
     # Maybe consider
@@ -209,6 +211,7 @@ ignore = [
     # Intentionally ignored
     "COM812",  # Trailing comma missing
     "D203",  # 1 blank line required before class docstring (Note: conflicts with D211, which is preferred)
+    "D213",  # (Note: conflicts with D212, which is preferred)
     "D400",  # First line should end with a period (Note: prefer D415, which also allows "?" and "!")
     "F403",  # `from .classes import *` used; unable to detect undefined names (Note: used to match networkx)
     "N802",  # Function name ... should be lowercase
@@ -232,6 +235,7 @@ ignore = [
     "SIM105",  # Use contextlib.suppress(...) instead of try-except-pass (Note: try-except-pass is much faster)
     "SIM108",  # Use ternary operator ... instead of if-else-block (Note: if-else better for coverage and sometimes clearer)
     "TRY003",  # Avoid specifying long messages outside the exception class (Note: why?)
+    "UP038",  # Use `X | Y` in `isinstance` call instead of `(X, Y)` (Note: using `|` is slower atm)
     "FIX001", "FIX002", "FIX003", "FIX004",  # flake8-fixme (like flake8-todos)
 
     # Ignored categories
@@ -253,19 +257,19 @@ ignore = [
     "PD",  # pandas-vet (Intended for scripts that use pandas, not libraries)
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports (w/o defining `__all__`)
 "graphblas_algorithms/**/tests/*py" = ["S101", "T201", "D103", "D100"]  # Allow assert, print, and no docstring
 "graphblas_algorithms/interface.py" = ["PIE794"]  # Allow us to use `mod = nxapi.<module>` repeatedly
 "graphblas_algorithms/nxapi/exception.py" = ["F401"]  # Allow unused imports (w/o defining `__all__`)
 "scripts/*.py" = ["INP001", "S101", "T201"]  # Not a package, allow assert, allow print
 
-[tool.ruff.flake8-builtins]
+[tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["copyright"]
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 mark-parentheses = false
 
-[tool.ruff.pydocstyle]
+[tool.lint.ruff.pydocstyle]
 convention = "numpy"

@@ -19,7 +19,7 @@ def normalize(x, how):
 
 
 def is_converged(xprev, x, tol):
-    """Check convergence, L1 norm: err = sum(abs(xprev - x)); err < N * tol
+    """Check convergence, L1 norm: ``err = sum(abs(xprev - x)); err < N * tol``.
 
     This modifies `xprev`.
     """

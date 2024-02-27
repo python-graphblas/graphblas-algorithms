@@ -22,7 +22,7 @@ from .graph import (
 
 
 def get_AT(G, mask=None):
-    """A.T"""
+    """``A.T``."""
     A = G._A
     cache = G._cache
     if "AT" not in cache:
@@ -31,7 +31,7 @@ def get_AT(G, mask=None):
 
 
 def get_Up(G, mask=None):
-    """select.triu(A)"""
+    """``select.triu(A)``."""
     A = G._A
     cache = G._cache
     if "U+" not in cache:
@@ -50,7 +50,7 @@ def get_Up(G, mask=None):
 
 
 def get_Lp(G, mask=None):
-    """select.tril(A)"""
+    """``select.tril(A)``."""
     A = G._A
     cache = G._cache
     if "L+" not in cache:
@@ -69,7 +69,7 @@ def get_Lp(G, mask=None):
 
 
 def get_Um(G, mask=None):
-    """select.triu(A, 1)"""
+    """``select.triu(A, 1)``."""
     A = G._A
     cache = G._cache
     if "U-" not in cache:
@@ -93,7 +93,7 @@ def get_Um(G, mask=None):
 
 
 def get_Lm(G, mask=None):
-    """select.tril(A, -1)"""
+    """``select.tril(A, -1)``."""
     A = G._A
     cache = G._cache
     if "L-" not in cache:
@@ -117,7 +117,7 @@ def get_Lm(G, mask=None):
 
 
 def get_recip_degreesp(G, mask=None):
-    """pair(A & A.T).reduce_rowwise()"""
+    """``pair(A & A.T).reduce_rowwise()``."""
     A = G._A
     cache = G._cache
     AT = cache.get("AT", A.T)
@@ -159,7 +159,7 @@ def get_recip_degreesp(G, mask=None):
 
 
 def get_recip_degreesm(G, mask=None):
-    """C = select.offdiag(A) ; pair(C & C.T).reduce_rowwise()"""
+    """``C = select.offdiag(A) ; pair(C & C.T).reduce_rowwise()``."""
     A = G._A
     cache = G._cache
     if "AT" in cache:
@@ -236,7 +236,7 @@ def get_recip_degreesm(G, mask=None):
 
 
 def get_total_degreesp(G, mask=None):
-    """A.reduce_rowwise(agg.count) + A.reduce_columnwise(agg.count)"""
+    """``A.reduce_rowwise(agg.count) + A.reduce_columnwise(agg.count)``."""
     cache = G._cache
     if mask is not None:
         if "total_degrees+" in cache:
@@ -266,7 +266,7 @@ def get_total_degreesp(G, mask=None):
 
 
 def get_total_degreesm(G, mask=None):
-    """C = select.offdiag(A) ; C.reduce_rowwise(agg.count) + C.reduce_columnwise(agg.count)"""
+    """``C = select.offdiag(A) ; C.reduce_rowwise(agg.count) + C.reduce_columnwise(agg.count)``."""
     cache = G._cache
     if mask is not None:
         if "total_degrees-" in cache:
@@ -296,7 +296,7 @@ def get_total_degreesm(G, mask=None):
 
 
 def get_total_recipp(G, mask=None):
-    """pair(A & A.T).reduce_scalar()"""
+    """``pair(A & A.T).reduce_scalar()``."""
     A = G._A
     cache = G._cache
     if "total_recip+" not in cache:
@@ -315,7 +315,7 @@ def get_total_recipp(G, mask=None):
 
 
 def get_total_recipm(G, mask=None):
-    """C = select.offdiag(A) ; pair(C & C.T).reduce_scalar()"""
+    """``C = select.offdiag(A) ; pair(C & C.T).reduce_scalar()``."""
     cache = G._cache
     if "total_recip-" not in cache:
         if "total_recip+" in cache and cache.get("has_self_edges") is False:
@@ -330,7 +330,7 @@ def get_total_recipm(G, mask=None):
 
 
 def has_self_edges(G, mask=None):
-    """A.diag().nvals > 0"""
+    """``A.diag().nvals > 0``."""
     A = G._A
     cache = G._cache
     if "has_self_edges" not in cache:

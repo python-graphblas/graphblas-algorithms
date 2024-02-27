@@ -88,7 +88,7 @@ def normalize_chunksize(chunksize, itemsize=1, N=None):
 
 
 def partition(chunksize, L, *, evenly=True):
-    """Partition a list into chunks"""
+    """Partition a list into chunks."""
     N = len(L)
     if N == 0:
         return
@@ -109,7 +109,7 @@ def partition(chunksize, L, *, evenly=True):
 
 
 def split_evenly(k, L):
-    """Split a list into approximately-equal parts"""
+    """Split a list into approximately-equal parts."""
     N = len(L)
     if N == 0:
         return

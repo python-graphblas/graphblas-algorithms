@@ -9,6 +9,7 @@ We should consider removing any test here that becomes too much of a nuisance.
 For now, though, let's try to match and stay up-to-date with NetworkX!
 
 """
+
 import sys
 from collections import namedtuple
 from pathlib import Path
@@ -49,7 +50,7 @@ def isdispatched(func):
 
 
 def dispatchname(func):
-    """The dispatched name of the dispatchable NetworkX function"""
+    """The dispatched name of the dispatchable NetworkX function."""
     # Haha, there should be a better way to get this
     if not isdispatched(func):
         raise ValueError(f"Function is not dispatched in NetworkX: {func.__name__}")
