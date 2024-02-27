@@ -177,7 +177,7 @@ def matrix_to_vectornodemap(self, A):
 
 
 def matrix_to_dicts(self, A, *, use_row_index=False, use_column_index=False, values_are_keys=False):
-    """Convert a Matrix to a dict of dicts of the form ``{row: {col: val}}``
+    """Convert a Matrix to a dict of dicts of the form ``{row: {col: val}}``.
 
     Use ``use_row_index=True`` to return the row index as keys in the dict,
     and likewise for `use_column_index=True``.
@@ -256,7 +256,7 @@ def _cacheit(self, key, func, *args, **kwargs):
 
 
 def renumber_key_to_id(self, indices):
-    """Create `key_to_id` for e.g. a subgraph with node ids from `indices`"""
+    """Create `key_to_id` for e.g. a subgraph with node ids from `indices`."""
     id_to_key = self.id_to_key
     return {id_to_key[index]: i for i, index in enumerate(indices)}
     # Alternative (about the same performance)

@@ -116,13 +116,14 @@ def bellman_ford_path_length(G, source, target):
 
 
 def bellman_ford_path_lengths(G, nodes=None, *, expand_output=False):
-    """Extra parameter: expand_output
+    """Extra parameter: expand_output.
 
     Parameters
     ----------
     expand_output : bool, default False
         When False, the returned Matrix has one row per node in nodes.
         When True, the returned Matrix has the same shape as the input Matrix.
+
     """
     # Same algorithms as in `single_source_bellman_ford_path_length`, but with
     # `Cur` as a Matrix with each row corresponding to a source node.

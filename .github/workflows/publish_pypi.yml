@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - name: Install build dependencies
@@ -27,7 +27,7 @@ jobs:
           python -m pip install build twine
       - name: Build wheel and sdist
         run: python -m build --sdist --wheel
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: releases
           path: dist
@@ -35,7 +35,7 @@ jobs:
       - name: Check with twine
         run: python -m twine check --strict dist/*
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}

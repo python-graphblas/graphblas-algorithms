@@ -67,7 +67,7 @@ def readfile(filepath, is_symmetric, backend):
 
 
 def best_units(num):
-    """Returns scale factor and prefix such that 1 <= num*scale < 1000"""
+    """Returns scale factor and prefix such that ``1 <= num*scale < 1000``."""
     if num < 1e-12:
         return 1e15, "f"
     if num < 1e-9:

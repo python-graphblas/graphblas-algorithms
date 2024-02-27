@@ -1,4 +1,4 @@
-"""BFS routines used by other algorithms"""
+"""BFS routines used by other algorithms."""
 
 import numpy as np
 from graphblas import Matrix, Vector, binary, indexunary, replace, semiring, unary

@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(scope="session", autouse=True)
 def ic():
-    """Make `ic` available everywhere during testing for easier debugging"""
+    """Make `ic` available everywhere during testing for easier debugging."""
     try:
         import icecream
     except ImportError:
