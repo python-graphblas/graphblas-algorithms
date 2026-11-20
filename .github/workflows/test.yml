@@ -58,7 +58,9 @@ jobs:
           activate-environment: graphblas
       - name: Install dependencies
         run: |
-          $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
+          # conda, not mamba: on Windows the action's bash wrapper for mamba runs `cmd.exe /C`,
+          # which Git Bash rewrites to `cmd.exe C:/`, so the install silently does nothing.
+          conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
             pytest-cov pytest-randomly pytest-xdist networkx rich setuptools
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           # Sometimes we prefer to use the latest release of NetworkX or the latest development from github
@@ -111,7 +113,7 @@ jobs:
       - name: Install dependencies
         run: |
           # pytest-mpl brings matplotlib, which NetworkX's drawing tests need.
-          $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
+          conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
             pytest-cov pytest-randomly pytest-mpl pytest-xdist networkx
           pip install -e . --no-deps
       - name: NetworkX test suite
