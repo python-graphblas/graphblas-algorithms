@@ -44,6 +44,8 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: 3 :: Only",
   "Intended Audience :: Developers",
   "Intended Audience :: Other Audience",
@@ -127,7 +129,10 @@ dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
-target-version = ["py311", "py312", "py313"]
+# No "py315" yet, as in python-graphblas: a black that does not know a listed version refuses
+# to run on this project, and conda-forge's black for Python 3.15 is still 26.1 (black 26.5, the
+# first to know py315, needs a pytokens with no 3.15 build there as of 2026-11).
+target-version = ["py311", "py312", "py313", "py314"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
