@@ -1,4 +1,5 @@
 import pathlib
+import tomllib
 
 import pytest
 
@@ -9,17 +10,12 @@ try:
 except ImportError:  # pragma: no cover (import)
     setuptools = None
 
-try:
-    import tomli
-except ImportError:  # pragma: no cover (import)
-    tomli = None
-
 
 def test_version():
     assert ga.__version__ > "2022.11.0"
 
 
-@pytest.mark.skipif("not setuptools or not tomli or not ga.__file__")
+@pytest.mark.skipif("not setuptools or not ga.__file__")
 def test_packages():
     """Ensure all packages are declared in pyproject.toml."""
     # Currently assume s`pyproject.toml` is at the same level as `graphblas_algorithms` folder.
@@ -33,7 +29,7 @@ def test_packages():
     if not pyproject.exists():
         pytest.skip("Did not find pyproject.toml")
     with pyproject.open("rb") as f:
-        pkgs2 = sorted(tomli.load(f)["tool"]["setuptools"]["packages"])
+        pkgs2 = sorted(tomllib.load(f)["tool"]["setuptools"]["packages"])
     assert (
         pkgs == pkgs2
     ), "If there are extra items on the left, add them to pyproject.toml:tool.setuptools.packages"

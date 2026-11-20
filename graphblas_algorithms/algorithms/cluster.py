@@ -3,21 +3,21 @@ from graphblas import Matrix, Vector, binary, replace, unary
 from graphblas.semiring import plus_first, plus_pair, plus_times
 
 __all__ = [
+    "average_clustering",
+    "average_clustering_directed",
+    "clustering",
+    "clustering_directed",
+    "generalized_degree",
+    "single_clustering",
+    "single_clustering_directed",
+    "single_generalized_degree",
+    "single_square_clustering",
     "single_triangle",
-    "triangles",
+    "square_clustering",
     "total_triangles",
     "transitivity",
     "transitivity_directed",
-    "clustering",
-    "clustering_directed",
-    "single_clustering",
-    "single_clustering_directed",
-    "average_clustering",
-    "average_clustering_directed",
-    "single_square_clustering",
-    "square_clustering",
-    "generalized_degree",
-    "single_generalized_degree",
+    "triangles",
 ]
 
 

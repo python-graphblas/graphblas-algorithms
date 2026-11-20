@@ -1,6 +1,6 @@
 from graphblas.semiring import plus_pair
 
-__all__ = ["intra_community_edges", "inter_community_edges"]
+__all__ = ["inter_community_edges", "intra_community_edges"]
 
 
 def intra_community_edges(G, partition):

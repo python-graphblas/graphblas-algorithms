@@ -5,11 +5,14 @@ exclude =
     graphblas_algorithms/*/tests/,
     graphblas_algorithms/*/*/tests/,
     build/
+# E203 for black; B042 because ArpackNoConvergence mirrors SciPy's signature.
 extend-ignore =
     E203,
     SIM105,
     SIM401,
-# E203 whitespace before ':' (to be compatible with black)
+    B042,
+# No trailing comments below: flake8 would read them as part of the pattern.
 per-file-ignores =
-    __init__.py:F401,F403,  # allow unused and star imports
-    graphblas_algorithms/nxapi/exception.py:F401,
+    __init__.py:F401,F403
+    _nx_graphblas/__init__.py:E501
+    graphblas_algorithms/nxapi/exception.py:F401

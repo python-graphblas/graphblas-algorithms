@@ -2,7 +2,7 @@ from graphblas import binary
 
 from .exceptions import EmptyGraphError
 
-__all__ = ["reciprocity", "overall_reciprocity"]
+__all__ = ["overall_reciprocity", "reciprocity"]
 
 
 def reciprocity(G, mask=None):

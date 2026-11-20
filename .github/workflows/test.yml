@@ -3,65 +3,144 @@ name: Tests
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
+    name: pytest (${{ matrix.os }}, ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
     strategy:
-      fail-fast: true
+      # One failing cell should not cancel the others.
+      fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
+        include:
+          # Additional architectures, at one Python version to limit the cost.
+          - os: macos-15-intel
+            python-version: "3.13"
+          - os: ubuntu-24.04-arm
+            python-version: "3.13"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Setup mamba
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         id: setup_mamba
         continue-on-error: true
         with:
-          miniforge-variant: Mambaforge
+          miniforge-variant: Miniforge3
           miniforge-version: latest
           use-mamba: true
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge,${{ contains(matrix.python-version, 'pypy') && 'defaults' || 'nodefaults' }}
-          channel-priority: ${{ contains(matrix.python-version, 'pypy') && 'flexible' || 'strict' }}
+          channels: conda-forge
+          channel-priority: strict
           activate-environment: graphblas
-          auto-activate-base: false
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         id: setup_conda
         if: steps.setup_mamba.outcome == 'failure'
         continue-on-error: false
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge,${{ contains(matrix.python-version, 'pypy') && 'defaults' || 'nodefaults' }}
-          channel-priority: ${{ contains(matrix.python-version, 'pypy') && 'flexible' || 'strict' }}
+          channels: conda-forge
+          channel-priority: strict
           activate-environment: graphblas
-          auto-activate-base: false
       - name: Install dependencies
         run: |
-          $(command -v mamba || command -v conda) install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
-            pytest-cov pytest-randomly pytest-mpl networkx
+          # conda, not mamba: on Windows the action's bash wrapper for mamba runs `cmd.exe /C`,
+          # which Git Bash rewrites to `cmd.exe C:/`, so the install silently does nothing.
+          conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
+            pytest-cov pytest-randomly pytest-xdist networkx rich setuptools
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
           # Sometimes we prefer to use the latest release of NetworkX or the latest development from github
           # pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
-      - name: PyTest
+      - name: pytest
         run: |
           python -c 'import sys, graphblas_algorithms; assert "networkx" not in sys.modules'
-          coverage run --branch -m pytest --color=yes -v --check-structure
-          coverage report
-          # NETWORKX_GRAPH_CONVERT=graphblas pytest --color=yes --pyargs networkx --cov --cov-append
-          ./run_nx_tests.sh --color=yes --cov --cov-append
+          coverage run --branch -m pytest --color=yes -v
           coverage report
           coverage xml
       - name: Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+
+  networkx:
+    # One cell, since the suite is slow and tests the dispatch layer, not the platform.
+    name: NetworkX suite through the backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Setup mamba
+        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+        id: setup_mamba
+        continue-on-error: true
+        with:
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
+          use-mamba: true
+          python-version: "3.13"
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: graphblas
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+        if: steps.setup_mamba.outcome == 'failure'
+        continue-on-error: false
+        with:
+          auto-update-conda: true
+          python-version: "3.13"
+          channels: conda-forge
+          channel-priority: strict
+          activate-environment: graphblas
+      - name: Install dependencies
+        run: |
+          # pytest-mpl brings matplotlib, which NetworkX's drawing tests need.
+          conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
+            pytest-cov pytest-randomly pytest-mpl pytest-xdist networkx
+          pip install -e . --no-deps
+      - name: NetworkX test suite
+        id: nx_suite
+        # Advisory: the step may fail, the job passes, the counts are in the step summary.
+        continue-on-error: true
+        run: |
+          # The runner adds no pipefail to a custom shell, and `tee` would set the step's status.
+          set -o pipefail
+          ./run_nx_tests.sh --color=yes -n auto -q --cov --cov-report=xml | tee nx-suite.log
+      - name: Publish the suite result
+        if: always()
+        env:
+          SUITE_OUTCOME: ${{ steps.nx_suite.outcome }}
+        run: |
+          # The step summary and annotations do not render color escapes.
+          summary=$(tail -n 1 nx-suite.log 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
+          summary=${summary:-"the suite produced no output"}
+          {
+            echo "### NetworkX suite through this backend"
+            echo
+            echo '```'
+            echo "$summary"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$SUITE_OUTCOME" != "success" ]; then
+            echo "::warning::NetworkX suite did not pass: $summary"
+          fi
+      - name: Coverage
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

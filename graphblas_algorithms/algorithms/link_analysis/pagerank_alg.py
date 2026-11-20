@@ -6,7 +6,7 @@ from graphblas_algorithms import Graph
 from .._helpers import is_converged
 from ..exceptions import ConvergenceFailure
 
-__all__ = ["pagerank", "google_matrix"]
+__all__ = ["google_matrix", "pagerank"]
 
 
 def pagerank(

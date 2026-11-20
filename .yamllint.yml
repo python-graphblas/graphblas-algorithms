@@ -1,0 +1,11 @@
+---
+extends: default
+rules:
+  # GitHub workflows use `on:` as a mapping key, which the default truthy rule rejects.
+  truthy:
+    check-keys: false
+  document-start: disable
+  line-length: disable
+  # prettier writes one space before an inline comment; yamllint's default wants two.
+  comments:
+    min-spaces-from-content: 1

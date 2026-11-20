@@ -2,14 +2,14 @@ from graphblas_algorithms import algorithms
 from graphblas_algorithms.classes.digraph import to_graph
 
 __all__ = [
-    "cut_size",
-    "volume",
-    "normalized_cut_size",
+    "boundary_expansion",
     "conductance",
+    "cut_size",
     "edge_expansion",
     "mixing_expansion",
     "node_expansion",
-    "boundary_expansion",
+    "normalized_cut_size",
+    "volume",
 ]
 
 

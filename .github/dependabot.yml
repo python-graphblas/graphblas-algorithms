@@ -1,6 +1,10 @@
 version: 2
 updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: 'weekly'
+      interval: "weekly"
+    # Wait a week after a release before proposing it, so a compromised or
+    # broken release has time to be noticed and yanked.
+    cooldown:
+      default-days: 7

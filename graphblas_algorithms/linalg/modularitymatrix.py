@@ -2,7 +2,7 @@ from graphblas import monoid, unary
 
 from .laplacianmatrix import _laplacian_helper
 
-__all__ = ["modularity_matrix", "directed_modularity_matrix"]
+__all__ = ["directed_modularity_matrix", "modularity_matrix"]
 
 
 def modularity_matrix(G, nodelist=None, is_weighted=False, *, name="modularity_matrix"):

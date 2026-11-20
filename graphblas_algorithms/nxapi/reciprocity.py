@@ -4,7 +4,7 @@ from graphblas_algorithms.utils import not_implemented_for
 
 from .exception import NetworkXError
 
-__all__ = ["reciprocity", "overall_reciprocity"]
+__all__ = ["overall_reciprocity", "reciprocity"]
 
 
 @not_implemented_for("undirected", "multigraph")

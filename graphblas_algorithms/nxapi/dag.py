@@ -3,7 +3,7 @@ from graphblas_algorithms.classes.digraph import to_graph
 
 from .exception import NetworkXError
 
-__all__ = ["descendants", "ancestors"]
+__all__ = ["ancestors", "descendants"]
 
 
 def descendants(G, source):

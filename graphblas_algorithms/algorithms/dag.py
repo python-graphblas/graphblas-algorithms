@@ -1,6 +1,6 @@
 from ._bfs import _bfs_plain
 
-__all__ = ["descendants", "ancestors"]
+__all__ = ["ancestors", "descendants"]
 
 
 def descendants(G, source):

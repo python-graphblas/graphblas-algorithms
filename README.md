@@ -9,6 +9,7 @@
 [![Coverage](https://codecov.io/gh/python-graphblas/graphblas-algorithms/branch/main/graph/badge.svg)](https://codecov.io/gh/python-graphblas/graphblas-algorithms)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7329185.svg)](https://doi.org/10.5281/zenodo.7329185)
 [![Discord](https://img.shields.io/badge/Chat-Discord-blue)](https://discord.com/invite/vur45CbwMz)
+
 <!--- [![Docs](https://readthedocs.org/projects/graphblas-algorithms/badge/?version=latest)](https://graphblas-algorithms.readthedocs.io/en/latest/) --->
 
 `graphblas-algorithms` is a collection of GraphBLAS algorithms written using
@@ -16,7 +17,7 @@
 It may be used directly or as an experimental
 [backend to NetworkX](https://networkx.org/documentation/stable/reference/classes/index.html#backends).
 
-Why use GraphBLAS Algorithms? Because it is *fast*, *flexible*, and *familiar* by using the NetworkX API.
+Why use GraphBLAS Algorithms? Because it is _fast_, _flexible_, and _familiar_ by using the NetworkX API.
 
 Are we missing any [algorithms](#Plugin-Algorithms) that you want?
 [Please let us know!](https://github.com/python-graphblas/graphblas-algorithms/issues)
@@ -26,9 +27,11 @@ Are we missing any [algorithms](#Plugin-Algorithms) that you want?
 <img src="https://raw.githubusercontent.com/python-graphblas/graphblas-algorithms/main/docs/_static/img/graphblas-vs-igraph.png" alt="GraphBLAS vs igraph" title="igraph may use different algorithms for PageRank" width="600" />
 
 ### Installation
+
 ```
 conda install -c conda-forge graphblas-algorithms
 ```
+
 ```
 pip install graphblas-algorithms
 ```
@@ -70,12 +73,12 @@ Algorithms whose result is a subgraph will return `ga.Graph`.
 
 ## Plugin for NetworkX
 
-Dispatching to plugins is a new feature in Networkx 3.0.
 When both `networkx` and `graphblas-algorithms` are installed in an
 environment, calls to NetworkX algorithms can be dispatched to the
 equivalent version in `graphblas-algorithms`.
 
 ### Dispatch Example
+
 ```python
 import networkx as nx
 import graphblas_algorithms as ga
@@ -91,13 +94,14 @@ T5 = nx.k_truss(G2, 5)
 ```
 
 `G2` is not a `nx.Graph`, but it does have an attribute
-`__networkx_plugin__ = "graphblas"`. This tells NetworkX to
-dispatch the k_truss call to graphblas-algorithms. This link
-connection exists because graphblas-algorithms registers
-itself as a "networkx.plugin" entry point.
+`__networkx_backend__ = "graphblas"`. This tells NetworkX to
+dispatch the k_truss call to graphblas-algorithms. That link
+exists because graphblas-algorithms registers itself under
+the "networkx.backends" entry point group.
 
 The result `T5` is a `ga.Graph` representing the 5-truss structure of the
 original graph. To convert to a NetworkX Graph, use:
+
 ```python
 T5.to_networkx()
 ```
@@ -112,7 +116,7 @@ The following NetworkX algorithms have been implemented
 by graphblas-algorithms and can be used following the
 dispatch pattern shown above.
 
-[//]: # (Begin auto-generated code)
+[//]: # "Begin auto-generated code"
 
 ```
 graphblas_algorithms.nxapi
@@ -246,4 +250,4 @@ graphblas_algorithms.nxapi
     └── is_triad
 ```
 
-[//]: # (End auto-generated code)
+[//]: # "End auto-generated code"
