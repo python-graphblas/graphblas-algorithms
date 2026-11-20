@@ -55,7 +55,9 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["python-graphblas >=2023.1.0"]
+# python-graphblas converts a NetworkX graph through a scipy sparse array. 1.11.2 is the scipy
+# floor NetworkX 3.6.1 declares, above python-graphblas's own.
+dependencies = ["python-graphblas >=2026.11.0", "scipy >=1.11.2"]
 
 [project.entry-points."networkx.backends"]
 graphblas = "graphblas_algorithms.interface:Dispatcher"
@@ -75,7 +77,7 @@ test = [
   "pytest-xdist",
   "networkx >=3.6",
   "rich",           # scripts/maketree.py, which the generated-code freshness test runs
-  "scipy >=1.9",
+  "scipy >=1.11.2",
   "setuptools",
 ]
 all = ["graphblas-algorithms[test]"]

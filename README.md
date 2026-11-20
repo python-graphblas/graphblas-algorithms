@@ -36,6 +36,10 @@ conda install -c conda-forge graphblas-algorithms
 pip install graphblas-algorithms
 ```
 
+graphblas-algorithms depends on scipy: python-graphblas converts a NetworkX graph through a scipy
+sparse array, and `adjacency_matrix`, `laplacian_matrix`, `normalized_laplacian_matrix`,
+`bethe_hessian_matrix` and `tournament_matrix` return scipy sparse arrays.
+
 ## Basic Usage
 
 First, create a GraphBLAS Matrix.
