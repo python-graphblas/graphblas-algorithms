@@ -9,6 +9,7 @@ We should consider removing any test here that becomes too much of a nuisance.
 For now, though, let's try to match and stay up-to-date with NetworkX!
 
 """
+
 import sys
 from collections import namedtuple
 from pathlib import Path

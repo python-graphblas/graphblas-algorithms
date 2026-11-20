@@ -5,9 +5,9 @@ from .._utils import normalize_chunksize, partition
 from ..exception import NodeNotFound
 
 __all__ = [
+    "all_pairs_shortest_path_length",
     "single_source_shortest_path_length",
     "single_target_shortest_path_length",
-    "all_pairs_shortest_path_length",
 ]
 
 

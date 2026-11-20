@@ -6,11 +6,11 @@ from .._bfs import _bfs_level, _bfs_levels, _bfs_parent, _bfs_plain
 from ..exceptions import NoPath, Unbounded
 
 __all__ = [
-    "single_source_bellman_ford_path_length",
     "bellman_ford_path",
     "bellman_ford_path_length",
     "bellman_ford_path_lengths",
     "negative_edge_cycle",
+    "single_source_bellman_ford_path_length",
 ]
 
 

@@ -5,9 +5,9 @@ from .._bfs import _bfs_level, _bfs_levels
 from ..exceptions import NoPath
 
 __all__ = [
+    "all_pairs_shortest_path_length",
     "single_source_shortest_path_length",
     "single_target_shortest_path_length",
-    "all_pairs_shortest_path_length",
 ]
 
 

@@ -8,12 +8,12 @@ from graphblas_algorithms.utils import not_implemented_for
 from ._utils import normalize_chunksize, partition
 
 __all__ = [
-    "triangles",
-    "transitivity",
-    "clustering",
     "average_clustering",
-    "square_clustering",
+    "clustering",
     "generalized_degree",
+    "square_clustering",
+    "transitivity",
+    "triangles",
 ]
 
 

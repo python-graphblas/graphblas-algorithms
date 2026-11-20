@@ -1,6 +1,6 @@
 from graphblas import monoid
 
-__all__ = ["is_regular", "is_k_regular"]
+__all__ = ["is_k_regular", "is_regular"]
 
 
 def is_regular(G):

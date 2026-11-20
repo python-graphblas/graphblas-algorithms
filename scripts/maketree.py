@@ -4,6 +4,7 @@
 This updates API tree in README.md and dispatch functions in `graphblas_algorithms/interface.py`.
 
 """
+
 from io import StringIO
 from pathlib import Path
 
@@ -69,8 +70,8 @@ def main(print_to_console=True, update_readme=True, update_interface=True):
         _autogenerate_code(
             Path(__file__).parent.parent / "README.md",
             f"\n```\n{text}```\n\n",
-            begin="[//]: # (Begin auto-generated code)",
-            end="[//]: # (End auto-generated code)",
+            begin='[//]: # "Begin auto-generated code"',
+            end='[//]: # "End auto-generated code"',
             callblack=False,
         )
     # Step 2: add to interface.py

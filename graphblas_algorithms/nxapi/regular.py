@@ -3,7 +3,7 @@ from graphblas_algorithms.classes.digraph import to_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
 from graphblas_algorithms.utils import not_implemented_for
 
-__all__ = ["is_regular", "is_k_regular"]
+__all__ = ["is_k_regular", "is_regular"]
 
 
 def is_regular(G):

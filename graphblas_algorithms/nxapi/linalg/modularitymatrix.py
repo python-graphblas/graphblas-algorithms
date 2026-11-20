@@ -3,7 +3,7 @@ from graphblas_algorithms.classes.digraph import to_directed_graph
 from graphblas_algorithms.classes.graph import to_undirected_graph
 from graphblas_algorithms.utils import not_implemented_for
 
-__all__ = ["modularity_matrix", "directed_modularity_matrix"]
+__all__ = ["directed_modularity_matrix", "modularity_matrix"]
 
 
 @not_implemented_for("directed")

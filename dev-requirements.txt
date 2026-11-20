@@ -1,0 +1,38 @@
+# Development dependencies for a pip environment: roughly what `environment.yml`
+# installs with conda. `pyproject.toml`'s `test` extra is a smaller set, only what
+# running this package's own tests needs.
+python-graphblas
+networkx
+scipy
+# python-graphblas default dependencies
+donfig
+numba
+suitesparse-graphblas
+pyyaml
+# networkx default dependencies
+matplotlib
+pandas
+# networkx extra dependencies
+lxml
+pydot
+pygraphviz
+sympy
+# For updating algorithm list in README
+rich
+# For linting
+pre-commit
+# For testing
+pytest
+pytest-cov
+# NetworkX's image-comparison tests skip without it.
+pytest-mpl
+pytest-xdist
+setuptools
+# For benchmarking
+requests
+# For debugging
+icecream
+ipykernel
+ipython
+# For type annotations
+mypy

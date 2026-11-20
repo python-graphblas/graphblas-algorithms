@@ -9,50 +9,57 @@
 #   $ pre-commit install
 #
 # At times, one may need to use a development version of networkx or python-graphblas.
-# To do this, you will need to uninstall, git clone, and run setup.py develop.  For example:
+# To do this, uninstall the conda package, clone the repository, and install it in place:
 #
 #   $ conda remove --force python-graphblas
 #   $ git clone git@github.com:python-graphblas/python-graphblas.git
 #   $ cd python-graphblas
-#   $ python setup.py develop --no-deps
+#   $ pip install -e . --no-deps
 #
 #   $ conda remove --force networkx
 #   $ git clone git@github.com:networkx/networkx.git
 #   $ cd networkx
-#   $ python setup.py develop --no-deps
+#   $ pip install -e . --no-deps
+#
+# `dev-requirements.txt` is the pip mirror of this file; keep the two in lockstep.
 name: graphblas-algorithms-dev
 channels:
-    - conda-forge
-    - nodefaults  # Only install packages from conda-forge for faster solving
+  - conda-forge
+  - nodefaults # Only install packages from conda-forge for faster solving
 dependencies:
-    - python
-    - python-graphblas
-    - networkx
-    # python-graphblas default dependencies
-    - donfig
-    - numba
-    - python-suitesparse-graphblas
-    - pyyaml
-    # networkx default dependencies
-    - matplotlib
-    - pandas
-    - scipy
-    # networkx extra dependencies
-    - lxml
-    - pydot
-    - pygraphviz
-    - sympy
-    # For updating algorithm list in README
-    - rich
-    # For linting
-    - pre-commit
-    # For testing
-    - pytest-cov
-    # For benchmarking
-    - requests
-    # For debugging
-    - icecream
-    - ipykernel
-    - ipython
-    # For type annotations
-    - mypy
+  - python
+  - python-graphblas
+  - networkx
+  # python-graphblas default dependencies
+  - donfig
+  - numba
+  - python-suitesparse-graphblas
+  - pyyaml
+  # networkx default dependencies
+  - matplotlib
+  - pandas
+  - scipy
+  # networkx extra dependencies
+  - lxml
+  - pydot
+  - pygraphviz
+  - sympy
+  # For updating algorithm list in README
+  - rich
+  # For linting
+  - pre-commit
+  # For testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  # NetworkX's image-comparison tests skip without it.
+  - pytest-mpl
+  - setuptools
+  # For benchmarking
+  - requests
+  # For debugging
+  - icecream
+  - ipykernel
+  - ipython
+  # For type annotations
+  - mypy
