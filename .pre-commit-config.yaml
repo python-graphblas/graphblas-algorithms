@@ -39,6 +39,7 @@ repos:
       - id: trailing-whitespace
       - id: name-tests-test
         args: ["--pytest-test-first"]
+        exclude: /tests/_[^/]+\.py$ # helper modules, which pytest does not collect
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.27
     hooks:

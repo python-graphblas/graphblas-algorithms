@@ -70,7 +70,14 @@ repository = "https://github.com/python-graphblas/graphblas-algorithms"
 changelog = "https://github.com/python-graphblas/graphblas-algorithms/releases"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-xdist", "networkx >=3.6", "scipy >=1.9", "setuptools"]
+test = [
+  "pytest",
+  "pytest-xdist",
+  "networkx >=3.6",
+  "rich",           # scripts/maketree.py, which the generated-code freshness test runs
+  "scipy >=1.9",
+  "setuptools",
+]
 all = ["graphblas-algorithms[test]"]
 
 [tool.setuptools]

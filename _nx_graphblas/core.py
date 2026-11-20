@@ -84,6 +84,12 @@ def get_extra_parameters(functions=None):
 def update_text(text, lines_to_add, target, indent=" " * 4):
     begin = f"# BEGIN: {target}\n"
     end = f"# END: {target}\n"
+    for marker in (begin, end):
+        # `index` below raises on a missing marker; a duplicate would splice into the wrong block.
+        if text.count(marker) != 1:
+            raise ValueError(
+                f"expected {marker.strip()!r} exactly once, found {text.count(marker)}"
+            )
     start = text.index(begin)
     stop = text.index(end)
     to_add = "\n".join(f"{indent}{line}" for line in lines_to_add)
