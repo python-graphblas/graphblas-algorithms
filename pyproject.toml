@@ -248,6 +248,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"] # Allow unused imports (w/o defining `__all__`)
+"_nx_graphblas/__init__.py" = ["E501"] # Generated; one line per parameter description
+"_nx_graphblas/core.py" = ["T201"] # Printing is how this reports what it regenerated
 "graphblas_algorithms/**/tests/*py" = [
   "S101",
   "T201",

@@ -14,4 +14,5 @@ extend-ignore =
 # No trailing comments below: flake8 would read them as part of the pattern.
 per-file-ignores =
     __init__.py:F401,F403
+    _nx_graphblas/__init__.py:E501
     graphblas_algorithms/nxapi/exception.py:F401

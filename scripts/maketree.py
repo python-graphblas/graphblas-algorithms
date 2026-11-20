@@ -5,19 +5,13 @@ This updates API tree in README.md and dispatch functions in `graphblas_algorith
 
 """
 
+import sys
 from io import StringIO
 from pathlib import Path
 
 import rich
 from graphblas.core.utils import _autogenerate_code
 from rich.tree import Tree
-
-from graphblas_algorithms.tests import test_match_nx
-from graphblas_algorithms.tests.test_match_nx import get_fullname
-
-
-def get_fixture(attr):
-    return getattr(test_match_nx, attr).__wrapped__
 
 
 def trim(name):
@@ -27,11 +21,36 @@ def trim(name):
     raise ValueError(f"{name!r} does not begin with a recognized prefix")
 
 
+def nx_fullname(name, func):
+    """`func`'s NetworkX path, plus " (name)" when it is registered under another name.
+
+    For example `bipartite_average_clustering` is `bipartite.cluster.average_clustering`.
+    """
+    fullname = f"{func.__module__}.{func.__name__}"
+    if not fullname.endswith(f".{name}"):
+        fullname += f" ({name})"
+    return fullname
+
+
 def get_names():
-    nx_names_to_info = get_fixture("nx_names_to_info")(get_fixture("nx_info")())
-    gb_names_to_info = get_fixture("gb_names_to_info")(get_fixture("gb_info")())
-    implemented = nx_names_to_info.keys() & gb_names_to_info.keys()
-    return sorted(trim(get_fullname(next(iter(nx_names_to_info[name])))) for name in implemented)
+    """Names we implement: the `nxapi` functions that NetworkX's registry knows.
+
+    Scanning `nxapi`, not the `Dispatcher`, keeps the generated table from being its own input.
+    """
+    from networkx.utils.backends import _registered_algorithms
+
+    from graphblas_algorithms import nxapi  # noqa: F401  (populates sys.modules)
+
+    implemented = set()
+    for modname, module in sys.modules.items():
+        if not modname.startswith("graphblas_algorithms.nxapi") or "tests" in modname:
+            continue
+        for key, val in vars(module).items():
+            if key.startswith("_") or key not in _registered_algorithms or not callable(val):
+                continue
+            if getattr(val, "__module__", "").startswith("graphblas_algorithms.nxapi."):
+                implemented.add(key)
+    return sorted(trim(nx_fullname(name, _registered_algorithms[name])) for name in implemented)
 
 
 # Dispatched functions that are only available from `nxapi`
@@ -98,7 +117,8 @@ def main(print_to_console=True, update_readme=True, update_interface=True):
     lines.append("")
     lines.append("    del mod")
     lines.append("")
-    text = "\n".join(lines)
+    # The text's last line becomes the END marker's indent, so end at the class body's.
+    text = "\n".join(lines) + " " * 4
     if update_interface:
         _autogenerate_code(
             Path(__file__).parent.parent / "graphblas_algorithms" / "interface.py",
