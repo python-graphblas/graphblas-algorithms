@@ -73,7 +73,6 @@ Algorithms whose result is a subgraph will return `ga.Graph`.
 
 ## Plugin for NetworkX
 
-Dispatching to plugins is a new feature in Networkx 3.0.
 When both `networkx` and `graphblas-algorithms` are installed in an
 environment, calls to NetworkX algorithms can be dispatched to the
 equivalent version in `graphblas-algorithms`.
@@ -95,10 +94,10 @@ T5 = nx.k_truss(G2, 5)
 ```
 
 `G2` is not a `nx.Graph`, but it does have an attribute
-`__networkx_plugin__ = "graphblas"`. This tells NetworkX to
-dispatch the k_truss call to graphblas-algorithms. This link
-connection exists because graphblas-algorithms registers
-itself as a "networkx.plugin" entry point.
+`__networkx_backend__ = "graphblas"`. This tells NetworkX to
+dispatch the k_truss call to graphblas-algorithms. That link
+exists because graphblas-algorithms registers itself under
+the "networkx.backends" entry point group.
 
 The result `T5` is a `ga.Graph` representing the 5-truss structure of the
 original graph. To convert to a NetworkX Graph, use:
