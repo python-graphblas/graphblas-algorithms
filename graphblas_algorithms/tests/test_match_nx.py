@@ -133,7 +133,6 @@ def gb_names_to_info(gb_info):
     return rv
 
 
-@pytest.mark.checkstructure
 def test_nonempty(nx_info, gb_info, nx_names_to_info, gb_names_to_info):
     assert len(nx_info) > 15
     assert len(gb_info) > 15
@@ -154,7 +153,6 @@ def module_exists(info):
     return info[2].rsplit(".", 1)[0] in sys.modules
 
 
-@pytest.mark.checkstructure
 def test_dispatched_funcs_in_nxapi(nx_names_to_info, gb_names_to_info):
     """Are graphblas_algorithms functions in the correct locations in nxapi?"""
     failing = False

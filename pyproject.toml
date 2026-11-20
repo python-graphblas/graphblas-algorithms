@@ -136,10 +136,9 @@ testpaths = "graphblas_algorithms"
 xfail_strict = false
 addopts = [
   "--strict-config",  # Force error if config is misspelled
-  "--strict-markers", # Force error if marker is misspelled (must be defined below)
+  "--strict-markers", # Force error if a marker is misspelled or otherwise unregistered
   "-ra",              # Print summary of all fails/errors
 ]
-markers = ["checkstructure: Skipped unless --check-structure passed"]
 
 [tool.codespell]
 # "THIRDPARTY" is an isort section name, not a misspelling.
