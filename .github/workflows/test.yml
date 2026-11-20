@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    name: pytest (${{ matrix.os }}, ${{ matrix.python-version }})
+    name: pytest (${{ matrix.os }}, py${{ matrix.python-version }}, nx${{ matrix.networkx-version }})
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -20,13 +20,21 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        # The NetworkX floor (3.6, at its last patch) and the newest release.
+        networkx-version: ["3.6.1", "latest"]
+        exclude:
+          # NetworkX 3.7 requires Python 3.12, so "latest" would be 3.6.1 again.
+          - python-version: "3.11"
+            networkx-version: "latest"
         include:
           # Additional architectures, at one Python version to limit the cost.
           - os: macos-15-intel
             python-version: "3.13"
+            networkx-version: "3.6.1"
           - os: ubuntu-24.04-arm
             python-version: "3.13"
+            networkx-version: "3.6.1"
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,13 +66,16 @@ jobs:
           activate-environment: graphblas
       - name: Install dependencies
         run: |
+          if [ "${{ matrix.networkx-version }}" = "latest" ]; then
+            nx=networkx
+          else
+            nx=networkx=${{ matrix.networkx-version }}
+          fi
           # conda, not mamba: on Windows the action's bash wrapper for mamba runs `cmd.exe /C`,
           # which Git Bash rewrites to `cmd.exe C:/`, so the install silently does nothing.
           conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
-            pytest-cov pytest-randomly pytest-xdist networkx rich setuptools
+            pytest-cov pytest-randomly pytest-xdist "$nx" rich setuptools
             # matplotlib lxml pygraphviz pydot sympy  # Extra networkx deps we don't need yet
-          # Sometimes we prefer to use the latest release of NetworkX or the latest development from github
-          # pip install git+https://github.com/networkx/networkx.git@main --no-deps
           pip install -e . --no-deps
       - name: pytest
         run: |
@@ -72,16 +83,24 @@ jobs:
           coverage run --branch -m pytest --color=yes -v
           coverage report
           coverage xml
+      # act, which runs these workflows locally, sets ACT; GitHub does not.
       - name: Coverage
+        if: ${{ !env.ACT }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   networkx:
-    # One cell, since the suite is slow and tests the dispatch layer, not the platform.
-    name: NetworkX suite through the backend
+    # Linux and Python 3.13 only: the suite is slow and tests the dispatch layer, not the platform.
+    name: NetworkX suite through the backend (nx${{ matrix.networkx-version }})
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        networkx-version: ["3.6.1", "latest"]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -112,9 +131,14 @@ jobs:
           activate-environment: graphblas
       - name: Install dependencies
         run: |
+          if [ "${{ matrix.networkx-version }}" = "latest" ]; then
+            nx=networkx
+          else
+            nx=networkx=${{ matrix.networkx-version }}
+          fi
           # pytest-mpl brings matplotlib, which NetworkX's drawing tests need.
           conda install python-suitesparse-graphblas scipy pandas donfig pyyaml numpy python-graphblas \
-            pytest-cov pytest-randomly pytest-mpl pytest-xdist networkx
+            pytest-cov pytest-randomly pytest-mpl pytest-xdist "$nx"
           pip install -e . --no-deps
       - name: NetworkX test suite
         id: nx_suite
@@ -133,14 +157,17 @@ jobs:
           summary=$(tail -n 1 nx-suite.log 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
           summary=${summary:-"the suite produced no output"}
           {
-            echo "### NetworkX suite through this backend"
+            echo "### NetworkX suite through this backend, on networkx ${{ matrix.networkx-version }}"
             echo
             echo '```'
             echo "$summary"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "$SUITE_OUTCOME" != "success" ]; then
-            echo "::warning::NetworkX suite did not pass: $summary"
+            echo "::warning::NetworkX suite did not pass on networkx ${{ matrix.networkx-version }}: $summary"
           fi
       - name: Coverage
+        if: ${{ !env.ACT }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

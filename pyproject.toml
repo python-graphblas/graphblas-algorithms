@@ -44,6 +44,8 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: 3 :: Only",
   "Intended Audience :: Developers",
   "Intended Audience :: Other Audience",
@@ -55,7 +57,9 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["python-graphblas >=2023.1.0"]
+# python-graphblas converts a NetworkX graph through a scipy sparse array. 1.11.2 is the scipy
+# floor NetworkX 3.6.1 declares, above python-graphblas's own.
+dependencies = ["python-graphblas >=2026.11.0", "scipy >=1.11.2"]
 
 [project.entry-points."networkx.backends"]
 graphblas = "graphblas_algorithms.interface:Dispatcher"
@@ -75,7 +79,7 @@ test = [
   "pytest-xdist",
   "networkx >=3.6",
   "rich",           # scripts/maketree.py, which the generated-code freshness test runs
-  "scipy >=1.9",
+  "scipy >=1.11.2",
   "setuptools",
 ]
 all = ["graphblas-algorithms[test]"]
@@ -125,7 +129,10 @@ dirty_template = "{tag}+{ccount}.g{sha}.dirty"
 
 [tool.black]
 line-length = 100
-target-version = ["py311", "py312", "py313"]
+# No "py315" yet, as in python-graphblas: a black that does not know a listed version refuses
+# to run on this project, and conda-forge's black for Python 3.15 is still 26.1 (black 26.5, the
+# first to know py315, needs a pytokens with no 3.15 build there as of 2026-11).
+target-version = ["py311", "py312", "py313", "py314"]
 
 [tool.isort]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
