@@ -83,8 +83,12 @@ jobs:
           coverage run --branch -m pytest --color=yes -v
           coverage report
           coverage xml
+      # act, which runs these workflows locally, sets ACT; GitHub does not.
       - name: Coverage
+        if: ${{ !env.ACT }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   networkx:
     # Linux and Python 3.13 only: the suite is slow and tests the dispatch layer, not the platform.
@@ -163,4 +167,7 @@ jobs:
             echo "::warning::NetworkX suite did not pass on networkx ${{ matrix.networkx-version }}: $summary"
           fi
       - name: Coverage
+        if: ${{ !env.ACT }}
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
